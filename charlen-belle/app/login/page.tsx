@@ -109,6 +109,12 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
+              <div className="text-center mt-6">
+          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
+            Dari Noel
+          </Link>
+        </div>
     </div>
   );
 }
+
