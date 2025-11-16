@@ -45,6 +45,27 @@ export default function BookingPage() {
     fetchAvailableDates();
   }, [currentMonth]);
 
+  // Add this check in app/user/booking/page.tsx before allowing booking
+  useEffect(() => {
+    const checkCustomerProfile = async () => {
+      try {
+        const response = await fetch('/api/user/customer-profile');
+        const data = await response.json();
+        
+        if (data.success && !data.customer_profile?.completed_at) {
+          // Redirect to profile completion if not completed
+          router.push('/user/customer-profile?redirect=/user/booking');
+        }
+      } catch (error) {
+        console.error('Error checking customer profile:', error);
+      }
+    };
+
+    if (session) {
+      checkCustomerProfile();
+    }
+  }, [session, router]);
+
   // In your fetchAvailableDates function, add this:
   async function fetchAvailableDates() {
     setIsLoadingDates(true);

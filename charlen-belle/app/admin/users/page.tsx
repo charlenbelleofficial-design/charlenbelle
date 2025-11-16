@@ -24,6 +24,15 @@ interface SnackbarState {
   type: SnackbarType;
 }
 
+interface CustomerProfile {
+  skin_type?: string;
+  allergies?: string[];
+  medical_conditions?: string[];
+  medications?: string[];
+  notes?: string;
+  completed_at?: string;
+}
+
 export default function AdminUsersPage() {
   const { data: session } = useSession();
   const [users, setUsers] = useState<User[]>([]);
@@ -35,6 +44,8 @@ export default function AdminUsersPage() {
     message: '',
     type: 'info'
   });
+  const [viewingCustomerProfile, setViewingCustomerProfile] = useState<User | null>(null);
+
   
   // Confirmation modal state
   const [confirmationModal, setConfirmationModal] = useState({
@@ -220,11 +231,18 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex gap-2">
                           <button
+                            onClick={() => setViewingCustomerProfile(user)}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            Profil Kesehatan
+                          </button>
+                          <button
                             onClick={() => setEditingUser(user)}
                             className="text-blue-600 hover:text-blue-900"
                           >
                             Edit
                           </button>
+                          
                           {user.role !== 'superadmin' && (
                             <button
                               onClick={() => handleDeleteUser(user._id, user.name)}
@@ -256,6 +274,14 @@ export default function AdminUsersPage() {
               setEditingUser(null);
               fetchUsers();
             }}
+            showSnackbar={showSnackbar}
+          />
+        )}
+
+        {viewingCustomerProfile && (
+          <CustomerProfileModal
+            user={viewingCustomerProfile}
+            onClose={() => setViewingCustomerProfile(null)}
             showSnackbar={showSnackbar}
           />
         )}
@@ -423,6 +449,424 @@ function UserModal({ user, onClose, onSuccess, showSnackbar }: any) {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CustomerProfileModal({ user, onClose, showSnackbar }: any) {
+  const [profile, setProfile] = useState<CustomerProfile>({});
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // New state for input fields
+  const [newAllergy, setNewAllergy] = useState('');
+  const [newCondition, setNewCondition] = useState('');
+  const [newMedication, setNewMedication] = useState('');
+
+  useEffect(() => {
+    fetchCustomerProfile();
+  }, [user]);
+
+  const fetchCustomerProfile = async () => {
+    try {
+      const response = await fetch(`/api/admin/users/${user._id}/customer-profile`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setProfile(data.customer_profile || {
+          allergies: [],
+          medical_conditions: [],
+          medications: [],
+          skin_type: '',
+          notes: ''
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching customer profile:', error);
+      showSnackbar('Gagal memuat profil kesehatan', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveProfile = async () => {
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/admin/users/${user._id}/customer-profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile)
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        showSnackbar('Profil kesehatan berhasil diperbarui', 'success');
+        setEditing(false);
+        fetchCustomerProfile();
+        // Clear input fields
+        setNewAllergy('');
+        setNewCondition('');
+        setNewMedication('');
+      } else {
+        throw new Error(data.error || 'Gagal menyimpan profil');
+      }
+    } catch (error) {
+      console.error('Error saving customer profile:', error);
+      showSnackbar('Gagal menyimpan profil kesehatan', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Helper functions for adding/removing items
+  const addAllergy = () => {
+    if (newAllergy.trim()) {
+      setProfile(prev => ({
+        ...prev,
+        allergies: [...(prev.allergies || []), newAllergy.trim()]
+      }));
+      setNewAllergy('');
+    }
+  };
+
+  const removeAllergy = (index: number) => {
+    setProfile(prev => ({
+      ...prev,
+      allergies: (prev.allergies || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const addCondition = () => {
+    if (newCondition.trim()) {
+      setProfile(prev => ({
+        ...prev,
+        medical_conditions: [...(prev.medical_conditions || []), newCondition.trim()]
+      }));
+      setNewCondition('');
+    }
+  };
+
+  const removeCondition = (index: number) => {
+    setProfile(prev => ({
+      ...prev,
+      medical_conditions: (prev.medical_conditions || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const addMedication = () => {
+    if (newMedication.trim()) {
+      setProfile(prev => ({
+        ...prev,
+        medications: [...(prev.medications || []), newMedication.trim()]
+      }));
+      setNewMedication('');
+    }
+  };
+
+  const removeMedication = (index: number) => {
+    setProfile(prev => ({
+      ...prev,
+      medications: (prev.medications || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full">
+          <div className="p-6">
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Profil Kesehatan - {user.name}
+              </h2>
+              <p className="text-gray-600">{user.email}</p>
+            </div>
+            <div className="flex gap-2">
+              {!editing ? (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Edit Profil
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setEditing(false);
+                      // Reset form when canceling
+                      fetchCustomerProfile();
+                      setNewAllergy('');
+                      setNewCondition('');
+                      setNewMedication('');
+                    }}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={saveProfile}
+                    disabled={saving}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400"
+                  >
+                    {saving ? 'Menyimpan...' : 'Simpan'}
+                  </button>
+                </>
+              )}
+              <button
+                onClick={onClose}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Skin Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Jenis Kulit
+              </label>
+              {editing ? (
+                <select
+                  value={profile.skin_type || ''}
+                  onChange={(e) => setProfile(prev => ({ ...prev, skin_type: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                >
+                  <option value="">Pilih jenis kulit</option>
+                  <option value="normal">Normal</option>
+                  <option value="oily">Berminyak</option>
+                  <option value="dry">Kering</option>
+                  <option value="combination">Kombinasi</option>
+                  <option value="sensitive">Sensitif</option>
+                </select>
+              ) : (
+                <p className="text-lg">{profile.skin_type || 'Belum diisi'}</p>
+              )}
+            </div>
+
+            {/* Allergies */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Alergi
+              </label>
+              {editing ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newAllergy}
+                      onChange={(e) => setNewAllergy(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAllergy())}
+                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                      placeholder="Tambahkan alergi (contoh: Latex, Lidocaine)"
+                    />
+                    <button
+                      onClick={addAllergy}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Tambah
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(profile.allergies || []).map((allergy: string, index: number) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        {allergy}
+                        <button
+                          onClick={() => removeAllergy(index)}
+                          className="text-red-600 hover:text-red-800 text-lg font-bold"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {(profile.allergies || []).length > 0 ? (
+                    (profile.allergies || []).map((allergy: string, index: number) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        {allergy}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">Tidak ada alergi yang tercatat</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Medical Conditions */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Kondisi Medis
+              </label>
+              {editing ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newCondition}
+                      onChange={(e) => setNewCondition(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCondition())}
+                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                      placeholder="Tambahkan kondisi medis (contoh: Diabetes, Hipertensi)"
+                    />
+                    <button
+                      onClick={addCondition}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Tambah
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(profile.medical_conditions || []).map((condition: string, index: number) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        {condition}
+                        <button
+                          onClick={() => removeCondition(index)}
+                          className="text-yellow-600 hover:text-yellow-800 text-lg font-bold"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {(profile.medical_conditions || []).length > 0 ? (
+                    (profile.medical_conditions || []).map((condition: string, index: number) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        {condition}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">Tidak ada kondisi medis yang tercatat</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Medications */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Obat yang Dikonsumsi
+              </label>
+              {editing ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newMedication}
+                      onChange={(e) => setNewMedication(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addMedication())}
+                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                      placeholder="Tambahkan obat (contoh: Warfarin, Aspirin)"
+                    />
+                    <button
+                      onClick={addMedication}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Tambah
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(profile.medications || []).map((medication: string, index: number) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        {medication}
+                        <button
+                          onClick={() => removeMedication(index)}
+                          className="text-green-600 hover:text-green-800 text-lg font-bold"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {(profile.medications || []).length > 0 ? (
+                    (profile.medications || []).map((medication: string, index: number) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        {medication}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">Tidak ada obat yang tercatat</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Additional Notes */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Catatan Tambahan
+              </label>
+              {editing ? (
+                <textarea
+                  value={profile.notes || ''}
+                  onChange={(e) => setProfile(prev => ({ ...prev, notes: e.target.value }))}
+                  rows={4}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                  placeholder="Informasi tambahan tentang kesehatan..."
+                />
+              ) : (
+                <p className="text-lg">{profile.notes || 'Tidak ada catatan tambahan'}</p>
+              )}
+            </div>
+
+            {/* Profile Completion Status */}
+            {profile.completed_at && (
+              <div className="md:col-span-2">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600">
+                    Profil kesehatan terakhir diperbarui: {new Date(profile.completed_at).toLocaleDateString('id-ID')}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

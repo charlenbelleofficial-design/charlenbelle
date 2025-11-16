@@ -12,6 +12,7 @@ import { authOptions } from '../../../lib/auth-config';
 import mongoose from 'mongoose';
 
 // Only handle GET requests for multiple bookings
+// Add this to your existing GET function in app/api/admin/bookings/route.ts
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
     const date = searchParams.get('date');
+    const search = searchParams.get('search');
     const limit = parseInt(searchParams.get('limit') || '50');
 
     let query: any = {};
@@ -66,12 +68,49 @@ export async function GET(req: NextRequest) {
       };
     }
 
+    // Search functionality
+    let userQuery: any = {};
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      userQuery = {
+        $or: [
+          { name: searchRegex },
+          { email: searchRegex },
+          { phone_number: searchRegex }
+        ]
+      };
+    }
+
+    // First, find users that match the search criteria if search is provided
+    let userIds = [];
+    if (search && search.trim()) {
+      const User = (await import('../../../models/User')).default;
+      const matchingUsers = await User.find(userQuery).select('_id');
+      userIds = matchingUsers.map(user => user._id);
+      
+      // If no users found and there's a search term, return empty results
+      if (userIds.length === 0) {
+        // Also check if search term might be a booking ID
+        if (mongoose.Types.ObjectId.isValid(search)) {
+          query._id = new mongoose.Types.ObjectId(search);
+        } else {
+          return NextResponse.json({
+            success: true,
+            bookings: []
+          });
+        }
+      } else {
+        query.user_id = { $in: userIds };
+      }
+    }
+
     const bookings = await Booking.find(query)
       .populate('user_id', 'name email phone_number')
       .populate({
         path: 'slot_id',
         model: 'BookingSlot'
       })
+      .populate('consultation_notes.added_by', 'name')
       .populate('confirmed_by', 'name')
       .sort({ created_at: -1 })
       .limit(limit);
@@ -97,6 +136,7 @@ export async function GET(req: NextRequest) {
           total_amount: booking.total_amount,
           created_at: booking.created_at,
           updated_at: booking.updated_at,
+          consultation_notes: booking.consultation_notes,
           payment: payment ? {
             status: payment.status,
             payment_method: payment.payment_method
@@ -125,7 +165,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Add this to explicitly reject other methods
 // Update the POST function in app/api/bookings/route.ts
 export async function POST(req: NextRequest) {
   try {

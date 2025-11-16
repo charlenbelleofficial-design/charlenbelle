@@ -2,12 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../../lib/mongodb';
 import Treatment from '../../../../models/Treatment';
-import TreatmentCategory from '../../../../models/TreatmentCategory';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../../lib/auth-config';
 import mongoose from 'mongoose';
 
-// GET - Get single treatment
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -22,18 +20,14 @@ export async function GET(
     const { id } = await params;
     await connectDB();
 
-    // Ensure all models are registered
-    if (!mongoose.models.TreatmentCategory) {
-      await import('../../../../models/TreatmentCategory');
-    }
-    if (!mongoose.models.Treatment) {
-      await import('../../../../models/Treatment');
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'Invalid treatment ID' }, { status: 400 });
     }
 
     const treatment = await Treatment.findById(id).populate('category_id', 'name');
 
     if (!treatment) {
-      return NextResponse.json({ error: 'Treatment tidak ditemukan' }, { status: 404 });
+      return NextResponse.json({ error: 'Treatment not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -64,12 +58,8 @@ export async function PUT(
     const { id } = await params;
     await connectDB();
 
-    // Ensure all models are registered
-    if (!mongoose.models.TreatmentCategory) {
-      await import('../../../../models/TreatmentCategory');
-    }
-    if (!mongoose.models.Treatment) {
-      await import('../../../../models/Treatment');
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'Invalid treatment ID' }, { status: 400 });
     }
 
     const updateData = await req.json();
@@ -82,7 +72,7 @@ export async function PUT(
     ).populate('category_id', 'name');
 
     if (!treatment) {
-      return NextResponse.json({ error: 'Treatment tidak ditemukan' }, { status: 404 });
+      return NextResponse.json({ error: 'Treatment not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -113,24 +103,21 @@ export async function PATCH(
     const { id } = await params;
     await connectDB();
 
-    // Ensure all models are registered
-    if (!mongoose.models.TreatmentCategory) {
-      await import('../../../../models/TreatmentCategory');
-    }
-    if (!mongoose.models.Treatment) {
-      await import('../../../../models/Treatment');
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: 'Invalid treatment ID' }, { status: 400 });
     }
 
-    const { is_active } = await req.json();
+    const updateData = await req.json();
+    updateData.updated_at = new Date();
 
     const treatment = await Treatment.findByIdAndUpdate(
       id,
-      { is_active, updated_at: new Date() },
-      { new: true }
-    );
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('category_id', 'name');
 
     if (!treatment) {
-      return NextResponse.json({ error: 'Treatment tidak ditemukan' }, { status: 404 });
+      return NextResponse.json({ error: 'Treatment not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -139,7 +126,7 @@ export async function PATCH(
     });
 
   } catch (error) {
-    console.error('Toggle treatment error:', error);
+    console.error('Patch treatment error:', error);
     return NextResponse.json({ 
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'

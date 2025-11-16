@@ -35,6 +35,7 @@ interface Booking {
     status: string;
     payment_method: string;
   };
+  consultation_notes?: ConsultationNote[];
 }
 
 interface Treatment {
@@ -44,6 +45,14 @@ interface Treatment {
   base_price: number;
   duration_minutes: number;
   requires_confirmation?: boolean;
+  final_price?: number;
+  applied_promo?: {
+    name: string;
+    discount_type: 'percentage' | 'fixed';
+    discount_value: number;
+    final_price: number;
+  };
+  active_promos?: any[]; // Add this to match the API response
 }
 
 interface Slot {
@@ -60,6 +69,248 @@ interface SnackbarState {
   type: SnackbarType;
 }
 
+interface BookingEditLog {
+  _id: string;
+  edited_by: { _id: string; name: string };
+  action: string;
+  details: any;
+  created_at: string;
+}
+
+interface ConsultationNote {
+  diagnosis?: string;
+  recommendations?: string;
+  notes?: string;
+  added_by: { _id: string; name: string };
+  added_at: string;
+}
+
+function EditBookingModal({ booking, treatments, onAddTreatment, onRemoveTreatment, onClose }: any) {
+  const [selectedTreatment, setSelectedTreatment] = useState('');
+  const [quantity, setQuantity] = useState(1);
+
+  const handleAddTreatment = () => {
+    if (!selectedTreatment) return;
+    onAddTreatment(selectedTreatment, quantity);
+    setSelectedTreatment('');
+    setQuantity(1);
+  };
+
+  const getSelectedTreatment = () => {
+    return treatments.find((t: any) => t._id === selectedTreatment);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Edit Treatments - {booking.user_id.name}
+          </h2>
+
+          <div className="space-y-4">
+            {/* Current Treatments */}
+            <div>
+              <h3 className="font-semibold mb-2">Treatments Saat Ini:</h3>
+              {booking.treatments && booking.treatments.length > 0 ? (
+                <div className="space-y-2">
+                  {booking.treatments.map((treatment: any) => (
+                    <div key={treatment._id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <div>
+                        <p className="font-medium">{treatment.treatment_id?.name}</p>
+                        <p className="text-sm text-gray-600">Qty: {treatment.quantity}</p>
+                        <p className="text-sm font-semibold text-green-600">
+                          {formatCurrency(treatment.price)} each
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => onRemoveTreatment(treatment.treatment_id._id)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">Belum ada treatments</p>
+              )}
+            </div>
+
+            {/* Add Treatment */}
+            <div>
+              <h3 className="font-semibold mb-2">Tambah Treatment:</h3>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <select
+                    value={selectedTreatment}
+                    onChange={(e) => setSelectedTreatment(e.target.value)}
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
+                  >
+                    <option value="">Pilih Treatment</option>
+                    {treatments.map((treatment: any) => (
+                      <option key={treatment._id} value={treatment._id}>
+                        {treatment.name} - {formatCurrency(treatment.final_price || treatment.base_price)}
+                        {treatment.applied_promo && (
+                          <span className="text-green-600">
+                            {' '}(Promo)
+                          </span>
+                        )}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => setQuantity(parseInt(e.target.value))}
+                    className="w-20 border border-gray-300 rounded-lg px-3 py-2"
+                  />
+                  <button
+                    onClick={handleAddTreatment}
+                    disabled={!selectedTreatment}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                  >
+                    Tambah
+                  </button>
+                </div>
+
+                {/* Selected Treatment Details */}
+                {selectedTreatment && (
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    {(() => {
+                      const treatment = getSelectedTreatment();
+                      if (!treatment) return null;
+                      
+                      return (
+                        <div className="text-sm">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-medium">{treatment.name}</span>
+                            <div className="text-right">
+                              {treatment.applied_promo ? (
+                                <>
+                                  <div className="text-green-600 font-semibold">
+                                    {formatCurrency(treatment.final_price!)} each
+                                  </div>
+                                  <div className="text-gray-500 text-xs line-through">
+                                    {formatCurrency(treatment.base_price)}
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="font-semibold">
+                                  {formatCurrency(treatment.base_price)} each
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {treatment.applied_promo && (
+                            <div className="bg-green-100 border border-green-200 rounded p-2">
+                              <div className="flex items-center gap-2 text-green-800">
+                                <span className="text-xs">🎁</span>
+                                <span className="text-xs font-medium">
+                                  Promo {treatment.applied_promo.name} diterapkan
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="mt-2 text-gray-600">
+                            Total untuk {quantity} item: {formatCurrency((treatment.final_price || treatment.base_price) * quantity)}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={onClose}
+                className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConsultationModal({ booking, data, onChange, onSave, onClose }: any) {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Catatan Konsultasi - {booking.user_id.name}
+          </h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Diagnosis
+              </label>
+              <textarea
+                value={data.diagnosis}
+                onChange={(e) => onChange({ ...data, diagnosis: e.target.value })}
+                rows={3}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                placeholder="Masukkan diagnosis..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Rekomendasi Treatment
+              </label>
+              <textarea
+                value={data.recommendations}
+                onChange={(e) => onChange({ ...data, recommendations: e.target.value })}
+                rows={3}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                placeholder="Masukkan rekomendasi treatment..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Catatan Tambahan
+              </label>
+              <textarea
+                value={data.notes}
+                onChange={(e) => onChange({ ...data, notes: e.target.value })}
+                rows={3}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                placeholder="Masukkan catatan tambahan..."
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={onClose}
+                className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600"
+              >
+                Batal
+              </button>
+              <button
+                onClick={onSave}
+                className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+              >
+                Simpan Catatan
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminBookingsPage() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
@@ -74,6 +325,17 @@ export default function AdminBookingsPage() {
     message: '',
     type: 'info'
   });
+
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editLogs, setEditLogs] = useState<BookingEditLog[]>([]);
+  const [showConsultationModal, setShowConsultationModal] = useState(false);
+  const [consultationData, setConsultationData] = useState({
+    diagnosis: '',
+    recommendations: '',
+    notes: ''
+  });
+
 
   // Walk-in booking state
   const [walkinData, setWalkinData] = useState({
@@ -95,14 +357,18 @@ export default function AdminBookingsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+
 
   useEffect(() => {
     fetchBookings();
-    if (showWalkinModal) {
+    if (showWalkinModal || showEditModal) {
       fetchTreatments();
+    }
+    if (showWalkinModal) {
       fetchAvailableDates();
     }
-  }, [filter, dateFilter, showWalkinModal]);
+  }, [filter, dateFilter, showWalkinModal, showEditModal]);
 
   useEffect(() => {
     if (walkinData.selectedDate && showWalkinModal) {
@@ -131,17 +397,20 @@ export default function AdminBookingsPage() {
     setSnackbar(prev => ({ ...prev, isVisible: false }));
   };
 
-  const fetchBookings = async () => {
+  // Replace your current fetchBookings function with this:
+  const fetchBookings = async (searchTerm?: string) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
       if (filter !== 'all') params.append('status', filter);
       if (dateFilter) params.append('date', dateFilter);
+      if (searchTerm) params.append('search', searchTerm);
 
       const response = await fetch(`/api/admin/bookings?${params}`);
       const data = await response.json();
       
       if (data.success) {
+        console.log('Bookings data:', data.bookings);
         setBookings(data.bookings);
       }
     } catch (error) {
@@ -149,21 +418,106 @@ export default function AdminBookingsPage() {
       showSnackbar('Gagal memuat data booking', 'error');
     } finally {
       setLoading(false);
+      setSearchLoading(false);
     }
   };
 
-  const fetchTreatments = async () => {
-    try {
-      const response = await fetch('/api/treatments');
-      const data = await response.json();
+  // Add search function
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      setSearchLoading(true);
+      // Debounce search to avoid too many requests
+      const timeoutId = setTimeout(() => {
+        fetchBookings(query.trim());
+      }, 500);
       
-      if (data.success) {
-        setTreatments(data.treatments);
-      }
-    } catch (error) {
-      console.error('Error fetching treatments:', error);
+      // Cleanup function to clear timeout
+      return () => clearTimeout(timeoutId);
+    } else {
+      fetchBookings(); // Reset to all bookings when search is cleared
     }
   };
+
+  // Add clear search function
+  const clearSearch = () => {
+    setSearchQuery('');
+    fetchBookings();
+  };
+  
+ const fetchTreatments = async () => {
+  try {
+    console.log('🔄 Fetching treatments from:', '/api/admin/treatments?include_promos=true');
+    const response = await fetch('/api/admin/treatments?include_promos=true');
+    const data = await response.json();
+    
+    console.log('📦 Treatments API response:', data); // Debug log
+    
+    if (data.success) {
+      // Calculate final prices with promos applied
+      const treatmentsWithPromos = data.treatments.map((treatment: any) => {
+        let finalPrice = treatment.base_price;
+        let appliedPromo = null;
+
+        console.log(`🔍 Processing treatment: ${treatment.name}`);
+        console.log(`💰 Base price: ${treatment.base_price}`);
+        console.log(`🎯 Active promos:`, treatment.active_promos);
+
+        // If treatment has active promos, apply the best one
+        if (treatment.active_promos && treatment.active_promos.length > 0) {
+          // Find the promo that gives the lowest price
+          let bestPrice = treatment.base_price;
+          let bestPromo: any = null;
+
+          treatment.active_promos.forEach((promo: any, index: number) => {
+            let discountedPrice = treatment.base_price;
+            
+            if (promo.discount_type === 'percentage') {
+              discountedPrice = Math.round(treatment.base_price * (1 - promo.discount_value / 100));
+              console.log(`  📊 Promo ${index + 1} (${promo.name}): ${promo.discount_value}% off = ${discountedPrice}`);
+            } else {
+              discountedPrice = Math.max(0, treatment.base_price - promo.discount_value);
+              console.log(`  📊 Promo ${index + 1} (${promo.name}): Rp ${promo.discount_value} off = ${discountedPrice}`);
+            }
+
+            if (discountedPrice < bestPrice) {
+              bestPrice = discountedPrice;
+              bestPromo = promo;
+              console.log(`  ✅ New best price found: ${bestPrice}`);
+            }
+          });
+
+          if (bestPromo) {
+            finalPrice = bestPrice;
+            appliedPromo = {
+              name: bestPromo.name,
+              discount_type: bestPromo.discount_type,
+              discount_value: bestPromo.discount_value,
+              final_price: bestPrice
+            };
+            console.log(`🎁 Applied promo: ${bestPromo.name}, Final price: ${finalPrice}`);
+          }
+        } else {
+          console.log(`❌ No active promos for ${treatment.name}`);
+        }
+
+        return {
+          ...treatment,
+          final_price: finalPrice,
+          applied_promo: appliedPromo
+        };
+      });
+
+      console.log('✅ Processed treatments with promos:', treatmentsWithPromos);
+      setTreatments(treatmentsWithPromos);
+    } else {
+      console.error('❌ API returned success: false', data);
+    }
+  } catch (error) {
+    console.error('❌ Error fetching treatments:', error);
+    showSnackbar('Gagal memuat data treatments', 'error');
+  }
+};
 
   const fetchAvailableDates = async () => {
     try {
@@ -236,6 +590,132 @@ export default function AdminBookingsPage() {
     setSearchResults([]);
   };
 
+  const fetchEditLogs = async (bookingId: string) => {
+    try {
+      const response = await fetch(`/api/admin/bookings/${bookingId}/edit-logs`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setEditLogs(data.logs || []);
+      }
+    } catch (error) {
+      console.error('Error fetching edit logs:', error);
+    }
+  };
+
+  const addTreatmentToBooking = async (treatmentId: string, quantity: number = 1) => {
+    if (!editingBooking) return;
+
+    try {
+      // Get the treatment with promo info
+      const treatment = treatments.find(t => t._id === treatmentId);
+      if (!treatment) {
+        throw new Error('Treatment tidak ditemukan');
+      }
+
+      // Use final price if available (with promo), otherwise use base price
+      const unitPrice = treatment.final_price || treatment.base_price;
+
+      const response = await fetch(`/api/admin/bookings/${editingBooking._id}/edit-treatments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add_treatment',
+          treatment_id: treatmentId,
+          quantity,
+          unit_price: unitPrice // Send the actual price to use
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        showSnackbar('Treatment berhasil ditambahkan', 'success');
+        fetchBookings();
+        setShowEditModal(false);
+        setEditingBooking(null);
+      } else {
+        throw new Error(data.error || 'Gagal menambah treatment');
+      }
+    } catch (error) {
+      console.error('Error adding treatment:', error);
+      showSnackbar('Gagal menambah treatment', 'error');
+    }
+  };
+
+  const removeTreatmentFromBooking = async (treatmentId: string) => {
+    if (!editingBooking) return;
+
+    try {
+      const response = await fetch(`/api/admin/bookings/${editingBooking._id}/edit-treatments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'remove_treatment',
+          treatment_id: treatmentId
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        showSnackbar('Treatment berhasil dihapus', 'success');
+        fetchBookings();
+        setShowEditModal(false);
+        setEditingBooking(null);
+      } else {
+        throw new Error(data.error || 'Gagal menghapus treatment');
+      }
+    } catch (error) {
+      console.error('Error removing treatment:', error);
+      showSnackbar('Gagal menghapus treatment', 'error');
+    }
+  };
+
+  const addConsultationNote = async () => {
+  if (!editingBooking) return;
+
+  try {
+    const response = await fetch(`/api/admin/bookings/${editingBooking._id}/consultation-notes`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(consultationData)
+    });
+
+    // Check if response is HTML (error page)
+    const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response received:', text.substring(0, 200));
+        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      if (data.success) {
+        showSnackbar('Catatan konsultasi berhasil ditambahkan', 'success');
+        fetchBookings();
+        setShowConsultationModal(false);
+        setEditingBooking(null);
+        setConsultationData({ diagnosis: '', recommendations: '', notes: '' });
+      } else {
+        throw new Error(data.error || 'Gagal menambah catatan konsultasi');
+      }
+    } catch (error) {
+      console.error('Error adding consultation note:', error);
+      showSnackbar(
+        `Gagal menambah catatan konsultasi: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      );
+    }
+  };
+
   const updateBookingStatus = async (bookingId: string, newStatus: string) => {
     try {
       const response = await fetch(`/api/admin/bookings/${bookingId}`, {
@@ -281,6 +761,25 @@ export default function AdminBookingsPage() {
 
     setWalkinLoading(true);
     try {
+      // Get selected treatment with promo info
+      let treatmentsData: Array<{
+        treatment_id: string;
+        quantity: number;
+        unit_price: number;
+      }> = [];
+      
+      if (walkinData.treatmentType === 'treatment' && walkinData.selectedTreatment) {
+        const selectedTreatment = treatments.find(t => t._id === walkinData.selectedTreatment);
+        if (selectedTreatment) {
+          const unitPrice = selectedTreatment.final_price || selectedTreatment.base_price;
+          treatmentsData = [{
+            treatment_id: walkinData.selectedTreatment,
+            quantity: 1,
+            unit_price: unitPrice // Send the actual price
+          }];
+        }
+      }
+
       const bookingData = {
         customer_name: walkinData.customerName,
         customer_email: walkinData.customerEmail,
@@ -288,12 +787,7 @@ export default function AdminBookingsPage() {
         slot_id: walkinData.selectedSlot,
         type: walkinData.treatmentType,
         notes: walkinData.notes,
-        treatments: walkinData.treatmentType === 'consultation' ? [] : [
-          {
-            treatment_id: walkinData.selectedTreatment,
-            quantity: 1
-          }
-        ],
+        treatments: treatmentsData, // Fixed variable name
         user_id: walkinData.customerType === 'existing' ? walkinData.selectedUserId : undefined
       };
 
@@ -381,10 +875,43 @@ export default function AdminBookingsPage() {
         </button>
       </div>
 
-      {/* Filters */}
+      {/* Filters and Search */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Search Input */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Cari Booking
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 pl-10 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                placeholder="Cari berdasarkan nama, email, telepon, atau ID booking..."
+              />
+              <div className="absolute left-3 top-2.5 text-gray-400">
+                🔍
+              </div>
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            {searchQuery && (
+              <p className="text-sm text-gray-500 mt-1">
+                Menampilkan hasil pencarian untuk: "{searchQuery}"
+              </p>
+            )}
+          </div>
+          
+          {/* Status Filter */}
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Status Booking
             </label>
@@ -401,7 +928,8 @@ export default function AdminBookingsPage() {
             </select>
           </div>
           
-          <div className="flex-1">
+          {/* Date Filter */}
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tanggal
             </label>
@@ -412,17 +940,31 @@ export default function AdminBookingsPage() {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
             />
           </div>
+        </div>
 
-          <div className="flex items-end">
+        {/* Action Buttons */}
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm text-gray-600">
+            {searchLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                Mencari...
+              </div>
+            ) : (
+              `Menampilkan ${bookings.length} booking`
+            )}
+          </div>
+          <div className="flex gap-2">
             <button
               onClick={() => {
                 setFilter('all');
                 setDateFilter('');
+                setSearchQuery('');
                 showSnackbar('Filter telah direset', 'info');
               }}
-              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm"
             >
-              Reset
+              Reset Filter
             </button>
           </div>
         </div>
@@ -437,9 +979,26 @@ export default function AdminBookingsPage() {
           </div>
         ) : bookings.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">📅</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Tidak ada booking</h3>
-            <p className="text-gray-600">Tidak ada booking yang sesuai dengan filter yang dipilih.</p>
+            <div className="text-6xl mb-4">
+              {searchQuery ? '🔍' : '📅'}
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              {searchQuery ? 'Tidak ada booking ditemukan' : 'Tidak ada booking'}
+            </h3>
+            <p className="text-gray-600 mb-4">
+              {searchQuery 
+                ? `Tidak ada booking yang sesuai dengan pencarian "${searchQuery}"`
+                : 'Tidak ada booking yang sesuai dengan filter yang dipilih.'
+              }
+            </p>
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Tampilkan Semua Booking
+              </button>
+            )}
           </div>
         ) : (
           <div className="overflow-hidden">
@@ -449,12 +1008,52 @@ export default function AdminBookingsPage() {
                 booking={booking}
                 onStatusUpdate={updateBookingStatus}
                 currentUserRole={session?.user?.role}
+                onEditBooking={(booking: Booking, action: string) => {
+                  setEditingBooking(booking);
+                  if (action === 'edit') {
+                    setShowEditModal(true);
+                    fetchEditLogs(booking._id);
+                  } else if (action === 'consultation') {
+                    setShowConsultationModal(true);
+                  }
+                }}
+                editLogs={editLogs}
               />
             ))}
           </div>
         )}
       </div>
 
+      {/* MODALS - MOVED HERE from BookingCard */}
+      
+      {/* Edit Booking Modal */}
+      {showEditModal && editingBooking && (
+        <EditBookingModal
+          booking={editingBooking}
+          treatments={treatments}
+          onAddTreatment={addTreatmentToBooking}
+          onRemoveTreatment={removeTreatmentFromBooking}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingBooking(null);
+          }}
+        />
+      )}
+
+      {/* Consultation Notes Modal */}
+      {showConsultationModal && editingBooking && (
+        <ConsultationModal
+          booking={editingBooking}
+          data={consultationData}
+          onChange={setConsultationData}
+          onSave={addConsultationNote}
+          onClose={() => {
+            setShowConsultationModal(false);
+            setEditingBooking(null);
+            setConsultationData({ diagnosis: '', recommendations: '', notes: '' });
+          }}
+        />
+      )}
       {/* Walk-in Booking Modal */}
       {showWalkinModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -629,10 +1228,72 @@ export default function AdminBookingsPage() {
                       <option value="">Pilih treatment...</option>
                       {treatments.map((treatment) => (
                         <option key={treatment._id} value={treatment._id}>
-                          {treatment.name} - {formatCurrency(treatment.base_price)}
+                          {treatment.name} - {formatCurrency(treatment.final_price || treatment.base_price)}
+                          {treatment.applied_promo && (
+                            <span className="text-green-600 ml-1">
+                              (Promo: {treatment.applied_promo.discount_type === 'percentage' 
+                                ? `${treatment.applied_promo.discount_value}%` 
+                                : `Rp ${treatment.applied_promo.discount_value.toLocaleString()}`
+                              })
+                            </span>
+                          )}
+                          {treatment.applied_promo && treatment.final_price !== treatment.base_price && (
+                            <span className="text-gray-500 line-through ml-1">
+                              {formatCurrency(treatment.base_price)}
+                            </span>
+                          )}
                         </option>
                       ))}
                     </select>
+                    
+                    {/* Show promo details when treatment is selected */}
+                    {walkinData.selectedTreatment && (
+                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                        {(() => {
+                          const selectedTreatment = treatments.find(t => t._id === walkinData.selectedTreatment);
+                          if (!selectedTreatment) return null;
+                          
+                          return (
+                            <div className="text-sm">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="font-medium">{selectedTreatment.name}</span>
+                                <div className="text-right">
+                                  {selectedTreatment.applied_promo ? (
+                                    <>
+                                      <div className="text-green-600 font-semibold">
+                                        {formatCurrency(selectedTreatment.final_price!)}
+                                      </div>
+                                      <div className="text-gray-500 text-xs line-through">
+                                        {formatCurrency(selectedTreatment.base_price)}
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className="font-semibold">
+                                      {formatCurrency(selectedTreatment.base_price)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {selectedTreatment.applied_promo && (
+                                <div className="bg-green-100 border border-green-200 rounded p-2">
+                                  <div className="flex items-center gap-2 text-green-800">
+                                    <span className="text-xs">🎁</span>
+                                    <span className="text-xs font-medium">
+                                      Promo {selectedTreatment.applied_promo.name}: 
+                                      {selectedTreatment.applied_promo.discount_type === 'percentage' 
+                                        ? ` ${selectedTreatment.applied_promo.discount_value}% off`
+                                        : ` Rp ${selectedTreatment.applied_promo.discount_value.toLocaleString()} off`
+                                      }
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -741,11 +1402,56 @@ export default function AdminBookingsPage() {
   );
 }
 
-// BookingCard component remains the same as before...
-function BookingCard({ booking, onStatusUpdate, currentUserRole }: any) {
-  const [showDetails, setShowDetails] = useState(false);
+// Helper functions (same as before)
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'confirmed': return 'bg-green-100 text-green-800';
+    case 'pending': return 'bg-yellow-100 text-yellow-800';
+    case 'completed': return 'bg-blue-100 text-blue-800';
+    case 'canceled': return 'bg-red-100 text-red-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+}
 
-  const canUpdateStatus = ['admin', 'superadmin', 'kasir'].includes(currentUserRole);
+function getStatusText(status: string) {
+  switch (status) {
+    case 'confirmed': return 'Dikonfirmasi';
+    case 'pending': return 'Menunggu';
+    case 'completed': return 'Selesai';
+    case 'canceled': return 'Dibatalkan';
+    default: return status;
+  }
+}
+
+function getEditLogMessage(log: BookingEditLog): string {
+  switch (log.action) {
+    case 'added_treatment':
+      return `Menambah treatment: ${log.details.treatment_name} (${log.details.quantity}x)`;
+    case 'removed_treatment':
+      return `Menghapus treatment: ${log.details.treatment_name}`;
+    case 'updated_treatment':
+      return `Mengupdate treatment: ${log.details.treatment_name} (${log.details.quantity}x)`;
+    case 'added_consultation_note':
+      return `Menambah catatan konsultasi`;
+    default:
+      return `Mengupdate booking`;
+  }
+}
+
+// BookingCard component remains the same as before...
+function BookingCard({ 
+  booking, 
+  onStatusUpdate, 
+  currentUserRole,
+  onEditBooking,
+  editLogs
+}: any) {
+  const [showDetails, setShowDetails] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+
+  const canUpdateStatus = ['admin', 'superadmin', 'kasir', 'doctor'].includes(currentUserRole);
+  const canEditBooking = ['admin', 'superadmin', 'doctor'].includes(currentUserRole);
+  const canAddConsultation = ['admin', 'superadmin', 'doctor'].includes(currentUserRole);
 
   return (
     <div className="border-b border-gray-200 last:border-b-0">
@@ -834,6 +1540,45 @@ function BookingCard({ booking, onStatusUpdate, currentUserRole }: any) {
                   </select>
                 </div>
               )}
+
+              {/* Edit Actions Dropdown */}
+              {(canEditBooking || canAddConsultation) && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowActions(!showActions)}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Aksi ▼
+                  </button>
+                  
+                  {showActions && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                      {canEditBooking && (
+                        <button
+                          onClick={() => {
+                            onEditBooking(booking, 'edit');
+                            setShowActions(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Edit Treatments
+                        </button>
+                      )}
+                      {canAddConsultation && booking.type === 'consultation' && (
+                        <button
+                          onClick={() => {
+                            onEditBooking(booking, 'consultation');
+                            setShowActions(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Tambah Catatan Konsultasi
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -864,55 +1609,48 @@ function BookingCard({ booking, onStatusUpdate, currentUserRole }: any) {
                 )}
               </div>
 
-              {/* Notes & Additional Info */}
+              {/* Consultation Notes & Edit Logs */}
               <div>
                 <h4 className="font-semibold text-gray-900 mb-3">Informasi Tambahan</h4>
-                {booking.notes && (
-                  <div className="mb-3">
-                    <p className="text-sm text-gray-600 mb-1">Catatan:</p>
-                    <p className="text-sm bg-white p-2 rounded">{booking.notes}</p>
-                  </div>
-                )}
                 
-                {booking.payment && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Pembayaran:</p>
-                    <p className="text-sm">
-                      Status: <span className={booking.payment.status === 'paid' ? 'text-green-600' : 'text-yellow-600'}>
-                        {booking.payment.status === 'paid' ? 'Lunas' : 'Belum Bayar'}
-                      </span>
-                    </p>
-                    {booking.payment.payment_method && (
-                      <p className="text-sm">Metode: {booking.payment.payment_method}</p>
-                    )}
+                {/* Consultation Notes */}
+                {booking.consultation_notes && booking.consultation_notes.length > 0 && (
+                  <div className="mb-4">
+                    <h5 className="font-medium text-gray-700 mb-2">Catatan Konsultasi:</h5>
+                    {booking.consultation_notes.map((note: ConsultationNote, index: number) => (
+                      <div key={index} className="mb-3 p-3 bg-white rounded border">
+                        {note.diagnosis && <p><strong>Diagnosis:</strong> {note.diagnosis}</p>}
+                        {note.recommendations && <p><strong>Rekomendasi:</strong> {note.recommendations}</p>}
+                        {note.notes && <p><strong>Catatan:</strong> {note.notes}</p>}
+                        <p className="text-xs text-gray-500 mt-1">
+                          Ditambahkan oleh: {note.added_by.name} • {formatDate(note.added_at)}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 )}
-              </div>
+
+                {/* Edit Logs */}
+                {editLogs && editLogs.length > 0 && (
+                  <div>
+                    <h5 className="font-medium text-gray-700 mb-2">Riwayat Edit:</h5>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {editLogs.map((log: BookingEditLog) => (
+                        <div key={log._id} className="text-xs text-gray-600 p-2 bg-white rounded border">
+                          <p>{getEditLogMessage(log)}</p>
+                          <p className="text-gray-400">
+                            oleh {log.edited_by.name} • {formatDate(log.created_at)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>  
             </div>
           </div>
         )}
       </div>
     </div>
   );
-}
-
-// Helper functions (same as before)
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'confirmed': return 'bg-green-100 text-green-800';
-    case 'pending': return 'bg-yellow-100 text-yellow-800';
-    case 'completed': return 'bg-blue-100 text-blue-800';
-    case 'canceled': return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-}
-
-function getStatusText(status: string) {
-  switch (status) {
-    case 'confirmed': return 'Dikonfirmasi';
-    case 'pending': return 'Menunggu';
-    case 'completed': return 'Selesai';
-    case 'canceled': return 'Dibatalkan';
-    default: return status;
-  }
 }

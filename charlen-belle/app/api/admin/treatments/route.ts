@@ -2,66 +2,90 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../lib/mongodb';
 import Treatment from '../../../models/Treatment';
-import TreatmentCategory from '../../../models/TreatmentCategory';
+import TreatmentPromo from '../../../models/TreatmentPromo';
+import Promo from '../../../models/Promo';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth-config';
-import mongoose from 'mongoose';
 
-// GET - Fetch all treatments
+// In your app/api/admin/treatments/route.ts, update the GET method:
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.role || !['admin', 'superadmin'].includes(session.user.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const { searchParams } = new URL(req.url);
+    const includePromos = searchParams.get('include_promos') === 'true';
 
+    console.log('🔄 API: Fetching treatments with promos:', includePromos);
     await connectDB();
 
-    // Ensure all models are registered
-    if (!mongoose.models.TreatmentCategory) {
-      await import('../../../models/TreatmentCategory');
+    const treatments = await Treatment.find({ is_active: true })
+      .select('name description base_price duration_minutes requires_confirmation')
+      .sort({ name: 1 });
+
+    console.log(`📦 API: Found ${treatments.length} treatments`);
+
+    let treatmentsWithPromos = treatments;
+
+    if (includePromos) {
+      // Get active promos for each treatment
+      treatmentsWithPromos = await Promise.all(
+        treatments.map(async (treatment) => {
+          console.log(`🔍 API: Checking promos for treatment: ${treatment.name}`);
+          
+          const treatmentPromos = await TreatmentPromo.find({ 
+            treatment_id: treatment._id 
+          }).populate('promo_id');
+
+          console.log(`  📊 API: Found ${treatmentPromos.length} promo mappings`);
+
+          const activePromos = treatmentPromos
+            .map(tp => {
+              const promo = tp.promo_id;
+              console.log(`  🎯 API: Checking promo: ${promo?.name}, Active: ${promo?.is_active}`);
+              return promo;
+            })
+            .filter(promo => {
+              if (!promo || !promo.is_active) {
+                console.log(`  ❌ API: Promo ${promo?.name} is not active`);
+                return false;
+              }
+              
+              const now = new Date();
+              if (promo.start_date && new Date(promo.start_date) > now) {
+                console.log(`  ❌ API: Promo ${promo.name} hasn't started yet`);
+                return false;
+              }
+              if (promo.end_date && new Date(promo.end_date) < now) {
+                console.log(`  ❌ API: Promo ${promo.name} has expired`);
+                return false;
+              }
+              
+              console.log(`  ✅ API: Promo ${promo.name} is active and valid`);
+              return true;
+            });
+
+          console.log(`  ✅ API: ${activePromos.length} active promos for ${treatment.name}`);
+
+          return {
+            ...treatment.toObject(),
+            active_promos: activePromos
+          };
+        })
+      );
     }
-    if (!mongoose.models.Treatment) {
-      await import('../../../models/Treatment');
-    }
-
-    const { searchParams } = new URL(req.url);
-    const category = searchParams.get('category');
-    const isActive = searchParams.get('is_active');
-
-    let query: any = {};
-
-    // Filter by category if provided
-    if (category && category !== 'all') {
-      query.category_id = category;
-    }
-
-    // Filter by active status if provided
-    if (isActive !== null) {
-      query.is_active = isActive === 'true';
-    }
-
-    const treatments = await Treatment.find(query)
-      .populate('category_id', 'name')
-      .sort({ created_at: -1 });
 
     return NextResponse.json({
       success: true,
-      treatments
+      treatments: treatmentsWithPromos
     });
 
   } catch (error) {
-    console.error('Get treatments error:', error);
+    console.error('❌ API: Error fetching treatments:', error);
     return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error',
-      stack: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.stack : undefined : undefined
+      success: false,
+      error: 'Terjadi kesalahan server' 
     }, { status: 500 });
   }
 }
 
-// POST - Create new treatment
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -72,24 +96,14 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    // Ensure all models are registered
-    if (!mongoose.models.TreatmentCategory) {
-      await import('../../../models/TreatmentCategory');
-    }
-    if (!mongoose.models.Treatment) {
-      await import('../../../models/Treatment');
-    }
-
     const treatmentData = await req.json();
     
-    // Add created_at and updated_at
-    const now = new Date();
-    treatmentData.created_at = now;
-    treatmentData.updated_at = now;
+    const treatment = await Treatment.create({
+      ...treatmentData,
+      category_id: treatmentData.category_id || null
+    });
 
-    const treatment = await Treatment.create(treatmentData);
-    
-    // Populate category if it exists
+    // Populate the category for the response
     await treatment.populate('category_id', 'name');
 
     return NextResponse.json({
@@ -97,11 +111,11 @@ export async function POST(req: NextRequest) {
       treatment
     }, { status: 201 });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create treatment error:', error);
     return NextResponse.json({ 
       error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error.message
     }, { status: 500 });
   }
 }

@@ -3,13 +3,19 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-
 import { Snackbar, SnackbarType } from '../../components/ui/snackbar';
 import { formatCurrency } from '../../lib/utils';
 
 interface TreatmentImage {
   url: string;
   public_id: string;
+}
+
+interface TreatmentCategory {
+  _id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
 }
 
 interface Treatment {
@@ -34,7 +40,9 @@ interface SnackbarState {
 export default function AdminTreatmentsPage() {
   const { data: session } = useSession();
   const [treatments, setTreatments] = useState<Treatment[]>([]);
+  const [categories, setCategories] = useState<TreatmentCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTreatment, setEditingTreatment] = useState<Treatment | null>(null);
@@ -46,6 +54,7 @@ export default function AdminTreatmentsPage() {
 
   useEffect(() => {
     fetchTreatments();
+    fetchCategories();
   }, []);
 
   const showSnackbar = (message: string, type: SnackbarType = 'info') => {
@@ -88,6 +97,30 @@ export default function AdminTreatmentsPage() {
       showSnackbar(errorMessage, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const response = await fetch('/api/admin/treatment-categories');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setCategories(data.categories || []);
+      } else {
+        throw new Error(data.error || 'Failed to fetch categories');
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      showSnackbar('Gagal memuat kategori treatment', 'error');
+    } finally {
+      setCategoriesLoading(false);
     }
   };
 
@@ -178,6 +211,8 @@ export default function AdminTreatmentsPage() {
         {(showAddModal || editingTreatment) && (
           <TreatmentModal
             treatment={editingTreatment}
+            categories={categories}
+            categoriesLoading={categoriesLoading}
             onClose={() => {
               setShowAddModal(false);
               setEditingTreatment(null);
@@ -251,7 +286,9 @@ function TreatmentCard({ treatment, onEdit, onToggleStatus }: any) {
         {treatment.category_id && (
           <div className="flex justify-between">
             <span>Kategori:</span>
-            <span className="font-medium">{treatment.category_id.name}</span>
+            <span className="font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+              {treatment.category_id.name}
+            </span>
           </div>
         )}
         <div className="flex justify-between">
@@ -284,12 +321,13 @@ function TreatmentCard({ treatment, onEdit, onToggleStatus }: any) {
   );
 }
 
-function TreatmentModal({ treatment, onClose, onSuccess, showSnackbar }: any) {
+function TreatmentModal({ treatment, categories, categoriesLoading, onClose, onSuccess, showSnackbar }: any) {
   const [formData, setFormData] = useState({
     name: treatment?.name || '',
     description: treatment?.description || '',
     duration_minutes: treatment?.duration_minutes || 60,
     base_price: treatment?.base_price || 0,
+    category_id: treatment?.category_id?._id || '',
     requires_confirmation: treatment?.requires_confirmation || false,
     is_active: treatment?.is_active ?? true,
     images: treatment?.images || []
@@ -362,10 +400,16 @@ function TreatmentModal({ treatment, onClose, onSuccess, showSnackbar }: any) {
       const url = treatment ? `/api/admin/treatments/${treatment._id}` : '/api/admin/treatments';
       const method = treatment ? 'PUT' : 'POST';
 
+      // Prepare data for API - convert empty string to null for category_id
+      const submitData = {
+        ...formData,
+        category_id: formData.category_id || null
+      };
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(submitData)
       });
 
       const data = await response.json();
@@ -405,11 +449,11 @@ function TreatmentModal({ treatment, onClose, onSuccess, showSnackbar }: any) {
               {/* Image Preview */}
               {formData.images.length > 0 && (
                 <div className="grid grid-cols-3 gap-3 mb-3">
-                  {formData.images.map((image: TreatmentImage, index: number) => ( // Added type annotation here
+                  {formData.images.map((image: TreatmentImage, index: number) => (
                     <div key={index} className="relative group">
                       <img
                         src={image.url}
-                        alt={`Treatment ${index + 1}`} // Fixed template string
+                        alt={`Treatment ${index + 1}`}
                         className="w-full h-24 object-cover rounded-lg"
                       />
                       <button
@@ -464,10 +508,10 @@ function TreatmentModal({ treatment, onClose, onSuccess, showSnackbar }: any) {
               </div>
             </div>
 
-            {/* Rest of the form remains the same */}
+            {/* Basic Information */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nama Treatment
+                Nama Treatment *
               </label>
               <input
                 type="text"
@@ -493,7 +537,7 @@ function TreatmentModal({ treatment, onClose, onSuccess, showSnackbar }: any) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Durasi (menit)
+                  Durasi (menit) *
                 </label>
                 <input
                   type="number"
@@ -507,7 +551,7 @@ function TreatmentModal({ treatment, onClose, onSuccess, showSnackbar }: any) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Harga Dasar
+                  Harga Dasar *
                 </label>
                 <input
                   type="number"
@@ -518,6 +562,38 @@ function TreatmentModal({ treatment, onClose, onSuccess, showSnackbar }: any) {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
                 />
               </div>
+            </div>
+
+            {/* Category Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kategori
+              </label>
+              {categoriesLoading ? (
+                <div className="flex items-center text-gray-500">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2"></div>
+                  Memuat kategori...
+                </div>
+              ) : (
+                <select
+                  value={formData.category_id}
+                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                >
+                  <option value="">Pilih Kategori (Opsional)</option>
+                  {categories
+                    .filter((category: TreatmentCategory) => category.is_active)
+                    .map((category: TreatmentCategory) => (
+                      <option key={category._id} value={category._id}>
+                        {category.name}
+                      </option>
+                    ))
+                  }
+                </select>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Pilih kategori untuk mengelompokkan treatment ini
+              </p>
             </div>
 
             <div className="flex items-center gap-4">
@@ -553,8 +629,11 @@ function TreatmentModal({ treatment, onClose, onSuccess, showSnackbar }: any) {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-400"
+                className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-400 flex items-center justify-center gap-2"
               >
+                {loading && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                )}
                 {loading ? 'Menyimpan...' : (treatment ? 'Update' : 'Simpan')}
               </button>
             </div>

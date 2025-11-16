@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Input } from '../components/ui/input';
+import { Input } from '../../components/ui/input';
 import toast from 'react-hot-toast';
 
 export default function ForgotPasswordPage() {
