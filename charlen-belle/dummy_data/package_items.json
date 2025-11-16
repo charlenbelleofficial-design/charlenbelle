@@ -1,0 +1,5 @@
+[
+  {"_id":"pkg_item_001","package_id":"pkg_ultimate_01","treatment_id":"treat_021","quantity":1},
+  {"_id":"pkg_item_002","package_id":"pkg_ultimate_01","treatment_id":"treat_028","quantity":1},
+  {"_id":"pkg_item_003","package_id":"pkg_ultimate_01","treatment_id":"treat_006","quantity":1}
+]

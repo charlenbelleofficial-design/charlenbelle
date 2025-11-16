@@ -1,0 +1,28 @@
+[
+  {
+    "_id":"pay_001",
+    "booking_id":"booking_001",
+    "user_id":"user_customer_1",
+    "amount":1000000,
+    "payment_method":"manual_transfer",
+    "midtrans_transaction_id":null,
+    "midtrans_redirect_url":null,
+    "status":"paid",
+    "paid_at":"2025-03-01T10:00:00.000Z",
+    "created_at":"2025-03-01T09:50:00.000Z",
+    "updated_at":"2025-03-01T10:00:00.000Z"
+  },
+  {
+    "_id":"pay_002",
+    "booking_id":"booking_002",
+    "user_id":"user_customer_1",
+    "amount":4500000,
+    "payment_method":"midtrans_va",
+    "midtrans_transaction_id":"midtrans_abc_002",
+    "midtrans_redirect_url":"https://midtrans.example/redirect/002",
+    "status":"pending",
+    "paid_at":null,
+    "created_at":"2025-03-02T10:05:00.000Z",
+    "updated_at":"2025-03-02T10:05:00.000Z"
+  }
+]

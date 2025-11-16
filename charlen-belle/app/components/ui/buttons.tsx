@@ -12,18 +12,27 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         className={cn(
-          "inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
+          "inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c3aa4c] disabled:pointer-events-none disabled:opacity-50",
           {
-            'bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700': variant === 'default',
-            'border-2 border-purple-600 text-purple-600 hover:bg-purple-50': variant === 'outline',
+            // Updated default variant to match your login page design
+            'bg-[#c3aa4c] text-white hover:bg-[#b0963d] active:bg-[#9c8536] shadow-sm': variant === 'default',
+            
+            // Updated outline variant to match the color scheme
+            'border border-[#c3aa4c] text-[#c3aa4c] hover:bg-[#fdf8e8]': variant === 'outline',
+            
+            // Neutral secondary variant
             'bg-gray-200 text-gray-900 hover:bg-gray-300': variant === 'secondary',
-            'hover:bg-gray-100': variant === 'ghost',
+            
+            // Minimal ghost variant
+            'text-gray-700 hover:bg-gray-100': variant === 'ghost',
+            
+            // Error state
             'bg-red-500 text-white hover:bg-red-600': variant === 'destructive',
           },
           {
-            'h-10 px-4 py-2': size === 'default',
-            'h-9 px-3 text-sm': size === 'sm',
-            'h-12 px-8 text-lg': size === 'lg',
+            'h-12 px-6 text-base': size === 'default',
+            'h-9 px-4 text-sm': size === 'sm',
+            'h-14 px-8 text-lg': size === 'lg',
           },
           className
         )}

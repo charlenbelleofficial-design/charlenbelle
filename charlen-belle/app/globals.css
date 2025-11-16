@@ -244,3 +244,39 @@ body {
     padding-top: 2.5rem;
   }
 }
+
+.navbar {
+  @apply bg-white shadow-sm border-b border-gray-200;
+}
+
+.navbar-inner {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between;
+}
+
+.navbar-logo {
+  @apply flex items-center gap-3;
+}
+
+.logo-circle {
+  @apply w-10 h-10 bg-[#c3aa4c] rounded-full flex items-center justify-center text-white font-bold text-lg;
+}
+
+.logo-text {
+  @apply text-xl font-bold text-[#2d2617];
+}
+
+.navbar-menu {
+  @apply hidden md:flex items-center gap-8;
+}
+
+.navbar-menu a {
+  @apply text-[#2d2617] hover:text-[#c3aa4c] transition-colors font-medium;
+}
+
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.btn-primary {
+  @apply bg-[#c3aa4c] text-white hover:bg-[#b0963d];
+}

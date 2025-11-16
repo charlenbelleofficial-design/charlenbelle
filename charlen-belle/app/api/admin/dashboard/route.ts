@@ -4,7 +4,7 @@ import connectDB from '../../../lib/mongodb';
 import Booking from '../../../models/Booking';
 import Payment from '../../../models/Payment';
 import User from '../../../models/User';
-import Promo from './../../../../models/Promo';
+import Promo from '../../../models/Promo';
 
 export async function GET(req: NextRequest) {
   try {

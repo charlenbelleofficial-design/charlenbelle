@@ -24,7 +24,7 @@ export const HeroSection: React.FC = () => {
             </p>
           </div>
 
-          <Link href="/booking" className="btn btn-primary hero-btn">
+          <Link href="/user/treatments" className="btn btn-primary hero-btn">
             Book Now
           </Link>
         </div>

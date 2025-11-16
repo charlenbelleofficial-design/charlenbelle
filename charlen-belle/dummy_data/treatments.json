@@ -1,0 +1,594 @@
+[
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4e1"
+    },
+    "name": "Noselift 4 Benang",
+    "description": "Thread lift hidung menggunakan 4 benang untuk meningkatkan struktur hidung secara natural.",
+    "duration_minutes": 45,
+    "base_price": 1000000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d1"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4e2"
+    },
+    "name": "Noselift 8 Benang (Free 2 Benang)",
+    "description": "Thread lift hidung menggunakan 8 benang dengan bonus 2 benang tambahan.",
+    "duration_minutes": 60,
+    "base_price": 2000000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d1"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4e3"
+    },
+    "name": "3 Benang Cuping",
+    "description": "Thread lift area cuping hidung menggunakan 3 benang.",
+    "duration_minutes": 30,
+    "base_price": 1000000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d1"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4e4"
+    },
+    "name": "Barbie Nose (4 batang + 3 cuping)",
+    "description": "Kombinasi thread lift batang hidung dan cuping untuk tampilan hidung lebih proporsional.",
+    "duration_minutes": 60,
+    "base_price": 2000000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d1"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4e5"
+    },
+    "name": "Benang Wajah (per benang)",
+    "description": "Treatment thread lift wajah per benang untuk mengencangkan kulit.",
+    "duration_minutes": 20,
+    "base_price": 500000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d1"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4e6"
+    },
+    "name": "4 Benang Wajah",
+    "description": "Paket thread lift wajah menggunakan 4 benang.",
+    "duration_minutes": 45,
+    "base_price": 1899000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d1"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4e7"
+    },
+    "name": "6 Benang Wajah",
+    "description": "Paket thread lift wajah menggunakan 6 benang.",
+    "duration_minutes": 60,
+    "base_price": 2200000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d1"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4e8"
+    },
+    "name": "Facial Whitening/Acne",
+    "description": "Facial dasar untuk mencerahkan kulit atau mengatasi jerawat.",
+    "duration_minutes": 45,
+    "base_price": 135000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d2"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-05T08:00:00.000Z",
+    "updated_at": "2025-01-05T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4e9"
+    },
+    "name": "Facial Couple",
+    "description": "Paket facial untuk dua orang secara bersamaan.",
+    "duration_minutes": 50,
+    "base_price": 250000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d2"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-05T08:00:00.000Z",
+    "updated_at": "2025-01-05T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4ea"
+    },
+    "name": "Facial IPL",
+    "description": "Perawatan facial dengan teknologi IPL untuk mencerahkan dan meratakan warna kulit.",
+    "duration_minutes": 45,
+    "base_price": 249000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d2"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-05T08:00:00.000Z",
+    "updated_at": "2025-01-05T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4eb"
+    },
+    "name": "Facial Black Doll",
+    "description": "Laser facial menggunakan carbon mask untuk hasil kulit lebih halus.",
+    "duration_minutes": 45,
+    "base_price": 349000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d2"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-05T08:00:00.000Z",
+    "updated_at": "2025-01-05T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4ec"
+    },
+    "name": "PRP (Free Facial)",
+    "description": "Perawatan PRP untuk regenerasi kulit, termasuk free facial.",
+    "duration_minutes": 60,
+    "base_price": 549000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d2"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-05T08:00:00.000Z",
+    "updated_at": "2025-01-05T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4ed"
+    },
+    "name": "MTS Glow Peel (Free Facial)",
+    "description": "Perawatan MTS dengan peeling untuk kulit glowing, termasuk free facial.",
+    "duration_minutes": 60,
+    "base_price": 549000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d2"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-05T08:00:00.000Z",
+    "updated_at": "2025-01-05T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4ee"
+    },
+    "name": "Pico Laser",
+    "description": "Laser pico untuk flek, bekas jerawat, dan mencerahkan kulit.",
+    "duration_minutes": 40,
+    "base_price": 549000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d2"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-05T08:00:00.000Z",
+    "updated_at": "2025-01-05T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4ef"
+    },
+    "name": "IPL Hair Removal",
+    "description": "Penghilangan rambut menggunakan teknologi IPL.",
+    "duration_minutes": 30,
+    "base_price": 149000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d2"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-05T08:00:00.000Z",
+    "updated_at": "2025-01-05T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4f0"
+    },
+    "name": "Oxy Gen Neo 5 in 1",
+    "description": "Facial menyeluruh 5-in-1 untuk kulit glowing optimal.",
+    "duration_minutes": 60,
+    "base_price": 449000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d2"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-05T08:00:00.000Z",
+    "updated_at": "2025-01-05T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4f1"
+    },
+    "name": "Skin Booster",
+    "description": "Booster injeksi untuk hidrasi dan glowing kulit.",
+    "duration_minutes": 45,
+    "base_price": 1500000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d3"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-10T08:00:00.000Z",
+    "updated_at": "2025-01-10T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4f2"
+    },
+    "name": "DNA Salmon",
+    "description": "Perawatan injeksi DNA salmon untuk regenerasi kulit.",
+    "duration_minutes": 45,
+    "base_price": 1500000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d3"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-10T08:00:00.000Z",
+    "updated_at": "2025-01-10T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4f3"
+    },
+    "name": "Eye Booster",
+    "description": "Perawatan khusus area bawah mata untuk mencerahkan dan mengencangkan.",
+    "duration_minutes": 30,
+    "base_price": 1500000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d3"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-10T08:00:00.000Z",
+    "updated_at": "2025-01-10T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4f4"
+    },
+    "name": "Infus Vit C + Collagen",
+    "description": "Infus vitamin C dan kolagen untuk meningkatkan daya tahan tubuh dan kesehatan kulit.",
+    "duration_minutes": 30,
+    "base_price": 150000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d3"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-10T08:00:00.000Z",
+    "updated_at": "2025-01-10T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4f5"
+    },
+    "name": "Botox Full Face",
+    "description": "Botox untuk seluruh area wajah untuk hasil natural.",
+    "duration_minutes": 30,
+    "base_price": 2500000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d4"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-12T08:00:00.000Z",
+    "updated_at": "2025-01-12T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4f6"
+    },
+    "name": "Botox Rahang",
+    "description": "Botox area rahang untuk wajah lebih tirus.",
+    "duration_minutes": 30,
+    "base_price": 2000000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d4"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-12T08:00:00.000Z",
+    "updated_at": "2025-01-12T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4f7"
+    },
+    "name": "Instant Whitening Facial",
+    "description": "Facial cepat untuk hasil kulit lebih cerah.",
+    "duration_minutes": 30,
+    "base_price": 249000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d5"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-15T08:00:00.000Z",
+    "updated_at": "2025-01-15T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4f8"
+    },
+    "name": "Korean Peel (Free Facial)",
+    "description": "Peeling ala Korea termasuk free facial.",
+    "duration_minutes": 40,
+    "base_price": 249000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d5"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-15T08:00:00.000Z",
+    "updated_at": "2025-01-15T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4f9"
+    },
+    "name": "Facial Detox",
+    "description": "Facial untuk membersihkan pori dan mengatasi kulit kusam.",
+    "duration_minutes": 30,
+    "base_price": 249000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d5"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-15T08:00:00.000Z",
+    "updated_at": "2025-01-15T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4fa"
+    },
+    "name": "Microdermabrasi Facial",
+    "description": "Perawatan eksfoliasi microdermabrasi untuk kulit lebih halus.",
+    "duration_minutes": 40,
+    "base_price": 249000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d5"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-15T08:00:00.000Z",
+    "updated_at": "2025-01-15T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4fb"
+    },
+    "name": "Ultimate Contouring Package (100 unit botox + 1cc filler + 4 benang)",
+    "description": "Paket lengkap 100 unit botox + 1cc filler + 4 benang wajah.",
+    "duration_minutes": 90,
+    "base_price": 4500000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d6"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-20T08:00:00.000Z",
+    "updated_at": "2025-01-20T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4fc"
+    },
+    "name": "Filler Smile Line / Dagu / Bibir (per cc)",
+    "description": "Filler area smile line, dagu, atau bibir per cc.",
+    "duration_minutes": 45,
+    "base_price": 1799000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d7"
+    },
+    "requires_confirmation": true,
+    "is_active": true,
+    "created_at": "2025-01-20T08:00:00.000Z",
+    "updated_at": "2025-01-20T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4fd"
+    },
+    "name": "Eyelash Natural",
+    "description": "Perawatan eyelash untuk tampilan lentik natural.",
+    "duration_minutes": 45,
+    "base_price": 149000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d8"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-25T08:00:00.000Z",
+    "updated_at": "2025-01-25T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4fe"
+    },
+    "name": "Lash Lift",
+    "description": "Treatment lash lift untuk membuat bulu mata lebih lentik permanen.",
+    "duration_minutes": 45,
+    "base_price": 135000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d8"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-25T08:00:00.000Z",
+    "updated_at": "2025-01-25T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4ff"
+    },
+    "name": "Manicure",
+    "description": "Manicure lengkap untuk perawatan kuku tangan.",
+    "duration_minutes": 30,
+    "base_price": 60000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d9"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-30T08:00:00.000Z",
+    "updated_at": "2025-01-30T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c500"
+    },
+    "name": "Pedicure",
+    "description": "Pedicure untuk perawatan kaki dan kuku.",
+    "duration_minutes": 40,
+    "base_price": 70000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d9"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-30T08:00:00.000Z",
+    "updated_at": "2025-01-30T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c501"
+    },
+    "name": "Manipedi",
+    "description": "Paket manicure + pedicure.",
+    "duration_minutes": 60,
+    "base_price": 120000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d9"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-30T08:00:00.000Z",
+    "updated_at": "2025-01-30T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c502"
+    },
+    "name": "Nail Gel",
+    "description": "Perawatan nail gel dengan hasil tahan lama.",
+    "duration_minutes": 45,
+    "base_price": 50000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d9"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-30T08:00:00.000Z",
+    "updated_at": "2025-01-30T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c503"
+    },
+    "name": "Lulur",
+    "description": "Scrub lulur lengkap untuk kulit lebih halus.",
+    "duration_minutes": 40,
+    "base_price": 70000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d9"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-30T08:00:00.000Z",
+    "updated_at": "2025-01-30T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c504"
+    },
+    "name": "Massage",
+    "description": "Massage relaksasi area tangan dan kaki.",
+    "duration_minutes": 40,
+    "base_price": 130000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d9"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-30T08:00:00.000Z",
+    "updated_at": "2025-01-30T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c505"
+    },
+    "name": "Massage + Lulur",
+    "description": "Paket massage dan lulur untuk relaksasi maksimal.",
+    "duration_minutes": 60,
+    "base_price": 180000,
+    "category_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d9"
+    },
+    "requires_confirmation": false,
+    "is_active": true,
+    "created_at": "2025-01-30T08:00:00.000Z",
+    "updated_at": "2025-01-30T08:00:00.000Z"
+  }
+]

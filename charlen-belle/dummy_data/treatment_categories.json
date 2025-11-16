@@ -1,0 +1,92 @@
+[
+  {
+    "_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d1"
+    },
+    "name": "Thread Lift",
+    "description": "Thread lift procedures for facial contouring",
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d2"
+    },
+    "name": "Skin Revival",
+    "description": "Facial and skin rejuvenation treatments",
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d3"
+    },
+    "name": "Skin Essence",
+    "description": "Advanced skin booster and essence treatments",
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d4"
+    },
+    "name": "Botox & Contour",
+    "description": "Botox treatments for facial contouring",
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d5"
+    },
+    "name": "Glow & Go",
+    "description": "Quick facial treatments for instant glow",
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d6"
+    },
+    "name": "Ultimate Contouring",
+    "description": "Premium contouring packages",
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d7"
+    },
+    "name": "Perfect Shape Filler",
+    "description": "Filler treatments for facial shaping",
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d8"
+    },
+    "name": "Lash Lift",
+    "description": "Eyelash treatments and enhancements",
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "6737a1b2c8d9e0f1a2b3c4d9"
+    },
+    "name": "Velvet Hands & Feet",
+    "description": "Manicure, pedicure, and body treatments",
+    "is_active": true,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  }
+]

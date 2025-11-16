@@ -1,0 +1,10 @@
+[
+  {
+    "_id":"cn_001",
+    "booking_id":"booking_001",
+    "doctor_id":"user_doctor_1",
+    "diagnosis":"Permintaan hidung lebih mancung, kondisi kulit normal.",
+    "recommended_treatments":"Noselift 4 benang sesuai request, observasi 1 minggu.",
+    "created_at":"2025-03-01T09:30:00.000Z"
+  }
+]

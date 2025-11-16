@@ -1,0 +1,601 @@
+[
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e201" },
+    "date": "2025-11-20T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e202" },
+    "date": "2025-11-20T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e203" },
+    "date": "2025-11-20T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e204" },
+    "date": "2025-11-20T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e205" },
+    "date": "2025-11-20T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e206" },
+    "date": "2025-11-20T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e207" },
+    "date": "2025-11-20T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e208" },
+    "date": "2025-11-21T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e209" },
+    "date": "2025-11-21T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e210" },
+    "date": "2025-11-21T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e211" },
+    "date": "2025-11-21T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e212" },
+    "date": "2025-11-21T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e213" },
+    "date": "2025-11-21T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e214" },
+    "date": "2025-11-21T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e215" },
+    "date": "2025-11-22T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e216" },
+    "date": "2025-11-22T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e217" },
+    "date": "2025-11-22T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e218" },
+    "date": "2025-11-22T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e219" },
+    "date": "2025-11-22T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e220" },
+    "date": "2025-11-22T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e221" },
+    "date": "2025-11-22T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e222" },
+    "date": "2025-11-23T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e223" },
+    "date": "2025-11-23T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e224" },
+    "date": "2025-11-23T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e225" },
+    "date": "2025-11-23T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e226" },
+    "date": "2025-11-23T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e227" },
+    "date": "2025-11-23T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e228" },
+    "date": "2025-11-23T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e229" },
+    "date": "2025-11-25T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e230" },
+    "date": "2025-11-25T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e231" },
+    "date": "2025-11-25T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e232" },
+    "date": "2025-11-25T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e233" },
+    "date": "2025-11-25T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e234" },
+    "date": "2025-11-25T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e235" },
+    "date": "2025-11-25T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e236" },
+    "date": "2025-11-26T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e237" },
+    "date": "2025-11-26T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e238" },
+    "date": "2025-11-26T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e239" },
+    "date": "2025-11-26T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e240" },
+    "date": "2025-11-26T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e241" },
+    "date": "2025-11-26T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e242" },
+    "date": "2025-11-26T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e243" },
+    "date": "2025-11-27T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e244" },
+    "date": "2025-11-27T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e245" },
+    "date": "2025-11-27T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e246" },
+    "date": "2025-11-27T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e247" },
+    "date": "2025-11-27T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e248" },
+    "date": "2025-11-27T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e249" },
+    "date": "2025-11-27T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e250" },
+    "date": "2025-11-28T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e251" },
+    "date": "2025-11-28T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e252" },
+    "date": "2025-11-28T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e253" },
+    "date": "2025-11-28T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e254" },
+    "date": "2025-11-28T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e255" },
+    "date": "2025-11-28T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e256" },
+    "date": "2025-11-28T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e257" },
+    "date": "2025-11-29T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e258" },
+    "date": "2025-11-29T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e259" },
+    "date": "2025-11-29T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e260" },
+    "date": "2025-11-29T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e261" },
+    "date": "2025-11-29T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e262" },
+    "date": "2025-11-29T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e263" },
+    "date": "2025-11-29T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e264" },
+    "date": "2025-11-30T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e265" },
+    "date": "2025-11-30T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e266" },
+    "date": "2025-11-30T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e267" },
+    "date": "2025-11-30T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e268" },
+    "date": "2025-11-30T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e269" },
+    "date": "2025-11-30T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e270" },
+    "date": "2025-11-30T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e271" },
+    "date": "2025-12-02T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e272" },
+    "date": "2025-12-02T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e273" },
+    "date": "2025-12-02T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e274" },
+    "date": "2025-12-02T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e275" },
+    "date": "2025-12-02T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e276" },
+    "date": "2025-12-02T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e277" },
+    "date": "2025-12-02T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e278" },
+    "date": "2025-12-03T00:00:00.000Z",
+    "start_time": "10:00", "end_time": "11:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e279" },
+    "date": "2025-12-03T00:00:00.000Z",
+    "start_time": "11:00", "end_time": "12:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": null, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e280" },
+    "date": "2025-12-03T00:00:00.000Z",
+    "start_time": "13:00", "end_time": "14:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e281" },
+    "date": "2025-12-03T00:00:00.000Z",
+    "start_time": "14:00", "end_time": "15:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e282" },
+    "date": "2025-12-03T00:00:00.000Z",
+    "start_time": "15:00", "end_time": "16:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e283" },
+    "date": "2025-12-03T00:00:00.000Z",
+    "start_time": "16:00", "end_time": "17:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  },
+  {
+    "_id": { "$oid": "67b3c4d5e6f7a8b9c0d1e284" },
+    "date": "2025-12-03T00:00:00.000Z",
+    "start_time": "17:00", "end_time": "18:00",
+    "doctor_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d003" },
+    "therapist_id": { "$oid": "67a1b2c3d4e5f6a7b8c9d004" }, "is_available": true
+  }
+]

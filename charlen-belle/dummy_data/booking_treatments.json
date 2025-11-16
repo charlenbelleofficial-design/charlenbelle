@@ -1,0 +1,28 @@
+[
+  {
+    "_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d301"
+    },
+    "booking_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d101"
+    },
+    "treatment_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4e1"
+    },
+    "quantity": 1,
+    "price": 1000000
+  },
+  {
+    "_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d302"
+    },
+    "booking_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d102"
+    },
+    "treatment_id": {
+      "$oid": "6737a1b3c8d9e0f1a2b3c4fb"
+    },
+    "quantity": 1,
+    "price": 4500000
+  }
+]

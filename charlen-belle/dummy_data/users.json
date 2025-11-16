@@ -1,0 +1,67 @@
+[
+  {
+    "_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d001"
+    },
+    "name": "Admin Klinik",
+    "email": "admin@charlenbelle.id",
+    "password": "hashed_password_admin",
+    "phone_number": "081200000001",
+    "role": "admin",
+    "profile_picture": null,
+    "created_at": "2025-01-01T08:00:00.000Z",
+    "updated_at": "2025-01-01T08:00:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d002"
+    },
+    "name": "Kasir Klinik",
+    "email": "kasir@charlenbelle.id",
+    "password": "hashed_password_kasir",
+    "phone_number": "081200000002",
+    "role": "kasir",
+    "profile_picture": null,
+    "created_at": "2025-01-01T08:05:00.000Z",
+    "updated_at": "2025-01-01T08:05:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d003"
+    },
+    "name": "Dr. Siti",
+    "email": "dr.siti@charlenbelle.id",
+    "password": "hashed_password_doctor",
+    "phone_number": "081200000003",
+    "role": "doctor",
+    "profile_picture": null,
+    "created_at": "2025-01-01T08:10:00.000Z",
+    "updated_at": "2025-01-01T08:10:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d004"
+    },
+    "name": "Terapis Budi",
+    "email": "terapis@charlenbelle.id",
+    "password": "hashed_password_therapist",
+    "phone_number": "081200000004",
+    "role": "doctor",
+    "profile_picture": null,
+    "created_at": "2025-01-01T08:12:00.000Z",
+    "updated_at": "2025-01-01T08:12:00.000Z"
+  },
+  {
+    "_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d005"
+    },
+    "name": "Nina Pelanggan",
+    "email": "nina@example.com",
+    "password": "hashed_password_customer",
+    "phone_number": "081287962831",
+    "role": "customer",
+    "profile_picture": null,
+    "created_at": "2025-02-10T09:00:00.000Z",
+    "updated_at": "2025-02-10T09:00:00.000Z"
+  }
+]

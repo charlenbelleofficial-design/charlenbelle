@@ -1,3 +1,4 @@
+// app/models/Treatment.ts
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ITreatment extends Document {
@@ -5,7 +6,7 @@ export interface ITreatment extends Document {
   description?: string;
   duration_minutes: number;
   base_price: number;
-  category?: string;
+  category_id?: mongoose.Types.ObjectId;
   requires_confirmation: boolean;
   is_active: boolean;
   created_at: Date;
@@ -17,7 +18,7 @@ const TreatmentSchema: Schema = new Schema({
   description: { type: String },
   duration_minutes: { type: Number, required: true },
   base_price: { type: Number, required: true },
-  category: { type: String },
+  category_id: { type: Schema.Types.ObjectId, ref: 'TreatmentCategory' },
   requires_confirmation: { type: Boolean, default: false },
   is_active: { type: Boolean, default: true },
   created_at: { type: Date, default: Date.now },

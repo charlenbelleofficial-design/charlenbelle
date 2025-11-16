@@ -1,0 +1,40 @@
+[
+  {
+    "_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d101"
+    },
+    "user_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d005"
+    },
+    "slot_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d201"
+    },
+    "type": "treatment",
+    "status": "confirmed",
+    "confirmed_by": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d001"
+    },
+    "notes": "Ingin hasil natural, konsultasi singkat sebelum tindakan",
+    "created_at": "2025-03-01T09:00:00.000Z",
+    "updated_at": "2025-03-01T09:05:00.000Z",
+    "total_amount": 1000000
+  },
+  {
+    "_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d102"
+    },
+    "user_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d005"
+    },
+    "slot_id": {
+      "$oid": "67a1b2c3d4e5f6a7b8c9d203"
+    },
+    "type": "treatment",
+    "status": "pending",
+    "confirmed_by": null,
+    "notes": "Ambil paket ultimate contouring",
+    "created_at": "2025-03-02T10:00:00.000Z",
+    "updated_at": "2025-03-02T10:00:00.000Z",
+    "total_amount": 1000000
+  }
+]

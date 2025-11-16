@@ -1,0 +1,11 @@
+[
+  {"_id":"tp_001","treatment_id":"treat_001","promo_id":"promo_thread_sale_2025"},
+  {"_id":"tp_002","treatment_id":"treat_002","promo_id":"promo_thread_sale_2025_b"},
+  {"_id":"tp_003","treatment_id":"treat_003","promo_id":"promo_thread_sale_2025"},
+  {"_id":"tp_004","treatment_id":"treat_006","promo_id":"promo_thread_sale_2025"},
+  {"_id":"tp_005","treatment_id":"treat_007","promo_id":"promo_thread_sale_2025"},
+  {"_id":"tp_006","treatment_id":"treat_004","promo_id":"promo_thread_sale_2025"},
+  {"_id":"tp_007","treatment_id":"treat_008","promo_id":"promo_facials_10pct"},
+  {"_id":"tp_008","treatment_id":"treat_010","promo_id":"promo_facials_10pct"},
+  {"_id":"tp_009","treatment_id":"treat_011","promo_id":"promo_facials_10pct"}
+]

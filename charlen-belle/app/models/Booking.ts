@@ -7,6 +7,7 @@ export interface IBooking extends Document {
   status: 'pending' | 'confirmed' | 'completed' | 'canceled';
   confirmed_by?: mongoose.Types.ObjectId;
   notes?: string;
+  total_amount?: number;
   created_at: Date;
   updated_at: Date;
 }
@@ -22,6 +23,7 @@ const BookingSchema: Schema = new Schema({
   },
   confirmed_by: { type: Schema.Types.ObjectId, ref: 'User' },
   notes: { type: String },
+  total_amount: { type: Number, default: 0 },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now }
 });
