@@ -59,7 +59,7 @@ export default function RegisterPage() {
       
       // Redirect after a short delay to show the success message
       setTimeout(() => {
-        router.push('/login');
+        router.push('/user/login');
       }, 1500);
 
     } catch (error: any) {
@@ -182,7 +182,7 @@ export default function RegisterPage() {
           <div className="mt-6 text-center text-sm text-gray-600">
             Sudah punya akun?{' '}
             <Link
-              href="/login"
+              href="/user/login"
               className="font-semibold text-[#c3aa4c] hover:text-[#b0963d]"
             >
               Masuk di sini

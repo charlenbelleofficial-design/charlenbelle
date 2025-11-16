@@ -9,6 +9,10 @@ export interface ITreatment extends Document {
   category_id?: mongoose.Types.ObjectId;
   requires_confirmation: boolean;
   is_active: boolean;
+  images: {
+    url: string;
+    public_id: string;
+  }[];
   created_at: Date;
   updated_at: Date;
 }
@@ -21,6 +25,10 @@ const TreatmentSchema: Schema = new Schema({
   category_id: { type: Schema.Types.ObjectId, ref: 'TreatmentCategory' },
   requires_confirmation: { type: Boolean, default: false },
   is_active: { type: Boolean, default: true },
+  images: [{
+    url: { type: String, required: true },
+    public_id: { type: String, required: true }
+  }],
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now }
 });

@@ -52,7 +52,8 @@ export async function GET(
         duration_minutes: treatment.duration_minutes,
         category_id: treatment.category_id,
         requires_confirmation: treatment.requires_confirmation,
-        is_active: treatment.is_active
+        is_active: treatment.is_active,
+        images: treatment.images
       }
     });
 

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IBookingSlot extends Document {
   date: Date;
@@ -7,6 +7,9 @@ export interface IBookingSlot extends Document {
   doctor_id?: mongoose.Types.ObjectId;
   therapist_id?: mongoose.Types.ObjectId;
   is_available: boolean;
+  booking_id?: mongoose.Types.ObjectId; // Reference to booking if booked
+  created_at: Date;
+  updated_at: Date;
 }
 
 const BookingSlotSchema: Schema = new Schema({
@@ -15,7 +18,17 @@ const BookingSlotSchema: Schema = new Schema({
   end_time: { type: String, required: true },
   doctor_id: { type: Schema.Types.ObjectId, ref: 'User' },
   therapist_id: { type: Schema.Types.ObjectId, ref: 'User' },
-  is_available: { type: Boolean, default: true }
+  is_available: { type: Boolean, default: true },
+  booking_id: { type: Schema.Types.ObjectId, ref: 'Booking' },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now }
 });
 
-export default mongoose.models.BookingSlot || mongoose.model<IBookingSlot>('BookingSlot', BookingSlotSchema);
+// Add indexes for better performance
+BookingSlotSchema.index({ date: 1, is_available: 1 });
+BookingSlotSchema.index({ date: 1, start_time: 1 });
+
+const BookingSlot: Model<IBookingSlot> = 
+  mongoose.models.BookingSlot || mongoose.model<IBookingSlot>('BookingSlot', BookingSlotSchema);
+
+export default BookingSlot;

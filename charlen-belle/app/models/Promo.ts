@@ -7,9 +7,12 @@ export interface IPromo extends Document {
   discount_type: 'percentage' | 'fixed';
   discount_value: number;
   start_date?: Date | string;
-  end_date?: Date | string;
+  end_date?: string;
   is_active: boolean;
   created_at: Date;
+  // Add these fields to track which treatments this promo applies to
+  applicable_treatments: mongoose.Types.ObjectId[];
+  is_global: boolean; // If true, applies to all treatments
 }
 
 const PromoSchema: Schema = new Schema({
@@ -20,6 +23,8 @@ const PromoSchema: Schema = new Schema({
   start_date: { type: Date },
   end_date: { type: Date },
   is_active: { type: Boolean, default: true },
+  applicable_treatments: [{ type: Schema.Types.ObjectId, ref: 'Treatment' }],
+  is_global: { type: Boolean, default: false },
   created_at: { type: Date, default: Date.now }
 });
 

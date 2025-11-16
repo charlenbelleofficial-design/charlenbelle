@@ -51,6 +51,11 @@ async function connectDB(): Promise<typeof mongoose> {
 
   try {
     cached.conn = await cached.promise;
+    await import('../models/BookingSlot');
+    await import('../models/Booking');
+    await import('../models/BookingTreatment');
+    console.log('MongoDB connected successfully');
+
   } catch (e) {
     cached.promise = null;
     console.error('Failed to connect to MongoDB:', e);

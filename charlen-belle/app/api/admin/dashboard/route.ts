@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import getServerSession from "next-auth"
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../../lib/auth-config';
 import connectDB from '../../../lib/mongodb';
 import Booking from '../../../models/Booking';
 import Payment from '../../../models/Payment';
 import User from '../../../models/User';
 import Promo from '../../../models/Promo';
+import BookingSlot from '../../../models/BookingSlot'; // Explicitly import BookingSlot
+import mongoose from 'mongoose';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     
-    if (!session || !['admin', 'superadmin'].includes(session.user.role)) {
+    if (!session || !session.user || !session.user.role || !['admin', 'superadmin'].includes(session.user.role)) {
       return NextResponse.json(
         { error: 'Tidak memiliki akses' },
         { status: 403 }
@@ -18,6 +21,11 @@ export async function GET(req: NextRequest) {
     }
 
     await connectDB();
+
+    // Ensure BookingSlot model is registered
+    if (!mongoose.models.BookingSlot) {
+      await import('../../../models/BookingSlot');
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -82,12 +90,15 @@ export async function GET(req: NextRequest) {
       end_date: { $gte: today }
     });
 
-    // Get recent bookings
+    // Get recent bookings - fix the populate path
     const recentBookings = await Booking.find()
       .sort({ created_at: -1 })
       .limit(10)
       .populate('user_id', 'name email')
-      .populate('slot_id');
+      .populate({
+        path: 'slot_id',
+        model: 'BookingSlot' // Explicitly specify the model
+      });
 
     return NextResponse.json({
       stats: {

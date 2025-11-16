@@ -31,7 +31,7 @@ export default function BookingPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login?redirect=/user/booking');
+      router.push('/user/login?redirect=/user/booking');
     }
   }, [status]);
 
@@ -104,24 +104,33 @@ export default function BookingPage() {
     if (selectedTreatments.length === 0) { toast.error('Pilih minimal 1 treatment'); return; }
     setIsLoading(true);
     try {
+      // Check if this is a consultation booking
+      const isConsultation = selectedTreatments.some(t => t.id === 'consultation');
+      
       const body = {
         slot_id: selectedSlot,
-        type: 'treatment',
+        type: isConsultation ? 'consultation' : 'treatment',
         notes,
-        treatments: selectedTreatments.map(t => ({ treatment_id: t.id, quantity: t.quantity }))
+        treatments: isConsultation ? [] : selectedTreatments.map(t => ({ treatment_id: t.id, quantity: t.quantity }))
       };
+      
+      console.log('Booking request body:', body); // Debug log
+      
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
+      
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal buat booking');
+      
       toast.success('Booking berhasil dibuat!');
       localStorage.removeItem('selectedTreatments');
       router.push(`/user/dashboard/bookings/${data.booking._id}`);
     } catch (e: any) {
-      toast.error(e.message || 'Error');
+      console.error('Booking error:', e);
+      toast.error(e.message || 'Error membuat booking');
     } finally {
       setIsLoading(false);
     }

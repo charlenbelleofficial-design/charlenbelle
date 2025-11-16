@@ -12,9 +12,13 @@ export const AdaptiveNavbar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Check if we're in dashboard area
-  const isDashboard = pathname?.startsWith('/user/dashboard');
+  // Check if we're in admin/staff area
+  const isStaffArea = pathname?.startsWith('/admin');
+  const isCustomerArea = pathname?.startsWith('/user/dashboard');
   const isAuthPage = pathname?.includes('/user/login') || pathname?.includes('/user/register');
+  
+  // Check if user is staff (not customer)
+  const isStaff = session?.user?.role && ['kasir', 'admin', 'superadmin', 'doctor'].includes(session.user.role);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -36,13 +40,10 @@ export const AdaptiveNavbar: React.FC = () => {
 
   const isLoading = status === 'loading';
 
-  // Dashboard Navigation
-  const dashboardNavigation = [
-    { name: 'Dashboard', href: '/user/dashboard', icon: '🏠' },
-    { name: 'Booking Saya', href: '/user/dashboard/bookings', icon: '📅' },
-    // { name: 'Riwayat', href: '/user/dashboard/history', icon: '📋' },
-    // { name: 'Profil', href: '/user/profile', icon: '👤' },
-  ];
+  // Don't show navbar in staff area (handled by unified layout)
+  if (isStaffArea) {
+    return null;
+  }
 
   return (
     <header className="navbar">
@@ -56,23 +57,31 @@ export const AdaptiveNavbar: React.FC = () => {
         {/* Menu - Only show if not on auth pages */}
         {!isAuthPage && (
           <nav className="navbar-menu">
-            {isDashboard ? (
-              // Dashboard Navigation
+            {isCustomerArea ? (
+              // Customer Dashboard Navigation
               <>
-                {dashboardNavigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      pathname === item.href
-                        ? 'bg-[#f8f5e6] text-[#c3aa4c]'
-                        : 'text-[#2d2617] hover:text-[#c3aa4c]'
-                    }`}
-                  >
-                    <span className="mr-2">{item.icon}</span>
-                    {item.name}
-                  </Link>
-                ))}
+                <Link
+                  href="/user/dashboard"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    pathname === '/user/dashboard'
+                      ? 'bg-[#f8f5e6] text-[#c3aa4c]'
+                      : 'text-[#2d2617] hover:text-[#c3aa4c]'
+                  }`}
+                >
+                  <span className="mr-2">🏠</span>
+                  Dashboard
+                </Link>
+                <Link
+                  href="/user/dashboard/bookings"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    pathname === '/user/dashboard/bookings'
+                      ? 'bg-[#f8f5e6] text-[#c3aa4c]'
+                      : 'text-[#2d2617] hover:text-[#c3aa4c]'
+                  }`}
+                >
+                  <span className="mr-2">📅</span>
+                  Booking Saya
+                </Link>
               </>
             ) : (
               // Main Site Navigation
@@ -100,8 +109,8 @@ export const AdaptiveNavbar: React.FC = () => {
           </nav>
         )}
 
-        {/* Auth Buttons / User Profile - Hide on auth pages */}
-        {!isAuthPage && (
+        {/* Auth Buttons / User Profile - Hide on auth pages and staff area */}
+        {!isAuthPage && !isStaffArea && (
           <div className="flex items-center gap-4">
             {isLoading ? (
               // Loading state
@@ -119,6 +128,11 @@ export const AdaptiveNavbar: React.FC = () => {
                   <span className="text-sm font-medium text-gray-700">
                     {session.user?.name || 'User'}
                   </span>
+                  {isStaff && (
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                      {session.user.role}
+                    </span>
+                  )}
                   <svg
                     className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
                     fill="none"
@@ -132,16 +146,17 @@ export const AdaptiveNavbar: React.FC = () => {
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
                   <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    {/* Dashboard Link - Only show if not already in dashboard */}
-                    {!isDashboard && (
+                    {/* Dashboard Link - Different for staff vs customers */}
+                    {!isCustomerArea && (
                       <Link
-                        href="/user/dashboard"
+                        href={isStaff ? '/admin/dashboard' : '/user/dashboard'}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                         onClick={() => setIsDropdownOpen(false)}
                       >
-                        Dashboard
+                        {isStaff ? 'Staff Dashboard' : 'Dashboard'}
                       </Link>
                     )}
+                    
                     <Link
                       href="/user/profile"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
@@ -149,13 +164,7 @@ export const AdaptiveNavbar: React.FC = () => {
                     >
                       Profile
                     </Link>
-                    {/* <Link
-                      href="/user/dashboard/history"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      Riwayat
-                    </Link> */}
+                    
                     <div className="border-t border-gray-200 my-1"></div>
                     <button
                       onClick={handleLogout}

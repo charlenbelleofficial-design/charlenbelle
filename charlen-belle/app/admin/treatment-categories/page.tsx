@@ -2,39 +2,63 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-type Category = { _id: string; name: string; description?: string; is_active?: boolean; };
+type Category = { 
+  _id: string; 
+  name: string; 
+  description?: string; 
+  is_active?: boolean; 
+};
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: ''
+  });
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  useEffect(() => { fetchCategories(); }, []);
+  useEffect(() => { 
+    fetchCategories(); 
+  }, []);
 
   async function fetchCategories() {
     setLoading(true);
-    const res = await fetch('/api/treatment-categories');
-    const data = await res.json();
-    setCategories(data.categories || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/treatment-categories');
+      const data = await res.json();
+      if (data.success) {
+        setCategories(data.categories || []);
+      } else {
+        throw new Error(data.error || 'Failed to fetch categories');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error loading categories');
+    } finally {
+      setLoading(false);
+    }
   }
 
-  async function handleCreate(e: any) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch('/api/treatment-categories', {
-        method: 'POST',
+      const url = editingId ? `/api/treatment-categories/${editingId}` : '/api/treatment-categories';
+      const method = editingId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description })
+        body: JSON.stringify(formData)
       });
+      
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal membuat');
-      toast.success('Kategori dibuat');
-      setName(''); setDescription('');
+      if (!res.ok) throw new Error(data.error || 'Failed to save category');
+
+      toast.success(editingId ? 'Category updated' : 'Category created');
+      resetForm();
       fetchCategories();
     } catch (err: any) {
-      toast.error(err.message || 'Error');
+      toast.error(err.message || 'Error saving category');
     }
   }
 
@@ -45,67 +69,149 @@ export default function AdminCategoriesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !current })
       });
+      
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal');
-      toast.success('Updated');
+      if (!res.ok) throw new Error(data.error || 'Failed to update');
+
+      toast.success('Category updated');
       fetchCategories();
     } catch (err: any) {
-      toast.error(err.message || 'Error');
+      toast.error(err.message || 'Error updating category');
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Hapus kategori?')) return;
+    if (!confirm('Delete this category?')) return;
     try {
       const res = await fetch(`/api/treatment-categories/${id}`, { method: 'DELETE' });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal hapus');
-      toast.success('Deleted');
+      if (!res.ok) throw new Error(data.error || 'Failed to delete');
+
+      toast.success('Category deleted');
       fetchCategories();
     } catch (err: any) {
-      toast.error(err.message || 'Error');
+      toast.error(err.message || 'Error deleting category');
     }
   }
 
-  return (
-    <div className="p-8 min-h-screen">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4">Manage Treatment Categories</h1>
+  function editCategory(category: Category) {
+    setFormData({
+      name: category.name,
+      description: category.description || ''
+    });
+    setEditingId(category._id);
+  }
 
-        <form onSubmit={handleCreate} className="mb-6 bg-white p-4 rounded shadow">
-          <div className="grid grid-cols-2 gap-3">
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="p-2 border rounded" required />
-            <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" className="p-2 border rounded" />
+  function resetForm() {
+    setFormData({
+      name: '',
+      description: ''
+    });
+    setEditingId(null);
+  }
+
+  return (
+    <div className="p-6">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">Manage Treatment Categories</h1>
+
+        {/* Category Form */}
+        <form onSubmit={handleSubmit} className="mb-8 bg-white p-6 rounded-lg shadow">
+          <h2 className="text-lg font-semibold mb-4">
+            {editingId ? 'Edit Category' : 'Create New Category'}
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <input
+                type="text"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full p-2 border rounded"
+              />
+            </div>
           </div>
-          <div className="mt-3">
-            <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded">Create</button>
+
+          <div className="flex gap-2">
+            <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded">
+              {editingId ? 'Update' : 'Create'} Category
+            </button>
+            {editingId && (
+              <button type="button" onClick={resetForm} className="bg-gray-500 text-white px-4 py-2 rounded">
+                Cancel
+              </button>
+            )}
           </div>
         </form>
 
-        <div className="bg-white p-4 rounded shadow">
-          {loading ? <div>Loading...</div> : (
-            <table className="w-full table-auto">
+        {/* Categories List */}
+        <div className="bg-white rounded-lg shadow">
+          {loading ? (
+            <div className="p-8 text-center">Loading categories...</div>
+          ) : (
+            <table className="w-full">
               <thead>
-                <tr>
-                  <th className="text-left p-2">Name</th>
-                  <th className="text-left p-2">Description</th>
-                  <th className="p-2">Active</th>
-                  <th className="p-2">Actions</th>
+                <tr className="border-b">
+                  <th className="text-left p-4">Name</th>
+                  <th className="text-left p-4">Description</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {categories.map(c => (
-                  <tr key={c._id} className="border-t">
-                    <td className="p-2">{c.name}</td>
-                    <td className="p-2 text-sm text-gray-600">{c.description}</td>
-                    <td className="p-2 text-center">
-                      <button onClick={() => handleToggle(c._id, !!c.is_active)} className={`px-3 py-1 rounded ${c.is_active ? 'bg-green-100' : 'bg-red-100'}`}>{c.is_active ? 'Active' : 'Inactive'}</button>
+                {categories.map(category => (
+                  <tr key={category._id} className="border-b hover:bg-gray-50">
+                    <td className="p-4 font-medium">{category.name}</td>
+                    <td className="p-4 text-sm text-gray-600">{category.description}</td>
+                    <td className="p-4 text-center">
+                      <button 
+                        onClick={() => handleToggle(category._id, !!category.is_active)}
+                        className={`px-3 py-1 rounded text-sm ${
+                          category.is_active 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {category.is_active ? 'Active' : 'Inactive'}
+                      </button>
                     </td>
-                    <td className="p-2">
-                      <button onClick={() => handleDelete(c._id)} className="text-red-600">Delete</button>
+                    <td className="p-4">
+                      <div className="flex gap-2 justify-center">
+                        <button 
+                          onClick={() => editCategory(category)}
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(category._id)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
+                {categories.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-gray-500">
+                      No categories found
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           )}

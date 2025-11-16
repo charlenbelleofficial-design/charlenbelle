@@ -1,119 +1,565 @@
+// app/admin/treatments/page.tsx
 'use client';
-import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
 
-type Category = { _id: string; name: string; };
-type Treatment = { _id: string; name: string; base_price: number; duration_minutes: number; category_id?: Category | string; };
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+
+import { Snackbar, SnackbarType } from '../../components/ui/snackbar';
+import { formatCurrency } from '../../lib/utils';
+
+interface TreatmentImage {
+  url: string;
+  public_id: string;
+}
+
+interface Treatment {
+  _id: string;
+  name: string;
+  description?: string;
+  duration_minutes: number;
+  base_price: number;
+  category_id?: { _id: string; name: string };
+  requires_confirmation: boolean;
+  is_active: boolean;
+  images: TreatmentImage[];
+  created_at: string;
+}
+
+interface SnackbarState {
+  isVisible: boolean;
+  message: string;
+  type: SnackbarType;
+}
 
 export default function AdminTreatmentsPage() {
+  const { data: session } = useSession();
   const [treatments, setTreatments] = useState<Treatment[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', base_price: '', duration_minutes: '', category_id: '' });
+  const [error, setError] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingTreatment, setEditingTreatment] = useState<Treatment | null>(null);
+  const [snackbar, setSnackbar] = useState<SnackbarState>({
+    isVisible: false,
+    message: '',
+    type: 'info'
+  });
 
   useEffect(() => {
-    fetchData();
+    fetchTreatments();
   }, []);
 
-  async function fetchData() {
-    setLoading(true);
-    const [res1, res2] = await Promise.all([fetch('/api/treatments'), fetch('/api/treatment-categories')]);
-    const data1 = await res1.json();
-    const data2 = await res2.json();
-    setTreatments(data1.treatments || []);
-    setCategories(data2.categories || []);
-    setLoading(false);
-  }
+  const showSnackbar = (message: string, type: SnackbarType = 'info') => {
+    setSnackbar({
+      isVisible: true,
+      message,
+      type
+    });
+  };
 
-  async function handleCreate(e: any) {
-    e.preventDefault();
-    try {
-      const payload = {
-        name: form.name,
-        description: form.description,
-        base_price: Number(form.base_price),
-        duration_minutes: Number(form.duration_minutes),
-        category_id: form.category_id || undefined
-      };
-      const res = await fetch('/api/treatments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal membuat');
-      toast.success('Treatment dibuat');
-      setShowCreate(false);
-      setForm({ name: '', description: '', base_price: '', duration_minutes: '', category_id: '' });
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || 'Error');
-    }
-  }
+  const hideSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, isVisible: false }));
+  };
 
-  async function handleDelete(id: string) {
-    if (!confirm('Hapus treatment?')) return;
+  const fetchTreatments = async () => {
     try {
-      const res = await fetch(`/api/treatments/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal hapus');
-      toast.success('Deleted');
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || 'Error');
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/admin/treatments');
+      
+      if (!response.ok) {
+        if (response.status === 405) {
+          throw new Error('Method not allowed. Please check the API route.');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setTreatments(data.treatments);
+      } else {
+        throw new Error(data.error || 'Failed to fetch treatments');
+      }
+    } catch (error) {
+      console.error('Error fetching treatments:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load treatments';
+      setError(errorMessage);
+      showSnackbar(errorMessage, 'error');
+    } finally {
+      setLoading(false);
     }
-  }
+  };
+
+  const handleToggleStatus = async (treatmentId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/admin/treatments/${treatmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !currentStatus })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        fetchTreatments(); // Refresh list
+        showSnackbar(
+          `Treatment berhasil ${!currentStatus ? 'diaktifkan' : 'dinonaktifkan'}`,
+          'success'
+        );
+      } else {
+        showSnackbar(`Gagal mengupdate status: ${data.error}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error updating treatment:', error);
+      showSnackbar('Terjadi kesalahan saat mengupdate status', 'error');
+    }
+  };
 
   return (
-    <div className="p-8 min-h-screen">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Manage Treatments</h1>
-          <button onClick={() => setShowCreate(true)} className="bg-purple-600 text-white px-4 py-2 rounded">Create Treatment</button>
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Manajemen Treatment</h1>
+            <p className="text-gray-600 mt-2">Kelola semua treatment dan layanan</p>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            + Tambah Treatment
+          </button>
         </div>
 
-        <div className="bg-white p-4 rounded shadow mb-6">
-          {loading ? <div>Loading...</div> : (
-            <table className="w-full table-auto">
-              <thead><tr><th className="p-2 text-left">Name</th><th className="p-2">Category</th><th className="p-2">Price</th><th className="p-2">Durasi</th><th className="p-2">Actions</th></tr></thead>
-              <tbody>
-                {treatments.map(t => (
-                  <tr key={t._id} className="border-t">
-                    <td className="p-2">{t.name}</td>
-                    <td className="p-2">{(t.category_id as any)?.name || '-'}</td>
-                    <td className="p-2">{t.base_price?.toLocaleString?.() ?? '-'}</td>
-                    <td className="p-2">{t.duration_minutes}m</td>
-                    <td className="p-2">
-                      <button onClick={() => handleDelete(t._id)} className="text-red-600">Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {showCreate && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-            <div className="bg-white p-6 rounded shadow w-[720px]">
-              <h2 className="text-xl mb-3">Create Treatment</h2>
-              <form onSubmit={handleCreate} className="space-y-3">
-                <input className="w-full p-2 border rounded" placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-                <textarea className="w-full p-2 border rounded" placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-                <div className="grid grid-cols-3 gap-3">
-                  <input className="p-2 border rounded" placeholder="Base price" value={form.base_price} onChange={e => setForm({ ...form, base_price: e.target.value })} required />
-                  <input className="p-2 border rounded" placeholder="Duration minutes" value={form.duration_minutes} onChange={e => setForm({ ...form, duration_minutes: e.target.value })} required />
-                  <select className="p-2 border rounded" value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value })}>
-                    <option value="">-- pilih kategori --</option>
-                    {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div className="flex gap-3 justify-end">
-                  <button type="button" onClick={() => setShowCreate(false)} className="px-4 py-2 border rounded">Cancel</button>
-                  <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded">Create</button>
-                </div>
-              </form>
-            </div>
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            <p>Error: {error}</p>
+            <button
+              onClick={fetchTreatments}
+              className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+            >
+              Coba Lagi
+            </button>
           </div>
         )}
 
+        {/* Treatments Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            // Loading skeletons
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+              </div>
+            ))
+          ) : treatments.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <div className="text-6xl mb-4">💆</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Tidak ada treatment</h3>
+              <p className="text-gray-600">Belum ada treatment yang tersedia.</p>
+            </div>
+          ) : (
+            treatments.map((treatment) => (
+              <TreatmentCard
+                key={treatment._id}
+                treatment={treatment}
+                onEdit={() => setEditingTreatment(treatment)}
+                onToggleStatus={handleToggleStatus}
+              />
+            ))
+          )}
+        </div>
+
+        {/* Add/Edit Treatment Modal */}
+        {(showAddModal || editingTreatment) && (
+          <TreatmentModal
+            treatment={editingTreatment}
+            onClose={() => {
+              setShowAddModal(false);
+              setEditingTreatment(null);
+            }}
+            onSuccess={() => {
+              setShowAddModal(false);
+              setEditingTreatment(null);
+              fetchTreatments();
+            }}
+            showSnackbar={showSnackbar}
+          />
+        )}
+
+        {/* Snackbar Component */}
+        <Snackbar
+          message={snackbar.message}
+          type={snackbar.type}
+          isVisible={snackbar.isVisible}
+          onClose={hideSnackbar}
+          duration={snackbar.type === 'error' ? 7000 : 5000}
+          position="top-center"
+        />
+      </div>
+  );
+}
+
+function TreatmentCard({ treatment, onEdit, onToggleStatus }: any) {
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+      {/* Image Section */}
+      {treatment.images && treatment.images.length > 0 ? (
+        <div className="mb-4">
+          <img
+            src={treatment.images[0].url}
+            alt={treatment.name}
+            className="w-full h-48 object-cover rounded-lg mb-3"
+          />
+        </div>
+      ) : (
+        <div className="mb-4 h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+          <span className="text-gray-400 text-sm">No Image</span>
+        </div>
+      )}
+
+      <div className="flex justify-between items-start mb-3">
+        <h3 className="font-semibold text-gray-900 text-lg">{treatment.name}</h3>
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          treatment.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {treatment.is_active ? 'Aktif' : 'Nonaktif'}
+        </span>
+      </div>
+
+      {treatment.description && (
+        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+          {treatment.description}
+        </p>
+      )}
+
+      <div className="space-y-2 text-sm text-gray-600">
+        <div className="flex justify-between">
+          <span>Durasi:</span>
+          <span className="font-medium">{treatment.duration_minutes} menit</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Harga:</span>
+          <span className="font-medium text-purple-600">
+            {formatCurrency(treatment.base_price)}
+          </span>
+        </div>
+        {treatment.category_id && (
+          <div className="flex justify-between">
+            <span>Kategori:</span>
+            <span className="font-medium">{treatment.category_id.name}</span>
+          </div>
+        )}
+        <div className="flex justify-between">
+          <span>Konfirmasi:</span>
+          <span className="font-medium">
+            {treatment.requires_confirmation ? 'Dibutuhkan' : 'Tidak'}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200">
+        <button
+          onClick={onEdit}
+          className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => onToggleStatus(treatment._id, treatment.is_active)}
+          className={`flex-1 py-2 rounded-lg text-sm transition-colors ${
+            treatment.is_active 
+              ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          {treatment.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TreatmentModal({ treatment, onClose, onSuccess, showSnackbar }: any) {
+  const [formData, setFormData] = useState({
+    name: treatment?.name || '',
+    description: treatment?.description || '',
+    duration_minutes: treatment?.duration_minutes || 60,
+    base_price: treatment?.base_price || 0,
+    requires_confirmation: treatment?.requires_confirmation || false,
+    is_active: treatment?.is_active ?? true,
+    images: treatment?.images || []
+  });
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      setUploading(true);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, data.image]
+        }));
+        showSnackbar('Gambar berhasil diupload', 'success');
+      } else {
+        showSnackbar('Gagal mengupload gambar', 'error');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      showSnackbar('Terjadi kesalahan saat mengupload gambar', 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        showSnackbar('Hanya file gambar yang diizinkan', 'error');
+        return;
+      }
+
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showSnackbar('Ukuran file maksimal 5MB', 'error');
+        return;
+      }
+
+      handleImageUpload(file);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_: TreatmentImage, i: number) => i !== index)
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const url = treatment ? `/api/admin/treatments/${treatment._id}` : '/api/admin/treatments';
+      const method = treatment ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        onSuccess();
+        showSnackbar(
+          treatment ? 'Treatment berhasil diupdate' : 'Treatment berhasil ditambahkan',
+          'success'
+        );
+      } else {
+        showSnackbar(`Gagal: ${data.error}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error saving treatment:', error);
+      showSnackbar('Terjadi kesalahan saat menyimpan treatment', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {treatment ? 'Edit Treatment' : 'Tambah Treatment Baru'}
+          </h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Image Upload Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Gambar Treatment
+              </label>
+              
+              {/* Image Preview */}
+              {formData.images.length > 0 && (
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  {formData.images.map((image: TreatmentImage, index: number) => ( // Added type annotation here
+                    <div key={index} className="relative group">
+                      <img
+                        src={image.url}
+                        alt={`Treatment ${index + 1}`} // Fixed template string
+                        className="w-full h-24 object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* File Input */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  disabled={uploading}
+                  className="hidden"
+                  id="image-upload"
+                />
+                <label
+                  htmlFor="image-upload"
+                  className={`cursor-pointer block ${
+                    uploading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <div className="text-gray-600">
+                    {uploading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                        <span className="ml-2">Mengupload...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="mt-2 block text-sm font-medium">
+                          Klik untuk upload gambar
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          PNG, JPG, JPEG (max. 5MB)
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Rest of the form remains the same */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nama Treatment
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Deskripsi
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Durasi (menit)
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={formData.duration_minutes}
+                  onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Harga Dasar
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  value={formData.base_price}
+                  onChange={(e) => setFormData({ ...formData, base_price: parseInt(e.target.value) })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.requires_confirmation}
+                  onChange={(e) => setFormData({ ...formData, requires_confirmation: e.target.checked })}
+                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="ml-2 text-sm text-gray-700">Butuh konfirmasi admin</span>
+              </label>
+
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                <span className="ml-2 text-sm text-gray-700">Aktif</span>
+              </label>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-400"
+              >
+                {loading ? 'Menyimpan...' : (treatment ? 'Update' : 'Simpan')}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

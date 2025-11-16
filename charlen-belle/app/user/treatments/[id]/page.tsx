@@ -10,6 +10,7 @@ type Treatment = {
   base_price: number;
   duration_minutes: number;
   category_id?: { _id: string, name: string } | string;
+  images?: { url: string }[]; // Add this line
 };
 
 export default function TreatmentDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -42,6 +43,10 @@ export default function TreatmentDetail({ params }: { params: Promise<{ id: stri
       }
       
       const data = await res.json();
+      
+      console.log('API Response:', data); // Debug log - check the full response
+      console.log('Treatment data:', data.treatment); // Debug log - check treatment object
+      console.log('Images:', data.treatment?.images); // Debug log - specifically check images
       
       if (data.success) {
         setTreatment(data.treatment);
@@ -87,6 +92,29 @@ export default function TreatmentDetail({ params }: { params: Promise<{ id: stri
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow">
+        {treatment.images && treatment.images.length > 0 ? (
+        <div className="mb-6">
+          <div className="space-y-4">
+            {treatment.images.map((image, index) => (
+              <div key={index} className="relative">
+                <img
+                  src={image.url}
+                  alt={`${treatment.name} ${index + 1}`}
+                  className="w-full h-64 object-cover rounded-lg"
+                  onError={(e) => {
+                    console.error('Image failed to load:', image.url);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="mb-6 h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+          <span className="text-gray-400">No images available</span>
+        </div>
+      )}
         <h1 className="text-2xl font-bold mb-2">{treatment.name}</h1>
         <p className="text-sm text-gray-600 mb-4">{treatment.description}</p>
         <div className="flex items-center justify-between mb-4">

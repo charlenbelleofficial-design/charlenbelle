@@ -123,7 +123,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center text-sm text-gray-600">
             Belum punya akun?{' '}
             <Link
-              href="/register"
+              href="/user/register"
               className="font-semibold text-[#c3aa4c] hover:text-[#b0963d]"
             >
               Daftar Sekarang
