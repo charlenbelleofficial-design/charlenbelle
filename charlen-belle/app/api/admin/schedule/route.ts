@@ -38,8 +38,8 @@ export async function GET(req: NextRequest) {
         $lt: nextDay
       }
     })
-    .populate('doctor_id', 'name')
-    .populate('therapist_id', 'name')
+    .populate('doctor_id', 'name email') // Ensure doctor is populated
+    .populate('therapist_id', 'name email') // Ensure therapist is populated
     .populate({
       path: 'booking_id',
       populate: {

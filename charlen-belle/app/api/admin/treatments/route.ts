@@ -1,4 +1,3 @@
-// app/api/admin/treatments/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../lib/mongodb';
 import Treatment from '../../../models/Treatment';
@@ -7,20 +6,27 @@ import Promo from '../../../models/Promo';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth-config';
 
-// In your app/api/admin/treatments/route.ts, update the GET method:
 export async function GET(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.role || !['admin', 'superadmin'].includes(session.user.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const includePromos = searchParams.get('include_promos') === 'true';
 
-    console.log('🔄 API: Fetching treatments with promos:', includePromos);
+    console.log('🔄 API: Fetching ALL treatments for admin');
     await connectDB();
 
-    const treatments = await Treatment.find({ is_active: true })
-      .select('name description base_price duration_minutes requires_confirmation')
+    // REMOVE the is_active filter to get ALL treatments for admin
+    const treatments = await Treatment.find() // Remove { is_active: true } filter
+      .populate('category_id', 'name') // Add category population
+      .select('name description base_price duration_minutes requires_confirmation is_active images created_at category_id')
       .sort({ name: 1 });
 
-    console.log(`📦 API: Found ${treatments.length} treatments`);
+    console.log(`📦 API: Found ${treatments.length} treatments (including inactive)`);
 
     let treatmentsWithPromos = treatments;
 
@@ -85,6 +91,7 @@ export async function GET(req: NextRequest) {
     }, { status: 500 });
   }
 }
+
 
 export async function POST(req: NextRequest) {
   try {

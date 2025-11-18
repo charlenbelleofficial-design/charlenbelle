@@ -40,6 +40,7 @@ interface SnackbarState {
 export default function AdminTreatmentsPage() {
   const { data: session } = useSession();
   const [treatments, setTreatments] = useState<Treatment[]>([]);
+  const [filteredTreatments, setFilteredTreatments] = useState<Treatment[]>([]);
   const [categories, setCategories] = useState<TreatmentCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -51,11 +52,51 @@ export default function AdminTreatmentsPage() {
     message: '',
     type: 'info'
   });
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   useEffect(() => {
     fetchTreatments();
     fetchCategories();
   }, []);
+
+  // Filter treatments whenever search term, category, status, or treatments change
+  useEffect(() => {
+    filterTreatments();
+  }, [searchTerm, categoryFilter, statusFilter, treatments]);
+
+  const filterTreatments = () => {
+    let filtered = treatments;
+
+    // Apply search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(treatment =>
+        treatment.name.toLowerCase().includes(term) ||
+        treatment.description?.toLowerCase().includes(term) ||
+        treatment.category_id?.name.toLowerCase().includes(term)
+      );
+    }
+
+    // Apply category filter
+    if (categoryFilter) {
+      filtered = filtered.filter(treatment =>
+        treatment.category_id?._id === categoryFilter
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(treatment =>
+        statusFilter === 'active' ? treatment.is_active : !treatment.is_active
+      );
+    }
+
+    setFilteredTreatments(filtered);
+  };
 
   const showSnackbar = (message: string, type: SnackbarType = 'info') => {
     setSnackbar({
@@ -87,6 +128,7 @@ export default function AdminTreatmentsPage() {
       
       if (data.success) {
         setTreatments(data.treatments);
+        setFilteredTreatments(data.treatments); // Initialize filtered treatments
       } else {
         throw new Error(data.error || 'Failed to fetch treatments');
       }
@@ -149,6 +191,12 @@ export default function AdminTreatmentsPage() {
     }
   };
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setCategoryFilter('');
+    setStatusFilter('all');
+  };
+
   return (
       <div className="p-6">
         {/* Header */}
@@ -163,6 +211,103 @@ export default function AdminTreatmentsPage() {
           >
             + Tambah Treatment
           </button>
+        </div>
+
+        {/* Search and Filter Section */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Search Input */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cari Treatment
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Cari berdasarkan nama, deskripsi, atau kategori..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Category Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Filter Kategori
+              </label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              >
+                <option value="">Semua Kategori</option>
+                {categories
+                  .filter(category => category.is_active)
+                  .map(category => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))
+                }
+              </select>
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Filter Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              >
+                <option value="all">Semua Status</option>
+                <option value="active">Aktif</option>
+                <option value="inactive">Nonaktif</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Filter Summary and Clear Button */}
+          {(searchTerm || categoryFilter || statusFilter !== 'all') && (
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                Menampilkan {filteredTreatments.length} dari {treatments.length} treatment
+                {searchTerm && (
+                  <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                    Pencarian: "{searchTerm}"
+                  </span>
+                )}
+                {categoryFilter && (
+                  <span className="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                    Kategori: {categories.find(c => c._id === categoryFilter)?.name}
+                  </span>
+                )}
+                {statusFilter !== 'all' && (
+                  <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">
+                    Status: {statusFilter === 'active' ? 'Aktif' : 'Nonaktif'}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={clearFilters}
+                className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Hapus Filter
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Error Message */}
@@ -189,14 +334,29 @@ export default function AdminTreatmentsPage() {
                 <div className="h-3 bg-gray-200 rounded w-1/4"></div>
               </div>
             ))
-          ) : treatments.length === 0 ? (
+          ) : filteredTreatments.length === 0 ? (
             <div className="col-span-full text-center py-12">
-              <div className="text-6xl mb-4">💆</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Tidak ada treatment</h3>
-              <p className="text-gray-600">Belum ada treatment yang tersedia.</p>
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {treatments.length === 0 ? 'Tidak ada treatment' : 'Treatment tidak ditemukan'}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {treatments.length === 0 
+                  ? 'Belum ada treatment yang tersedia.' 
+                  : 'Coba ubah kata kunci pencarian atau filter yang Anda gunakan.'
+                }
+              </p>
+              {(searchTerm || categoryFilter || statusFilter !== 'all') && (
+                <button
+                  onClick={clearFilters}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Tampilkan Semua Treatment
+                </button>
+              )}
             </div>
           ) : (
-            treatments.map((treatment) => (
+            filteredTreatments.map((treatment) => (
               <TreatmentCard
                 key={treatment._id}
                 treatment={treatment}
@@ -239,6 +399,7 @@ export default function AdminTreatmentsPage() {
   );
 }
 
+// TreatmentCard and TreatmentModal components remain the same...
 function TreatmentCard({ treatment, onEdit, onToggleStatus }: any) {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
@@ -321,6 +482,7 @@ function TreatmentCard({ treatment, onEdit, onToggleStatus }: any) {
   );
 }
 
+// TreatmentModal component remains exactly the same as your original code
 function TreatmentModal({ treatment, categories, categoriesLoading, onClose, onSuccess, showSnackbar }: any) {
   const [formData, setFormData] = useState({
     name: treatment?.name || '',

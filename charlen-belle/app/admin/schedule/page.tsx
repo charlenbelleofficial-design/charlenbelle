@@ -1,3 +1,4 @@
+// app/admin/schedule/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,20 +7,27 @@ import { Snackbar, SnackbarType } from '../../components/ui/snackbar';
 import { formatDate } from '../../lib/utils';
 import { ConfirmationModal } from '../../components/ui/confirmation-modal';
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
 interface BookingSlot {
   _id: string;
   date: string;
   start_time: string;
   end_time: string;
   is_available: boolean;
+  doctor_id?: { _id: string; name: string }; // Made optional
+  therapist_id?: { _id: string; name: string }; // Made optional
   booking_id?: {
     _id: string;
     user_id: { name: string; email: string };
     type: string;
     status: string;
   };
-  doctor_id?: { _id: string; name: string };
-  therapist_id?: { _id: string; name: string };
 }
 
 interface Holiday {
@@ -39,11 +47,13 @@ interface SnackbarState {
 interface BulkScheduleData {
   startDate: string;
   endDate: string;
-  daysOfWeek: number[]; // 0 = Sunday, 1 = Monday, etc.
+  daysOfWeek: number[];
   startTime: string;
   endTime: string;
-  timeInterval: number; // in minutes
+  timeInterval: number;
   excludeHolidays: boolean;
+  doctorId: string;
+  therapistId: string;
 }
 
 interface CalendarDay {
@@ -65,6 +75,8 @@ export default function AdminSchedulePage() {
   const [slots, setSlots] = useState<BookingSlot[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
+  const [doctors, setDoctors] = useState<User[]>([]);
+  const [therapists, setTherapists] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -81,15 +93,19 @@ export default function AdminSchedulePage() {
   const [showDeleteHolidayModal, setShowDeleteHolidayModal] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [selectedHolidayId, setSelectedHolidayId] = useState<string | null>(null);
+  const [editingSlot, setEditingSlot] = useState<BookingSlot | null>(null);
+  const [staffLoading, setStaffLoading] = useState(true);
 
   const [bulkData, setBulkData] = useState<BulkScheduleData>({
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    daysOfWeek: [1, 2, 3, 4, 5, 6], // Monday to Saturday
+    daysOfWeek: [1, 2, 3, 4, 5, 6],
     startTime: '10:00',
     endTime: '18:00',
     timeInterval: 60,
-    excludeHolidays: true
+    excludeHolidays: true,
+    doctorId: '',
+    therapistId: ''
   });
 
   const [holidayData, setHolidayData] = useState({
@@ -103,7 +119,50 @@ export default function AdminSchedulePage() {
     fetchSchedule();
     fetchHolidays();
     fetchCalendarData();
+    fetchDoctorsAndTherapists();
   }, [selectedDate, currentMonth]);
+
+  const fetchDoctorsAndTherapists = async () => {
+    try {
+      setStaffLoading(true);
+      const response = await fetch('/api/admin/users/staff');
+      
+      // Check if response is HTML (error page)
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('text/html')) {
+        console.warn('API returned HTML, using empty arrays');
+        setDoctors([]);
+        setTherapists([]);
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Ensure we have arrays even if API returns undefined
+        setDoctors(data.doctors || []);
+        setTherapists(data.therapists || []);
+        
+        // Set default values for bulk data if not set
+        if (data.doctors?.length > 0 && !bulkData.doctorId) {
+          setBulkData(prev => ({ ...prev, doctorId: data.doctors[0]._id }));
+        }
+        if (data.therapists?.length > 0 && !bulkData.therapistId) {
+          setBulkData(prev => ({ ...prev, therapistId: data.therapists[0]._id }));
+        }
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching staff:', error);
+      // Set empty arrays to prevent errors
+      setDoctors([]);
+      setTherapists([]);
+      showSnackbar('Gagal memuat data staff', 'error');
+    } finally {
+      setStaffLoading(false);
+    }
+  };
 
   const showSnackbar = (message: string, type: SnackbarType = 'info') => {
     setSnackbar({
@@ -194,37 +253,37 @@ export default function AdminSchedulePage() {
   };
 
   const handleDeleteSlotClick = (slotId: string) => {
-  setSelectedSlotId(slotId);
-  setShowDeleteSlotModal(true);
-};
+    setSelectedSlotId(slotId);
+    setShowDeleteSlotModal(true);
+  };
 
-const deleteSlot = async () => {
-  if (!selectedSlotId) return;
-  
-  setActionLoading(selectedSlotId);
-  try {
-    const response = await fetch(`/api/admin/schedule/${selectedSlotId}`, {
-      method: 'DELETE'
-    });
-
-    const data = await response.json();
+  const deleteSlot = async () => {
+    if (!selectedSlotId) return;
     
-    if (data.success) {
-      showSnackbar('Slot berhasil dihapus', 'success');
-      fetchSchedule();
-      fetchCalendarData(); // Refresh calendar
-    } else {
-      throw new Error(data.error);
+    setActionLoading(selectedSlotId);
+    try {
+      const response = await fetch(`/api/admin/schedule/${selectedSlotId}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        showSnackbar('Slot berhasil dihapus', 'success');
+        fetchSchedule();
+        fetchCalendarData(); // Refresh calendar
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error deleting slot:', error);
+      showSnackbar('Gagal menghapus slot', 'error');
+    } finally {
+      setActionLoading(null);
+      setSelectedSlotId(null);
+      setShowDeleteSlotModal(false);
     }
-  } catch (error) {
-    console.error('Error deleting slot:', error);
-    showSnackbar('Gagal menghapus slot', 'error');
-  } finally {
-    setActionLoading(null);
-    setSelectedSlotId(null);
-    setShowDeleteSlotModal(false);
-  }
-};
+  };
 
   const createBulkSchedule = async () => {
     setBulkCreating(true);
@@ -287,37 +346,37 @@ const deleteSlot = async () => {
   };
 
   const handleDeleteHolidayClick = (holidayId: string) => {
-  setSelectedHolidayId(holidayId);
-  setShowDeleteHolidayModal(true);
-};
+    setSelectedHolidayId(holidayId);
+    setShowDeleteHolidayModal(true);
+  };
 
-const deleteHoliday = async () => {
-  if (!selectedHolidayId) return;
-  
-  setActionLoading(selectedHolidayId);
-  try {
-    const response = await fetch(`/api/admin/holidays/${selectedHolidayId}`, {
-      method: 'DELETE'
-    });
-
-    const data = await response.json();
+  const deleteHoliday = async () => {
+    if (!selectedHolidayId) return;
     
-    if (data.success) {
-      showSnackbar('Hari libur berhasil dihapus', 'success');
-      fetchHolidays();
-      fetchCalendarData(); // Refresh calendar
-    } else {
-      throw new Error(data.error);
+    setActionLoading(selectedHolidayId);
+    try {
+      const response = await fetch(`/api/admin/holidays/${selectedHolidayId}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        showSnackbar('Hari libur berhasil dihapus', 'success');
+        fetchHolidays();
+        fetchCalendarData(); // Refresh calendar
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error deleting holiday:', error);
+      showSnackbar('Gagal menghapus hari libur', 'error');
+    } finally {
+      setActionLoading(null);
+      setSelectedHolidayId(null);
+      setShowDeleteHolidayModal(false);
     }
-  } catch (error) {
-    console.error('Error deleting holiday:', error);
-    showSnackbar('Gagal menghapus hari libur', 'error');
-  } finally {
-    setActionLoading(null);
-    setSelectedHolidayId(null);
-    setShowDeleteHolidayModal(false);
-  }
-};
+  };
 
   const generateTimeSlots = () => {
     const slots = [];
@@ -339,6 +398,63 @@ const deleteHoliday = async () => {
     }
     
     return slots;
+  };
+
+  const updateSlotStaff = async (slotId: string, doctorId: string, therapistId: string) => {
+    setActionLoading(slotId);
+    try {
+      const response = await fetch(`/api/admin/schedule/${slotId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          doctor_id: doctorId,
+          therapist_id: therapistId
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        showSnackbar('Staff slot berhasil diupdate', 'success');
+        fetchSchedule();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error updating slot staff:', error);
+      showSnackbar('Gagal mengupdate staff slot', 'error');
+    } finally {
+      setActionLoading(null);
+      setEditingSlot(null);
+    }
+  };
+
+  const handleEditSlotClick = (slot: BookingSlot) => {
+    setEditingSlot({
+      ...slot,
+      doctor_id: slot.doctor_id || { _id: '', name: '' },
+      therapist_id: slot.therapist_id || { _id: '', name: '' }
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSlot(null);
+  };
+
+  const handleSaveEdit = (slotId: string) => {
+    if (!editingSlot) return;
+    
+    // Ensure we have valid IDs
+    if (!editingSlot.doctor_id?._id || !editingSlot.therapist_id?._id) {
+      showSnackbar('Harap pilih dokter dan terapis', 'error');
+      return;
+    }
+    
+    updateSlotStaff(
+      slotId, 
+      editingSlot.doctor_id._id, 
+      editingSlot.therapist_id._id
+    );
   };
 
   // Calendar navigation
@@ -541,6 +657,7 @@ const deleteHoliday = async () => {
         {/* Right Sidebar */}
         <div className="space-y-6">
           {/* Selected Date Schedule */}
+          {/* Selected Date Schedule */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">
@@ -581,6 +698,71 @@ const deleteHoliday = async () => {
                           </span>
                         </div>
                         
+                        {/* Staff Information */}
+                        {editingSlot && editingSlot._id === slot._id ? (
+                          <div className="space-y-2 mb-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Dokter
+                              </label>
+                              <select
+                                value={editingSlot.doctor_id?._id || ''}
+                                onChange={(e) => setEditingSlot({
+                                  ...editingSlot,
+                                  doctor_id: { 
+                                    _id: e.target.value, 
+                                    name: doctors.find(d => d._id === e.target.value)?.name || '' 
+                                  }
+                                })}
+                                className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              >
+                                <option value="">Pilih Dokter</option>
+                                {doctors.map(doctor => (
+                                  <option key={doctor._id} value={doctor._id}>
+                                    {doctor.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Terapis
+                              </label>
+                              <select
+                                value={editingSlot.therapist_id?._id || ''}
+                                onChange={(e) => setEditingSlot({
+                                  ...editingSlot,
+                                  therapist_id: { 
+                                    _id: e.target.value, 
+                                    name: therapists.find(t => t._id === e.target.value)?.name || '' 
+                                  }
+                                })}
+                                className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              >
+                                <option value="">Pilih Terapis</option>
+                                {therapists.map(therapist => (
+                                  <option key={therapist._id} value={therapist._id}>
+                                    {therapist.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-600 space-y-1 mb-3">
+                            <div className="flex gap-4">
+                              <div>
+                                <span className="font-medium">Dokter:</span>{' '}
+                                {slot.doctor_id?.name || 'Belum ditentukan'}
+                              </div>
+                              <div>
+                                <span className="font-medium">Terapis:</span>{' '}
+                                {slot.therapist_id?.name || 'Belum ditentukan'}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {slot.booking_id && (
                           <div className="text-sm text-gray-600 space-y-1">
                             <p className="font-medium">{slot.booking_id.user_id.name}</p>
@@ -595,32 +777,64 @@ const deleteHoliday = async () => {
                       </div>
 
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => toggleSlotAvailability(slot._id, slot.is_available)}
-                          disabled={actionLoading === slot._id}
-                          className={`px-3 py-1 rounded text-sm transition-colors flex items-center gap-1 ${
-                            slot.is_available 
-                              ? 'bg-yellow-600 text-white hover:bg-yellow-700 disabled:bg-yellow-400' 
-                              : 'bg-green-600 text-white hover:bg-green-700 disabled:bg-green-400'
-                          } disabled:cursor-not-allowed`}
-                        >
-                          {actionLoading === slot._id ? (
-                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                          ) : (
-                            slot.is_available ? 'Tutup' : 'Buka'
-                          )}
-                        </button>
-                        <button
-                        onClick={() => handleDeleteSlotClick(slot._id)}
-                        disabled={actionLoading === slot._id}
-                        className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors"
-                        >
-                        {actionLoading === slot._id ? (
-                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                        {editingSlot && editingSlot._id === slot._id ? (
+                          <>
+                            <button
+                              onClick={() => handleSaveEdit(slot._id)}
+                              disabled={actionLoading === slot._id}
+                              className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {actionLoading === slot._id ? (
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                              ) : (
+                                'Simpan'
+                              )}
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              disabled={actionLoading === slot._id}
+                              className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                            >
+                              Batal
+                            </button>
+                          </>
                         ) : (
-                            'Hapus'
+                          <>
+                            <button
+                              onClick={() => handleEditSlotClick(slot)}
+                              disabled={actionLoading === slot._id}
+                              className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
+                            >
+                              Edit Staff
+                            </button>
+                            <button
+                              onClick={() => toggleSlotAvailability(slot._id, slot.is_available)}
+                              disabled={actionLoading === slot._id}
+                              className={`px-3 py-1 rounded text-sm transition-colors flex items-center gap-1 ${
+                                slot.is_available 
+                                  ? 'bg-yellow-600 text-white hover:bg-yellow-700 disabled:bg-yellow-400' 
+                                  : 'bg-green-600 text-white hover:bg-green-700 disabled:bg-green-400'
+                              } disabled:cursor-not-allowed`}
+                            >
+                              {actionLoading === slot._id ? (
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                              ) : (
+                                slot.is_available ? 'Tutup' : 'Buka'
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSlotClick(slot._id)}
+                              disabled={actionLoading === slot._id}
+                              className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {actionLoading === slot._id ? (
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                              ) : (
+                                'Hapus'
+                              )}
+                            </button>
+                          </>
                         )}
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -689,30 +903,75 @@ const deleteHoliday = async () => {
               <h2 className="text-xl font-bold text-gray-900 mb-4">Buat Jadwal Massal</h2>
               
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tanggal Mulai
-                    </label>
-                    <input
-                      type="date"
-                      value={bulkData.startDate}
-                      onChange={(e) => setBulkData({ ...bulkData, startDate: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-                    />
+                 {/* Staff Selection */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Dokter
+                      </label>
+                      <select
+                        value={bulkData.doctorId}
+                        onChange={(e) => setBulkData({ ...bulkData, doctorId: e.target.value })}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                        disabled={doctors.length === 0}
+                      >
+                        <option value="">{doctors.length === 0 ? 'Tidak ada dokter' : 'Pilih Dokter'}</option>
+                        {doctors.map(doctor => (
+                          <option key={doctor._id} value={doctor._id}>
+                            {doctor.name}
+                          </option>
+                        ))}
+                      </select>
+                      {doctors.length === 0 && (
+                        <p className="text-xs text-red-500 mt-1">Belum ada data dokter</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Terapis
+                      </label>
+                      <select
+                        value={bulkData.therapistId}
+                        onChange={(e) => setBulkData({ ...bulkData, therapistId: e.target.value })}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                        disabled={therapists.length === 0}
+                      >
+                        <option value="">{therapists.length === 0 ? 'Tidak ada terapis' : 'Pilih Terapis'}</option>
+                        {therapists.map(therapist => (
+                          <option key={therapist._id} value={therapist._id}>
+                            {therapist.name}
+                          </option>
+                        ))}
+                      </select>
+                      {therapists.length === 0 && (
+                        <p className="text-xs text-red-500 mt-1">Belum ada data terapis</p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tanggal Selesai
-                    </label>
-                    <input
-                      type="date"
-                      value={bulkData.endDate}
-                      onChange={(e) => setBulkData({ ...bulkData, endDate: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tanggal Mulai
+                      </label>
+                      <input
+                        type="date"
+                        value={bulkData.startDate}
+                        onChange={(e) => setBulkData({ ...bulkData, startDate: e.target.value })}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tanggal Selesai
+                      </label>
+                      <input
+                        type="date"
+                        value={bulkData.endDate}
+                        onChange={(e) => setBulkData({ ...bulkData, endDate: e.target.value })}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                      />
+                    </div>
                   </div>
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -825,7 +1084,7 @@ const deleteHoliday = async () => {
                   </button>
                   <button
                     onClick={createBulkSchedule}
-                    disabled={bulkCreating}
+                    disabled={bulkCreating || !bulkData.doctorId || !bulkData.therapistId}
                     className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {bulkCreating ? (

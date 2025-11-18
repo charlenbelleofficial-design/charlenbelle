@@ -1,3 +1,4 @@
+// app/api/admin/schedule/bulk/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../../lib/mongodb';
 import BookingSlot from '../../../../models/BookingSlot';
@@ -15,10 +16,20 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const { startDate, endDate, daysOfWeek, startTime, endTime, timeInterval, excludeHolidays } = await req.json();
+    const { 
+      startDate, 
+      endDate, 
+      daysOfWeek, 
+      startTime, 
+      endTime, 
+      timeInterval, 
+      excludeHolidays,
+      doctorId,
+      therapistId 
+    } = await req.json();
 
     // Validate input
-    if (!startDate || !endDate || !daysOfWeek || !startTime || !endTime || !timeInterval) {
+    if (!startDate || !endDate || !daysOfWeek || !startTime || !endTime || !timeInterval || !doctorId || !therapistId) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
@@ -49,9 +60,12 @@ export async function POST(req: NextRequest) {
       while (currentTime < endTimeObj) {
         const startStr = currentTime.toTimeString().slice(0, 5);
         currentTime.setMinutes(currentTime.getMinutes() + timeInterval);
-        const endStr = currentTime.toTimeString().slice(0, 5);
         
-        slots.push({ start_time: startStr, end_time: endStr });
+        // Check if we haven't exceeded end time after adding interval
+        if (currentTime <= endTimeObj) {
+          const endStr = currentTime.toTimeString().slice(0, 5);
+          slots.push({ start_time: startStr, end_time: endStr });
+        }
       }
       
       return slots;
@@ -64,9 +78,11 @@ export async function POST(req: NextRequest) {
       // Check if this day should have slots
       if (daysOfWeek.includes(dayOfWeek)) {
         // Check if it's a holiday
-        const isHoliday = holidays.some(holiday => 
-          new Date(holiday.date).toDateString() === date.toDateString()
-        );
+        const dateString = date.toISOString().split('T')[0];
+        const isHoliday = holidays.some(holiday => {
+          const holidayDate = new Date(holiday.date).toISOString().split('T')[0];
+          return holidayDate === dateString;
+        });
 
         if (!isHoliday) {
           const timeSlots = generateTimeSlots(new Date(date));
@@ -76,7 +92,8 @@ export async function POST(req: NextRequest) {
             const existingSlot = await BookingSlot.findOne({
               date: date,
               start_time: timeSlot.start_time,
-              end_time: timeSlot.end_time
+              end_time: timeSlot.end_time,
+              doctor_id: doctorId
             });
 
             if (!existingSlot) {
@@ -84,6 +101,8 @@ export async function POST(req: NextRequest) {
                 date: new Date(date),
                 start_time: timeSlot.start_time,
                 end_time: timeSlot.end_time,
+                doctor_id: doctorId,
+                therapist_id: therapistId,
                 is_available: true,
                 created_at: new Date(),
                 updated_at: new Date()

@@ -29,7 +29,7 @@ const UserSchema: Schema = new Schema({
   phone_number: { type: String },
   role: {
     type: String,
-    enum: ['customer', 'kasir', 'admin', 'superadmin', 'doctor'],
+    enum: ['customer', 'kasir', 'admin', 'superadmin', 'doctor', 'therapist'], // Added therapist
     default: 'customer'
   },
   profile_picture: { type: String },

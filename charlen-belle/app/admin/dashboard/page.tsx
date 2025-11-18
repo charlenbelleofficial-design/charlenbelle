@@ -130,7 +130,7 @@ export default function AdminDashboard() {
           title="Transaksi Walk-in"
           description="Input transaksi pelanggan langsung"
           icon="💳"
-          href="/admin/walkin"
+          href="/admin/transactions"
           color="bg-green-500"
         />
         {(session?.user?.role === 'admin' || session?.user?.role === 'superadmin') && (
