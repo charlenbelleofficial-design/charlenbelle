@@ -18,80 +18,71 @@ export async function GET(req: NextRequest) {
       if (mongoose.Types.ObjectId.isValid(category)) {
         filter.category_id = category;
       } else {
-        console.error(`Invalid category ID received: ${category}`);
         return NextResponse.json(
-          { 
-            success: false, 
-            error: 'ID kategori tidak valid' 
-          },
+          { success: false, error: 'ID kategori tidak valid' },
           { status: 400 }
         );
       }
     }
 
-    // Get all treatments
     const treatments = await Treatment.find(filter)
       .populate('category_id', 'name')
       .sort({ base_price: 1 });
 
-    const now = new Date();
-    
     // Get all active promos
+    const now = new Date();
     const activePromos = await Promo.find({
       is_active: true,
-      $and: [
-        { 
-          $or: [
-            { start_date: { $exists: false } },
-            { start_date: null },
-            { start_date: { $lte: now } }
-          ]
-        },
-        {
-          $or: [
-            { end_date: { $exists: false } },
-            { end_date: null },
-            { end_date: { $gte: now } }
-          ]
-        }
+      $or: [
+        { start_date: { $lte: now }, end_date: { $gte: now } },
+        { start_date: { $lte: now }, end_date: null },
+        { start_date: null, end_date: { $gte: now } },
+        { start_date: null, end_date: null }
       ]
     });
 
-    // Map treatments with their applicable promos
+    // Apply promos to treatments
     const treatmentsWithPromos = treatments.map(treatment => {
-      // Find promos that apply to this treatment
+      const treatmentObj = treatment.toObject();
+      
+      // Find applicable promos for this treatment
       const applicablePromos = activePromos.filter(promo => 
         promo.is_global || 
-        (promo.applicable_treatments && 
-         promo.applicable_treatments.some((treatmentId: mongoose.Types.ObjectId) => 
-           treatmentId.toString() === treatment._id.toString()
-         ))
+        promo.applicable_treatments.some((id: mongoose.Types.ObjectId) => id.toString() === treatment._id.toString())
       );
 
-      // Get the best promo (highest discount)
-      const bestPromo = applicablePromos.length > 0 
-        ? applicablePromos.reduce((best, current) => {
-            const currentDiscount = current.discount_type === 'percentage' 
-              ? treatment.base_price * (current.discount_value / 100)
-              : current.discount_value;
-            
-            const bestDiscount = best.discount_type === 'percentage'
-              ? treatment.base_price * (best.discount_value / 100)
-              : best.discount_value;
+      if (applicablePromos.length === 0) {
+        return treatmentObj;
+      }
 
-            return currentDiscount > bestDiscount ? current : best;
-          })
-        : null;
+      // Find the best promo (lowest final price)
+      let bestPrice = treatment.base_price;
+      let bestPromo = null;
+
+      applicablePromos.forEach(promo => {
+        let discountedPrice;
+        if (promo.discount_type === 'percentage') {
+          discountedPrice = Math.round(treatment.base_price * (1 - promo.discount_value / 100));
+        } else {
+          discountedPrice = Math.max(0, treatment.base_price - promo.discount_value);
+        }
+
+        if (discountedPrice < bestPrice) {
+          bestPrice = discountedPrice;
+          bestPromo = {
+            _id: promo._id,
+            name: promo.name,
+            discount_type: promo.discount_type,
+            discount_value: promo.discount_value,
+            is_global: promo.is_global
+          };
+        }
+      });
 
       return {
-        ...treatment.toObject(),
-        promo: bestPromo ? {
-          _id: bestPromo._id,
-          name: bestPromo.name,
-          discount_type: bestPromo.discount_type,
-          discount_value: bestPromo.discount_value,
-          is_global: bestPromo.is_global
-        } : undefined
+        ...treatmentObj,
+        promo: bestPromo,
+        final_price: bestPrice
       };
     });
 
@@ -103,10 +94,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Error fetching treatments with promos:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Gagal memuat data treatment' 
-      },
+      { success: false, error: 'Gagal memuat data treatment' },
       { status: 500 }
     );
   }

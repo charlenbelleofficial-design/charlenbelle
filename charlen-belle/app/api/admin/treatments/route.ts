@@ -5,6 +5,16 @@ import TreatmentPromo from '../../../models/TreatmentPromo';
 import Promo from '../../../models/Promo';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth-config';
+import mongoose from 'mongoose';
+
+
+interface PromoDetails {
+  _id: string;
+  name: string;
+  discount_type: string;
+  discount_value: number;
+}
+
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,52 +40,81 @@ export async function GET(req: NextRequest) {
 
     let treatmentsWithPromos = treatments;
 
+    // In the GET function, add more logging:
     if (includePromos) {
+      // Get all active promos first
+      const now = new Date();
+      const allActivePromos = await Promo.find({
+        is_active: true,
+        $or: [
+          { start_date: { $lte: now }, end_date: { $gte: now } },
+          { start_date: { $lte: now }, end_date: null },
+          { start_date: null, end_date: { $gte: now } },
+          { start_date: null, end_date: null }
+        ]
+      });
+
+      console.log(`🎯 API: Found ${allActivePromos.length} active promos total`);
+
       // Get active promos for each treatment
-      treatmentsWithPromos = await Promise.all(
-        treatments.map(async (treatment) => {
-          console.log(`🔍 API: Checking promos for treatment: ${treatment.name}`);
+      treatmentsWithPromos = treatments.map((treatment) => {
+        console.log(`🔍 API: Checking promos for treatment: ${treatment.name} (ID: ${treatment._id})`);
+        console.log(`  💰 Base price: ${treatment.base_price}`);
+        
+        // Find promos that apply to this treatment
+        const applicablePromos = allActivePromos.filter(promo => {
+          // Check if promo is global OR treatment is in applicable_treatments
+          const isApplicable = promo.is_global || 
+            promo.applicable_treatments.some((treatmentId: mongoose.Types.ObjectId) => 
+              treatmentId.toString() === treatment._id.toString()
+            );
           
-          const treatmentPromos = await TreatmentPromo.find({ 
-            treatment_id: treatment._id 
-          }).populate('promo_id');
+          if (isApplicable) {
+            console.log(`  ✅ API: Promo ${promo.name} applies to ${treatment.name}`);
+          }
+          
+          return isApplicable;
+        });
 
-          console.log(`  📊 API: Found ${treatmentPromos.length} promo mappings`);
+        console.log(`  📊 API: Found ${applicablePromos.length} applicable promos for ${treatment.name}`);
 
-          const activePromos = treatmentPromos
-            .map(tp => {
-              const promo = tp.promo_id;
-              console.log(`  🎯 API: Checking promo: ${promo?.name}, Active: ${promo?.is_active}`);
-              return promo;
-            })
-            .filter(promo => {
-              if (!promo || !promo.is_active) {
-                console.log(`  ❌ API: Promo ${promo?.name} is not active`);
-                return false;
-              }
-              
-              const now = new Date();
-              if (promo.start_date && new Date(promo.start_date) > now) {
-                console.log(`  ❌ API: Promo ${promo.name} hasn't started yet`);
-                return false;
-              }
-              if (promo.end_date && new Date(promo.end_date) < now) {
-                console.log(`  ❌ API: Promo ${promo.name} has expired`);
-                return false;
-              }
-              
-              console.log(`  ✅ API: Promo ${promo.name} is active and valid`);
-              return true;
-            });
+        // Calculate best price
+        let bestPrice = treatment.base_price;
+        let bestPromo: PromoDetails | null = null;
 
-          console.log(`  ✅ API: ${activePromos.length} active promos for ${treatment.name}`);
+        applicablePromos.forEach(promo => {
+          let discountedPrice = treatment.base_price;
+          
+          if (promo.discount_type === 'percentage') {
+            discountedPrice = Math.round(treatment.base_price * (1 - promo.discount_value / 100));
+          } else {
+            discountedPrice = Math.max(0, treatment.base_price - promo.discount_value);
+          }
 
-          return {
-            ...treatment.toObject(),
-            active_promos: activePromos
-          };
-        })
-      );
+          console.log(`  💰 Promo ${promo.name}: ${treatment.base_price} -> ${discountedPrice}`);
+
+          if (discountedPrice < bestPrice) {
+            bestPrice = discountedPrice;
+            bestPromo = {
+              _id: promo._id.toString(),
+              name: promo.name,
+              discount_type: promo.discount_type,
+              discount_value: promo.discount_value
+            };
+          }
+        });
+
+        const result = {
+          ...treatment.toObject(),
+          active_promos: applicablePromos,
+          final_price: bestPrice,
+          applied_promo: bestPromo
+        };
+
+        console.log(`  🎯 FINAL: ${treatment.name} - Base: ${treatment.base_price}, Final: ${bestPrice}, Has Promo: ${!!bestPromo}`);
+        
+        return result;
+      });
     }
 
     return NextResponse.json({

@@ -4,78 +4,82 @@ import connectDB from '../../../../../lib/mongodb';
 import Booking from '../../../../../models/Booking';
 import BookingTreatment from '../../../../../models/BookingTreatment';
 import Treatment from '../../../../../models/Treatment';
-import TreatmentPromo from '../../../../../models/TreatmentPromo';
 import Promo from '../../../../../models/Promo';
+import TreatmentPromo from '../../../../../models/TreatmentPromo';
 import BookingEditLog from '../../../../../models/BookingEditLog';
-import Payment from '../../../../../models/Payment';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../../../lib/auth-config';
 import mongoose from 'mongoose';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: bookingId } = await params;
+    const params = await context.params;
+    const bookingId = params.id;
+    
+    console.log('Edit treatments API called for booking:', bookingId);
+    
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user has admin/doctor access
-    if (!session.user.role || !['admin', 'superadmin', 'doctor', 'kasir'].includes(session.user.role)) {
+    if (!session.user.role || !['admin', 'superadmin', 'doctor'].includes(session.user.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     await connectDB();
+
+    const { action, treatment_id, quantity = 1, unit_price } = await req.json();
+
+    console.log('Edit treatments data:', { action, treatment_id, quantity, unit_price });
 
     // Validate booking ID
     if (!mongoose.Types.ObjectId.isValid(bookingId)) {
       return NextResponse.json({ error: 'Invalid booking ID' }, { status: 400 });
     }
 
-    const { action, treatment_id, quantity, unit_price } = await req.json();
-
-    // Find booking and check if it's editable
+    // Find booking
     const booking = await Booking.findById(bookingId);
     if (!booking) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    // Check if booking is paid (not editable if paid)
-    const payment = await Payment.findOne({ booking_id: bookingId, status: 'paid' });
-    if (payment) {
-      return NextResponse.json({ error: 'Cannot edit paid booking' }, { status: 400 });
-    }
-
-    let totalAmount = booking.total_amount || 0;
-    const editLogs = [];
-
     if (action === 'add_treatment') {
-      // Add new treatment
+      // Validate treatment_id
+      if (!treatment_id) {
+        return NextResponse.json({ error: 'Treatment ID is required' }, { status: 400 });
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(treatment_id)) {
+        return NextResponse.json({ error: 'Invalid treatment ID' }, { status: 400 });
+      }
+
       const treatment = await Treatment.findById(treatment_id);
       if (!treatment) {
         return NextResponse.json({ error: 'Treatment not found' }, { status: 404 });
       }
 
-      // Calculate final price with promo if unit_price not provided
+      // Use the provided unit_price (which should include promo discount)
+      // or calculate it if not provided
       let finalUnitPrice = unit_price;
+      
       if (!finalUnitPrice) {
-        finalUnitPrice = treatment.base_price;
-        
-        // Find promos mapped to this treatment
+        // Calculate price with promos
         const mappings = await TreatmentPromo.find({ treatment_id: treatment._id }).lean();
+        finalUnitPrice = treatment.base_price;
+
         if (mappings && mappings.length > 0) {
-          // Evaluate each promo and pick the one that gives lowest final price
           let bestPrice = treatment.base_price;
           for (const m of mappings) {
             const promo = await Promo.findById(m.promo_id);
-            if (!promo) continue;
+            if (!promo || !promo.is_active) continue;
+            
             // Check active date range
             const now = new Date();
-            if (!promo.is_active) continue;
             if (promo.start_date && new Date(promo.start_date) > now) continue;
             if (promo.end_date && new Date(promo.end_date) < now) continue;
 
@@ -92,132 +96,131 @@ export async function POST(
         }
       }
 
-      const treatmentQuantity = quantity || 1;
-      const linePrice = finalUnitPrice * treatmentQuantity;
+      console.log('Adding treatment with price:', finalUnitPrice);
 
-      // Create booking treatment
-      const bookingTreatment = await BookingTreatment.create({
+      // Check if treatment already exists in booking
+      const existingTreatment = await BookingTreatment.findOne({
         booking_id: bookingId,
-        treatment_id: treatment._id,
-        quantity: treatmentQuantity,
-        price: finalUnitPrice // Use the promo price
+        treatment_id: treatment_id
       });
 
-      totalAmount += linePrice;
+      // In the add_treatment section, update the BookingTreatment creation:
+      if (existingTreatment) {
+        // Update quantity if treatment already exists
+        existingTreatment.quantity += quantity;
+        existingTreatment.price = finalUnitPrice;
+        existingTreatment.original_price = treatment.base_price; // Store original price
+        
+        // Store promo info if price is discounted
+        if (finalUnitPrice < treatment.base_price && treatment.applied_promo) {
+          existingTreatment.promo_applied = {
+            promo_id: treatment.applied_promo._id,
+            promo_name: treatment.applied_promo.name,
+            discount_type: treatment.applied_promo.discount_type,
+            discount_value: treatment.applied_promo.discount_value
+          };
+        }
+        
+        await existingTreatment.save();
+      } else {
+        // Add new treatment to booking
+        const bookingTreatmentData: any = {
+          booking_id: bookingId,
+          treatment_id,
+          quantity,
+          price: finalUnitPrice,
+          original_price: treatment.base_price // Store original price
+        };
+
+        // Store promo info if price is discounted
+        if (finalUnitPrice < treatment.base_price && treatment.applied_promo) {
+          bookingTreatmentData.promo_applied = {
+            promo_id: treatment.applied_promo._id,
+            promo_name: treatment.applied_promo.name,
+            discount_type: treatment.applied_promo.discount_type,
+            discount_value: treatment.applied_promo.discount_value
+          };
+        }
+
+        await BookingTreatment.create(bookingTreatmentData);
+      }
 
       // Log the action
-      const editLog = await BookingEditLog.create({
+      await BookingEditLog.create({
         booking_id: bookingId,
         edited_by: new mongoose.Types.ObjectId(session.user.id),
         action: 'added_treatment',
         details: {
-          treatment_id: treatment._id,
+          treatment_id: treatment_id,
           treatment_name: treatment.name,
-          quantity: treatmentQuantity,
-          price: finalUnitPrice, // Log the actual price used
-          previous_total: booking.total_amount,
-          new_total: totalAmount,
-          used_promo_price: finalUnitPrice !== treatment.base_price
+          quantity: quantity,
+          price: finalUnitPrice
         }
       });
-      editLogs.push(editLog);
 
     } else if (action === 'remove_treatment') {
-      // Remove treatment
-      const bookingTreatment = await BookingTreatment.findOne({
+      // Validate treatment_id
+      if (!treatment_id) {
+        return NextResponse.json({ error: 'Treatment ID is required' }, { status: 400 });
+      }
+
+      const treatment = await Treatment.findById(treatment_id);
+      if (!treatment) {
+        return NextResponse.json({ error: 'Treatment not found' }, { status: 404 });
+      }
+
+      // Remove treatment from booking
+      const result = await BookingTreatment.findOneAndDelete({
         booking_id: bookingId,
         treatment_id
       });
 
-      if (!bookingTreatment) {
+      if (!result) {
         return NextResponse.json({ error: 'Treatment not found in booking' }, { status: 404 });
       }
 
-      const linePrice = bookingTreatment.price * bookingTreatment.quantity;
-      totalAmount = Math.max(0, totalAmount - linePrice);
-
-      // Log before deleting
-      const treatment = await Treatment.findById(treatment_id);
-      const editLog = await BookingEditLog.create({
+      // Log the action
+      await BookingEditLog.create({
         booking_id: bookingId,
         edited_by: new mongoose.Types.ObjectId(session.user.id),
         action: 'removed_treatment',
         details: {
           treatment_id: treatment_id,
-          treatment_name: treatment?.name,
-          quantity: bookingTreatment.quantity,
-          price: bookingTreatment.price,
-          previous_total: booking.total_amount,
-          new_total: totalAmount
+          treatment_name: treatment.name
         }
       });
-      editLogs.push(editLog);
-
-      // Remove the treatment
-      await BookingTreatment.findByIdAndDelete(bookingTreatment._id);
-
-    } else if (action === 'update_quantity') {
-      // Update treatment quantity
-      const bookingTreatment = await BookingTreatment.findOne({
-        booking_id: bookingId,
-        treatment_id
-      });
-
-      if (!bookingTreatment) {
-        return NextResponse.json({ error: 'Treatment not found in booking' }, { status: 404 });
-      }
-
-      const oldLinePrice = bookingTreatment.price * bookingTreatment.quantity;
-      const newLinePrice = bookingTreatment.price * quantity;
-
-      totalAmount = totalAmount - oldLinePrice + newLinePrice;
-
-      // Log the update
-      const treatment = await Treatment.findById(treatment_id);
-      const editLog = await BookingEditLog.create({
-        booking_id: bookingId,
-        edited_by: new mongoose.Types.ObjectId(session.user.id),
-        action: 'updated_treatment',
-        details: {
-          treatment_id: treatment_id,
-          treatment_name: treatment?.name,
-          quantity: quantity,
-          price: bookingTreatment.price,
-          previous_total: booking.total_amount,
-          new_total: totalAmount
-        }
-      });
-      editLogs.push(editLog);
-
-      // Update quantity
-      bookingTreatment.quantity = quantity;
-      await bookingTreatment.save();
+    } else {
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    // Update booking total amount
-    booking.total_amount = totalAmount;
-    booking.updated_at = new Date();
-    await booking.save();
+    // Update booking total
+    const bookingTreatments = await BookingTreatment.find({ booking_id: bookingId });
+    const newTotal = bookingTreatments.reduce((total, bt) => total + (bt.price * bt.quantity), 0);
+    
+    await Booking.findByIdAndUpdate(bookingId, { 
+      total_amount: newTotal,
+      updated_at: new Date()
+    });
 
-    // Get updated booking with treatments
+    // Return updated booking with treatments
     const updatedBooking = await Booking.findById(bookingId)
       .populate('user_id', 'name email phone_number')
-      .populate('slot_id')
-      .populate('confirmed_by', 'name');
+      .populate('slot_id');
 
     const updatedTreatments = await BookingTreatment.find({ booking_id: bookingId })
       .populate('treatment_id', 'name');
 
     return NextResponse.json({
       success: true,
-      booking: updatedBooking,
-      treatments: updatedTreatments,
-      edit_logs: editLogs,
-      message: 'Booking updated successfully'
+      message: 'Treatment updated successfully',
+      booking: {
+        ...updatedBooking.toObject(),
+        treatments: updatedTreatments
+      }
     });
 
   } catch (error) {
-    console.error('Edit booking treatments error:', error);
+    console.error('Edit treatments error:', error);
     return NextResponse.json({ 
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'

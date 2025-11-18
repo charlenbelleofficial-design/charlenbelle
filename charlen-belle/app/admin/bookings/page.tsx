@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { Snackbar, SnackbarType } from '../../components/ui/snackbar';
 import { formatCurrency, formatDate } from '../../lib/utils';
+import { calculateTreatmentPrice } from '../../lib/promo-utils';
 
 interface User {
   _id: string;
@@ -47,12 +48,12 @@ interface Treatment {
   requires_confirmation?: boolean;
   final_price?: number;
   applied_promo?: {
+    _id: string;
     name: string;
     discount_type: 'percentage' | 'fixed';
     discount_value: number;
-    final_price: number;
   };
-  active_promos?: any[]; // Add this to match the API response
+  active_promos?: any[];
 }
 
 interface Slot {
@@ -88,158 +89,329 @@ interface ConsultationNote {
 function EditBookingModal({ booking, treatments, onAddTreatment, onRemoveTreatment, onClose }: any) {
   const [selectedTreatment, setSelectedTreatment] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleAddTreatment = () => {
     if (!selectedTreatment) return;
     onAddTreatment(selectedTreatment, quantity);
     setSelectedTreatment('');
     setQuantity(1);
+    setSearchTerm('');
+    setIsDropdownOpen(false);
   };
 
   const getSelectedTreatment = () => {
     return treatments.find((t: any) => t._id === selectedTreatment);
   };
 
+  // Filter treatments based on search term
+  const filteredTreatments = treatments.filter((treatment: any) =>
+    treatment.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleTreatmentSelect = (treatmentId: string) => {
+    setSelectedTreatment(treatmentId);
+    setSearchTerm(''); // Clear search when treatment is selected
+    setIsDropdownOpen(false);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setIsDropdownOpen(true);
+    if (!selectedTreatment) {
+      setSelectedTreatment('');
+    }
+  };
+
+  const handleInputFocus = () => {
+    setIsDropdownOpen(true);
+  };
+
+  const handleInputBlur = () => {
+    // Delay closing to allow for item selection
+    setTimeout(() => setIsDropdownOpen(false), 200);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Edit Treatments - {booking.user_id.name}
+      <div className="
+        bg-white 
+        rounded-xl 
+        shadow-xl 
+        w-full 
+        max-w-[95vw] 
+        max-h-[90vh] 
+        overflow-y-auto 
+        overflow-x-hidden
+      ">
+        {/* HEADER */}
+        <div className="p-5 border-b flex justify-between items-center">
+          <h2 className="text-lg font-semibold">
+            Edit Treatments — {booking.user_id?.name}
           </h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            ✕
+          </button>
+        </div>
 
-          <div className="space-y-4">
-            {/* Current Treatments */}
-            <div>
-              <h3 className="font-semibold mb-2">Treatments Saat Ini:</h3>
-              {booking.treatments && booking.treatments.length > 0 ? (
-                <div className="space-y-2">
-                  {booking.treatments.map((treatment: any) => (
-                    <div key={treatment._id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+        {/* BODY */}
+        <div className="p-5 space-y-6 overflow-y-auto">
+
+          {/* CURRENT TREATMENTS */}
+          <section>
+            <h3 className="font-semibold mb-3 text-gray-800">Treatments Saat Ini</h3>
+
+            {booking.treatments?.length > 0 ? (
+              <div className="space-y-3">
+                {booking.treatments.map((treatment: any, index: number) => (
+                  <div
+                    key={index}
+                    className="p-3 rounded-lg border bg-gray-50 hover:bg-gray-100 transition"
+                  >
+                    <div className="flex justify-between">
                       <div>
-                        <p className="font-medium">{treatment.treatment_id?.name}</p>
-                        <p className="text-sm text-gray-600">Qty: {treatment.quantity}</p>
-                        <p className="text-sm font-semibold text-green-600">
+                        <p className="font-medium text-gray-900">
+                          {treatment.treatment_id?.name}
+                        </p>
+
+                        <p className="text-xs text-gray-600">Qty: {treatment.quantity}</p>
+
+                        {treatment.promo_applied && (
+                          <div className="mt-1 text-xs bg-green-100 text-green-700 rounded px-2 py-0.5 inline-block">
+                            🎁 {treatment.promo_applied.promo_name}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="text-right">
+                        <p className="font-semibold text-green-600">
                           {formatCurrency(treatment.price)} each
                         </p>
-                      </div>
-                      <button
-                        onClick={() => onRemoveTreatment(treatment.treatment_id._id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Hapus
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">Belum ada treatments</p>
-              )}
-            </div>
 
-            {/* Add Treatment */}
-            <div>
-              <h3 className="font-semibold mb-2">Tambah Treatment:</h3>
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <select
-                    value={selectedTreatment}
-                    onChange={(e) => setSelectedTreatment(e.target.value)}
-                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
-                  >
-                    <option value="">Pilih Treatment</option>
-                    {treatments.map((treatment: any) => (
-                      <option key={treatment._id} value={treatment._id}>
-                        {treatment.name} - {formatCurrency(treatment.final_price || treatment.base_price)}
-                        {treatment.applied_promo && (
-                          <span className="text-green-600">
-                            {' '}(Promo)
-                          </span>
+                        {treatment.original_price > treatment.price && (
+                          <p className="text-xs line-through text-gray-400">
+                            {formatCurrency(treatment.original_price)}
+                          </p>
                         )}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value))}
-                    className="w-20 border border-gray-300 rounded-lg px-3 py-2"
-                  />
-                  <button
-                    onClick={handleAddTreatment}
-                    disabled={!selectedTreatment}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-                  >
-                    Tambah
-                  </button>
-                </div>
 
-                {/* Selected Treatment Details */}
-                {selectedTreatment && (
-                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    {(() => {
-                      const treatment = getSelectedTreatment();
-                      if (!treatment) return null;
-                      
-                      return (
-                        <div className="text-sm">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="font-medium">{treatment.name}</span>
-                            <div className="text-right">
-                              {treatment.applied_promo ? (
-                                <>
-                                  <div className="text-green-600 font-semibold">
-                                    {formatCurrency(treatment.final_price!)} each
-                                  </div>
-                                  <div className="text-gray-500 text-xs line-through">
-                                    {formatCurrency(treatment.base_price)}
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="font-semibold">
-                                  {formatCurrency(treatment.base_price)} each
+                        <p className="text-xs text-gray-600 mt-1">
+                          Subtotal: {formatCurrency(treatment.price * treatment.quantity)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">Belum ada treatments.</p>
+            )}
+          </section>
+
+          {/* ADD NEW TREATMENT */}
+          <section>
+            <h3 className="font-semibold mb-3 text-gray-800">Tambah Treatment</h3>
+            <p className="text-xs text-gray-500 mb-2">
+              Harga di bawah adalah harga terbaru (sudah termasuk promo jika ada)
+            </p>
+
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                {/* Searchable Treatment Selector */}
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
+                    placeholder="Cari treatment..."
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  />
+                  
+                  {/* Search Icon */}
+                  <div className="absolute right-3 top-2.5 text-gray-400">
+                    🔍
+                  </div>
+
+                  {/* Dropdown Results */}
+                  {isDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {filteredTreatments.length === 0 ? (
+                        <div className="px-4 py-2 text-sm text-gray-500">
+                          {searchTerm ? 'Tidak ada treatment ditemukan' : 'Ketik untuk mencari treatment...'}
+                        </div>
+                      ) : (
+                        filteredTreatments.map((treatment: any) => (
+                          <button
+                            key={treatment._id}
+                            type="button"
+                            onClick={() => handleTreatmentSelect(treatment._id)}
+                            className={`w-full text-left px-4 py-3 hover:bg-gray-100 border-b border-gray-200 last:border-b-0 transition-colors ${
+                              selectedTreatment === treatment._id ? 'bg-blue-50 border-blue-200' : ''
+                            }`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-900">{treatment.name}</div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  Harga: {formatCurrency(treatment.final_price || treatment.base_price)}
+                                  {treatment.applied_promo && (
+                                    <span className="text-green-600 ml-1">
+                                      🎁 Promo {treatment.applied_promo.discount_type === 'percentage' 
+                                        ? `${treatment.applied_promo.discount_value}%`
+                                        : `Rp ${treatment.applied_promo.discount_value.toLocaleString()}`
+                                      }
+                                    </span>
+                                  )}
                                 </div>
+                                {treatment.applied_promo && treatment.final_price !== treatment.base_price && (
+                                  <div className="text-xs text-gray-500 line-through mt-1">
+                                    Normal: {formatCurrency(treatment.base_price)}
+                                  </div>
+                                )}
+                              </div>
+                              {selectedTreatment === treatment._id && (
+                                <div className="text-blue-600 ml-2">✓</div>
                               )}
                             </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  type="number"
+                  min="1"
+                  value={quantity}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // If the input is empty, set quantity to 1 (or 0 if you prefer)
+                    if (value === '') {
+                      setQuantity(1);
+                    } else {
+                      const numValue = parseInt(value);
+                      // Only update if it's a valid number and at least 1
+                      if (!isNaN(numValue) && numValue >= 1) {
+                        setQuantity(numValue);
+                      }
+                    }
+                  }}
+                  className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  placeholder="Qty"
+                />
+
+                <button
+                  onClick={handleAddTreatment}
+                  disabled={!selectedTreatment}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                >
+                  Tambah
+                </button>
+              </div>
+
+              {/* Selected Treatment Preview */}
+              {selectedTreatment && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  {(() => {
+                    const treatment = getSelectedTreatment();
+                    if (!treatment) return null;
+
+                    return (
+                      <div>
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{treatment.name}</h4>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Durasi: {treatment.duration_minutes} menit
+                            </p>
+                            {treatment.requires_confirmation && (
+                              <p className="text-xs text-orange-600 mt-1">⚠️ Membutuhkan konfirmasi</p>
+                            )}
                           </div>
-                          
-                          {treatment.applied_promo && (
-                            <div className="bg-green-100 border border-green-200 rounded p-2">
-                              <div className="flex items-center gap-2 text-green-800">
-                                <span className="text-xs">🎁</span>
-                                <span className="text-xs font-medium">
-                                  Promo {treatment.applied_promo.name} diterapkan
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                          
-                          <div className="mt-2 text-gray-600">
-                            Total untuk {quantity} item: {formatCurrency((treatment.final_price || treatment.base_price) * quantity)}
+                          <div className="text-right">
+                            {treatment.applied_promo ? (
+                              <>
+                                <p className="text-green-600 font-semibold text-lg">
+                                  {formatCurrency(treatment.final_price!)}
+                                </p>
+                                <p className="text-sm text-gray-500 line-through">
+                                  {formatCurrency(treatment.base_price)}
+                                </p>
+                              </>
+                            ) : (
+                              <p className="font-semibold text-lg">
+                                {formatCurrency(treatment.base_price)}
+                              </p>
+                            )}
                           </div>
                         </div>
-                      );
-                    })()}
-                  </div>
-                )}
-              </div>
-            </div>
 
-            <div className="flex gap-3 pt-4">
-              <button
-                onClick={onClose}
-                className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600"
-              >
-                Tutup
-              </button>
+                        {treatment.applied_promo && (
+                          <div className="bg-green-100 border border-green-200 rounded p-3 mb-3">
+                            <div className="flex items-center gap-2 text-green-800">
+                              <span className="text-sm">🎁</span>
+                              <div>
+                                <p className="font-medium text-sm">
+                                  Promo {treatment.applied_promo.name}
+                                </p>
+                                <p className="text-xs">
+                                  Diskon: {treatment.applied_promo.discount_type === 'percentage' 
+                                    ? `${treatment.applied_promo.discount_value}%`
+                                    : `Rp ${treatment.applied_promo.discount_value.toLocaleString()}`
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="bg-white rounded p-3 border">
+                          <p className="text-sm font-medium text-gray-900">
+                            Total untuk {quantity} item: {formatCurrency((treatment.final_price || treatment.base_price) * quantity)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Show selected treatment name when search is empty */}
+              {selectedTreatment && !searchTerm && (
+                <div className="text-sm text-gray-600">
+                  Treatment terpilih: <span className="font-medium">{getSelectedTreatment()?.name}</span>
+                  <button
+                    onClick={() => {
+                      setSelectedTreatment('');
+                      setSearchTerm('');
+                    }}
+                    className="ml-2 text-red-600 hover:text-red-800 text-xs"
+                  >
+                    ✕ Hapus pilihan
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
+          </section>
+        </div>
+
+        {/* FOOTER */}
+        <div className="border-t p-4 bg-gray-50 flex justify-end">
+          <button
+            onClick={onClose}
+            className="bg-gray-600 text-white px-5 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Tutup
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
 
 function ConsultationModal({ booking, data, onChange, onSave, onClose }: any) {
   return (
@@ -445,79 +617,48 @@ export default function AdminBookingsPage() {
     fetchBookings();
   };
   
- const fetchTreatments = async () => {
-  try {
-    console.log('🔄 Fetching treatments from:', '/api/admin/treatments?include_promos=true');
-    const response = await fetch('/api/admin/treatments?include_promos=true');
-    const data = await response.json();
-    
-    console.log('📦 Treatments API response:', data); // Debug log
-    
-    if (data.success) {
-      // Calculate final prices with promos applied
-      const treatmentsWithPromos = data.treatments.map((treatment: any) => {
-        let finalPrice = treatment.base_price;
-        let appliedPromo = null;
+  const fetchTreatments = async () => {
+    try {
+      console.log('🔄 Fetching treatments from:', '/api/admin/treatments?include_promos=true');
+      const response = await fetch('/api/admin/treatments?include_promos=true');
+      
+      // Check if response is HTML (error page)
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response received:', text.substring(0, 200));
+        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      console.log('📦 Treatments API response:', data);
+      
+      if (data.success) {
+        // Use the utility function to calculate prices with promos
+        const treatmentsWithPromos = data.treatments.map((treatment: any) => 
+          calculateTreatmentPrice(treatment)
+        );
 
-        console.log(`🔍 Processing treatment: ${treatment.name}`);
-        console.log(`💰 Base price: ${treatment.base_price}`);
-        console.log(`🎯 Active promos:`, treatment.active_promos);
-
-        // If treatment has active promos, apply the best one
-        if (treatment.active_promos && treatment.active_promos.length > 0) {
-          // Find the promo that gives the lowest price
-          let bestPrice = treatment.base_price;
-          let bestPromo: any = null;
-
-          treatment.active_promos.forEach((promo: any, index: number) => {
-            let discountedPrice = treatment.base_price;
-            
-            if (promo.discount_type === 'percentage') {
-              discountedPrice = Math.round(treatment.base_price * (1 - promo.discount_value / 100));
-              console.log(`  📊 Promo ${index + 1} (${promo.name}): ${promo.discount_value}% off = ${discountedPrice}`);
-            } else {
-              discountedPrice = Math.max(0, treatment.base_price - promo.discount_value);
-              console.log(`  📊 Promo ${index + 1} (${promo.name}): Rp ${promo.discount_value} off = ${discountedPrice}`);
-            }
-
-            if (discountedPrice < bestPrice) {
-              bestPrice = discountedPrice;
-              bestPromo = promo;
-              console.log(`  ✅ New best price found: ${bestPrice}`);
-            }
-          });
-
-          if (bestPromo) {
-            finalPrice = bestPrice;
-            appliedPromo = {
-              name: bestPromo.name,
-              discount_type: bestPromo.discount_type,
-              discount_value: bestPromo.discount_value,
-              final_price: bestPrice
-            };
-            console.log(`🎁 Applied promo: ${bestPromo.name}, Final price: ${finalPrice}`);
-          }
-        } else {
-          console.log(`❌ No active promos for ${treatment.name}`);
-        }
-
-        return {
-          ...treatment,
-          final_price: finalPrice,
-          applied_promo: appliedPromo
-        };
-      });
-
-      console.log('✅ Processed treatments with promos:', treatmentsWithPromos);
-      setTreatments(treatmentsWithPromos);
-    } else {
-      console.error('❌ API returned success: false', data);
+        console.log('✅ Processed treatments with promos:', treatmentsWithPromos);
+        setTreatments(treatmentsWithPromos);
+      } else {
+        throw new Error(data.error || 'Failed to fetch treatments');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching treatments:', error);
+      showSnackbar(
+        `Gagal memuat data treatments: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      );
+      // Set empty array as fallback
+      setTreatments([]);
     }
-  } catch (error) {
-    console.error('❌ Error fetching treatments:', error);
-    showSnackbar('Gagal memuat data treatments', 'error');
-  }
-};
+  };
 
   const fetchAvailableDates = async () => {
     try {
@@ -613,8 +754,16 @@ export default function AdminBookingsPage() {
         throw new Error('Treatment tidak ditemukan');
       }
 
-      // Use final price if available (with promo), otherwise use base price
-      const unitPrice = treatment.final_price || treatment.base_price;
+      // ALWAYS use final_price if available (with promo), otherwise use base_price
+      const unitPrice = treatment.final_price !== undefined ? treatment.final_price : treatment.base_price;
+
+      console.log('Adding treatment to booking:', {
+        treatment: treatment.name,
+        base_price: treatment.base_price,
+        final_price: treatment.final_price,
+        unitPrice,
+        hasPromo: treatment.applied_promo !== null
+      });
 
       const response = await fetch(`/api/admin/bookings/${editingBooking._id}/edit-treatments`, {
         method: 'POST',
@@ -623,14 +772,27 @@ export default function AdminBookingsPage() {
           action: 'add_treatment',
           treatment_id: treatmentId,
           quantity,
-          unit_price: unitPrice // Send the actual price to use
+          unit_price: unitPrice // Force using the promo price
         })
       });
 
+      // Check response type
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response from edit-treatments:', text.substring(0, 200));
+        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`);
+      }
+
       const data = await response.json();
       
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
+      
       if (data.success) {
-        showSnackbar('Treatment berhasil ditambahkan', 'success');
+        const promoText = treatment.applied_promo ? ` (dengan promo ${treatment.applied_promo.name})` : '';
+        showSnackbar(`Treatment "${treatment.name}" berhasil ditambahkan${promoText}`, 'success');
         fetchBookings();
         setShowEditModal(false);
         setEditingBooking(null);
@@ -639,7 +801,10 @@ export default function AdminBookingsPage() {
       }
     } catch (error) {
       console.error('Error adding treatment:', error);
-      showSnackbar('Gagal menambah treatment', 'error');
+      showSnackbar(
+        `Gagal menambah treatment: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      );
     }
   };
 
@@ -768,14 +933,16 @@ export default function AdminBookingsPage() {
         unit_price: number;
       }> = [];
       
+      // In your createWalkinBooking function, update the treatment selection part:
       if (walkinData.treatmentType === 'treatment' && walkinData.selectedTreatment) {
         const selectedTreatment = treatments.find(t => t._id === walkinData.selectedTreatment);
         if (selectedTreatment) {
+          // Use final_price (with promo) if available, otherwise use base_price
           const unitPrice = selectedTreatment.final_price || selectedTreatment.base_price;
           treatmentsData = [{
             treatment_id: walkinData.selectedTreatment,
             quantity: 1,
-            unit_price: unitPrice // Send the actual price
+            unit_price: unitPrice // This ensures promo price is used
           }];
         }
       }
@@ -1230,17 +1397,12 @@ export default function AdminBookingsPage() {
                         <option key={treatment._id} value={treatment._id}>
                           {treatment.name} - {formatCurrency(treatment.final_price || treatment.base_price)}
                           {treatment.applied_promo && (
-                            <span className="text-green-600 ml-1">
-                              (Promo: {treatment.applied_promo.discount_type === 'percentage' 
-                                ? `${treatment.applied_promo.discount_value}%` 
-                                : `Rp ${treatment.applied_promo.discount_value.toLocaleString()}`
-                              })
-                            </span>
+                            ` 🎁 (Promo: ${treatment.applied_promo.discount_type === 'percentage' 
+                              ? `${treatment.applied_promo.discount_value}%` 
+                              : `Rp ${treatment.applied_promo.discount_value.toLocaleString()}`})`
                           )}
                           {treatment.applied_promo && treatment.final_price !== treatment.base_price && (
-                            <span className="text-gray-500 line-through ml-1">
-                              {formatCurrency(treatment.base_price)}
-                            </span>
+                            ` ❌ ${formatCurrency(treatment.base_price)}`
                           )}
                         </option>
                       ))}
@@ -1564,7 +1726,7 @@ function BookingCard({
                           Edit Treatments
                         </button>
                       )}
-                      {canAddConsultation && booking.type === 'consultation' && (
+                      {canAddConsultation && (
                         <button
                           onClick={() => {
                             onEditBooking(booking, 'consultation');
@@ -1572,7 +1734,7 @@ function BookingCard({
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
-                          Tambah Catatan Konsultasi
+                          {booking.type === 'consultation' ? 'Edit Catatan Konsultasi' : 'Tambah Catatan Konsultasi'}
                         </button>
                       )}
                     </div>
@@ -1587,20 +1749,64 @@ function BookingCard({
         {showDetails && (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             <div className="grid md:grid-cols-2 gap-6">
-              {/* Treatments */}
+              {/* Treatments - Updated to show saved prices */}
               <div>
                 <h4 className="font-semibold text-gray-900 mb-3">Detail Treatment</h4>
                 {booking.treatments && booking.treatments.length > 0 ? (
                   <div className="space-y-2">
                     {booking.treatments.map((treatment: any, index: number) => (
-                      <div key={index} className="flex justify-between items-center p-2 bg-white rounded">
-                        <div>
-                          <p className="font-medium">{treatment.treatment_id?.name}</p>
-                          <p className="text-sm text-gray-600">Qty: {treatment.quantity}</p>
+                      <div key={index} className="p-3 bg-white rounded border">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <p className="font-medium">{treatment.treatment_id?.name}</p>
+                            <p className="text-sm text-gray-600">Qty: {treatment.quantity}</p>
+                            
+                            {/* Show promo info if applied */}
+                            {treatment.promo_applied && (
+                              <div className="mt-1 flex items-center gap-1">
+                                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                                  🎁 {treatment.promo_applied.promo_name}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  ({treatment.promo_applied.discount_type === 'percentage' 
+                                    ? `${treatment.promo_applied.discount_value}%` 
+                                    : `Rp ${treatment.promo_applied.discount_value.toLocaleString()}`} off)
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="text-right">
+                            {/* Show the saved price (the price they actually paid) */}
+                            <p className="font-semibold text-green-600">
+                              {formatCurrency(treatment.price)} each
+                            </p>
+                            
+                            {/* Show original price if there was a promo */}
+                            {treatment.promo_applied && treatment.original_price && treatment.original_price > treatment.price && (
+                              <p className="text-xs text-gray-500 line-through">
+                                {formatCurrency(treatment.original_price)}
+                              </p>
+                            )}
+                            
+                            {/* Show subtotal */}
+                            <p className="text-sm text-gray-600 mt-1">
+                              Subtotal: {formatCurrency(treatment.price * treatment.quantity)}
+                            </p>
+                          </div>
                         </div>
-                        <p className="font-semibold">{formatCurrency(treatment.price)}</p>
                       </div>
                     ))}
+                    
+                    {/* Total Amount */}
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-gray-900">Total Amount:</span>
+                        <span className="text-xl font-bold text-purple-600">
+                          {formatCurrency(booking.total_amount)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <p className="text-gray-600">
