@@ -1,4 +1,3 @@
-// app/admin/reports/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -63,6 +62,100 @@ interface FilterState {
   endDate: string;
 }
 
+// ==== ICONS (solid, senada tema cream-gold) ====
+const IconMoney = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <rect
+      x="3"
+      y="6"
+      width="18"
+      height="12"
+      rx="2"
+      stroke="currentColor"
+      strokeWidth={1.6}
+    />
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth={1.6} />
+    <path
+      d="M7 9h2M7 15h2M15 9h2M15 15h2"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const IconChartAvg = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <path
+      d="M4 19h16"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+    />
+    <path
+      d="M7 16l3-7 4 4 3-8"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="10" cy="9" r="1" fill="currentColor" />
+    <circle cx="14" cy="13" r="1" fill="currentColor" />
+    <circle cx="17" cy="5" r="1" fill="currentColor" />
+  </svg>
+);
+
+const IconTarget = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <circle
+      cx="12"
+      cy="12"
+      r="8"
+      stroke="currentColor"
+      strokeWidth={1.6}
+    />
+    <circle
+      cx="12"
+      cy="12"
+      r="4"
+      stroke="currentColor"
+      strokeWidth={1.6}
+    />
+    <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+  </svg>
+);
+
+const IconDownload = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <path
+      d="M6 19h12M12 5v10M8 11l4 4 4-4"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const IconLoader = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <circle
+      cx="12"
+      cy="12"
+      r="8"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      opacity={0.25}
+    />
+    <path
+      d="M20 12a8 8 0 0 0-8-8"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
 export default function SalesReportsPage() {
   const { data: session } = useSession();
   const [salesData, setSalesData] = useState<SalesData | null>(null);
@@ -71,7 +164,7 @@ export default function SalesReportsPage() {
   const [filters, setFilters] = useState<FilterState>({
     period: 'today',
     startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0]
+    endDate: new Date().toISOString().split('T')[0],
   });
 
   useEffect(() => {
@@ -83,7 +176,7 @@ export default function SalesReportsPage() {
       setLoading(true);
       const params = new URLSearchParams();
       params.append('period', filters.period);
-      
+
       if (filters.period === 'custom') {
         params.append('startDate', filters.startDate);
         params.append('endDate', filters.endDate);
@@ -91,7 +184,7 @@ export default function SalesReportsPage() {
 
       const response = await fetch(`/api/admin/sales-reports?${params}`);
       const data = await response.json();
-      
+
       if (data.success) {
         setSalesData(data.data);
       }
@@ -107,7 +200,7 @@ export default function SalesReportsPage() {
       setExporting(true);
       const params = new URLSearchParams();
       params.append('period', filters.period);
-      
+
       if (filters.period === 'custom') {
         params.append('startDate', filters.startDate);
         params.append('endDate', filters.endDate);
@@ -115,13 +208,15 @@ export default function SalesReportsPage() {
 
       const response = await fetch(`/api/admin/sales-reports/export?${params}`);
       const blob = await response.blob();
-      
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
-      a.download = `sales-report-${filters.period}-${new Date().toISOString().split('T')[0]}.csv`;
-      
+      a.download = `sales-report-${filters.period}-${new Date()
+        .toISOString()
+        .split('T')[0]}.csv`;
+
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -132,176 +227,103 @@ export default function SalesReportsPage() {
     }
   };
 
-  // Chart data configurations
-//   const revenueChartData = {
-//     labels: salesData?.dailySales.map(day => {
-//       const date = new Date(day._id);
-//       return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-//     }) || [],
-//     datasets: [
-//       {
-//         label: 'Pendapatan (Rp)',
-//         data: salesData?.dailySales.map(day => day.revenue) || [],
-//         backgroundColor: 'rgba(139, 92, 246, 0.8)',
-//         borderColor: 'rgba(139, 92, 246, 1)',
-//         borderWidth: 2,
-//         borderRadius: 4,
-//         borderSkipped: false,
-//       },
-//       {
-//         label: 'Transaksi',
-//         data: salesData?.dailySales.map(day => day.transactions) || [],
-//         backgroundColor: 'rgba(16, 185, 129, 0.8)',
-//         borderColor: 'rgba(16, 185, 129, 1)',
-//         borderWidth: 2,
-//         borderRadius: 4,
-//         borderSkipped: false,
-//         yAxisID: 'y1',
-//       }
-//     ],
-//   };
-
-//   const revenueChartOptions = {
-//     responsive: true,
-//     interaction: {
-//       mode: 'index' as const,
-//       intersect: false,
-//     },
-//     scales: {
-//       x: {
-//         grid: {
-//           display: false
-//         }
-//       },
-//       y: {
-//         type: 'linear' as const,
-//         display: true,
-//         position: 'left' as const,
-//         title: {
-//           display: true,
-//           text: 'Pendapatan (Rp)'
-//         },
-//         ticks: {
-//           callback: function(value: any) {
-//             return 'Rp ' + value.toLocaleString('id-ID');
-//           }
-//         }
-//       },
-//       y1: {
-//         type: 'linear' as const,
-//         display: true,
-//         position: 'right' as const,
-//         title: {
-//           display: true,
-//           text: 'Jumlah Transaksi'
-//         },
-//         grid: {
-//           drawOnChartArea: false,
-//         },
-//       },
-//     },
-//     plugins: {
-//       legend: {
-//         position: 'top' as const,
-//       },
-//       title: {
-//         display: true,
-//         text: 'Trend Pendapatan Harian',
-//       },
-//       tooltip: {
-//         callbacks: {
-//           label: function(context: any) {
-//             let label = context.dataset.label || '';
-//             if (label.includes('Pendapatan')) {
-//               return `${label}: Rp ${context.parsed.y.toLocaleString('id-ID')}`;
-//             } else {
-//               return `${label}: ${context.parsed.y} transaksi`;
-//             }
-//           }
-//         }
-//       }
-//     },
-//   };
-
-    const revenueChartData = {
-    labels: salesData?.dailySales.map(day => {
+  // === Chart data (logic sama, hanya ubah warna ke gold/cream) ===
+  const revenueChartData = {
+    labels:
+      salesData?.dailySales.map((day) => {
         const date = new Date(day._id);
-        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-    }) || [],
-    datasets: [
-        {
-        label: 'Pendapatan',
-        data: salesData?.dailySales.map(day => day.revenue) || [],
-        backgroundColor: 'rgba(139, 92, 246, 0.8)',
-        borderColor: 'rgba(139, 92, 246, 1)',
-        borderWidth: 2,
-        borderRadius: 4,
-        }
-    ],
-    };
-
-    const revenueChartOptions = {
-    responsive: true,
-    plugins: {
-        legend: {
-        position: 'top' as const,
-        },
-        title: {
-        display: true,
-        text: 'Trend Pendapatan Harian',
-        },
-        tooltip: {
-        callbacks: {
-            label: function(context: any) {
-            return `Pendapatan: Rp ${context.parsed.y.toLocaleString('id-ID')}`;
-            }
-        }
-        }
-    },
-    scales: {
-        x: {
-        grid: {
-            display: false
-        }
-        },
-        y: {
-        beginAtZero: true,
-        ticks: {
-            callback: function(value: any) {
-            return 'Rp ' + (value / 1000000).toFixed(1) + 'JT';
-            }
-        }
-        },
-    },
-    };
-
-  const paymentMethodChartData = {
-    labels: salesData?.paymentMethods.map(method => {
-      const methodNames: { [key: string]: string } = {
-        'bank_transfer': 'Transfer Bank',
-        'credit_card': 'Kartu Kredit',
-        'qris': 'QRIS',
-        'cash': 'Tunai',
-        'ewallet': 'E-Wallet'
-      };
-      return methodNames[method._id] || method._id;
-    }) || [],
+        return date.toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'short',
+        });
+      }) || [],
     datasets: [
       {
-        data: salesData?.paymentMethods.map(method => method.totalRevenue) || [],
+        label: 'Pendapatan',
+        data: salesData?.dailySales.map((day) => day.revenue) || [],
+        backgroundColor: 'rgba(180, 138, 90, 0.85)',
+        borderColor: 'rgba(148, 109, 64, 1)',
+        borderWidth: 2,
+        borderRadius: 6,
+      },
+    ],
+  };
+
+  const revenueChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          color: '#5B4630',
+        },
+      },
+      title: {
+        display: true,
+        text: 'Trend Pendapatan Harian',
+        color: '#3A3530',
+        font: {
+          size: 14,
+          weight: '600',
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context: any) {
+            return `Pendapatan: Rp ${context.parsed.y.toLocaleString('id-ID')}`;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: '#8B7B63',
+        },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function (value: any) {
+            return 'Rp ' + (value / 1000000).toFixed(1) + 'JT';
+          },
+          color: '#8B7B63',
+        },
+      },
+    },
+  };
+
+  const paymentMethodChartData = {
+    labels:
+      salesData?.paymentMethods.map((method) => {
+        const methodNames: { [key: string]: string } = {
+          bank_transfer: 'Transfer Bank',
+          credit_card: 'Kartu Kredit',
+          qris: 'QRIS',
+          cash: 'Tunai',
+          ewallet: 'E-Wallet',
+        };
+        return methodNames[method._id] || method._id;
+      }) || [],
+    datasets: [
+      {
+        data: salesData?.paymentMethods.map((method) => method.totalRevenue) || [],
         backgroundColor: [
-          'rgba(139, 92, 246, 0.8)',
-          'rgba(16, 185, 129, 0.8)',
-          'rgba(59, 130, 246, 0.8)',
-          'rgba(245, 158, 11, 0.8)',
-          'rgba(239, 68, 68, 0.8)',
+          'rgba(180, 138, 90, 0.9)',
+          'rgba(222, 181, 120, 0.9)',
+          'rgba(236, 206, 156, 0.9)',
+          'rgba(206, 171, 121, 0.9)',
+          'rgba(158, 118, 75, 0.9)',
         ],
         borderColor: [
-          'rgba(139, 92, 246, 1)',
-          'rgba(16, 185, 129, 1)',
-          'rgba(59, 130, 246, 1)',
-          'rgba(245, 158, 11, 1)',
-          'rgba(239, 68, 68, 1)',
+          'rgba(148, 109, 64, 1)',
+          'rgba(191, 146, 84, 1)',
+          'rgba(204, 173, 120, 1)',
+          'rgba(176, 139, 90, 1)',
+          'rgba(124, 87, 49, 1)',
         ],
         borderWidth: 2,
       },
@@ -313,34 +335,48 @@ export default function SalesReportsPage() {
     plugins: {
       legend: {
         position: 'bottom' as const,
+        labels: {
+          color: '#5B4630',
+        },
       },
       title: {
         display: true,
         text: 'Distribusi Metode Pembayaran',
+        color: '#3A3530',
+        font: {
+          size: 14,
+          weight: '600',
+        },
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function (context: any) {
             const value = context.parsed;
-            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            const total = context.dataset.data.reduce(
+              (a: number, b: number) => a + b,
+              0
+            );
             const percentage = ((value / total) * 100).toFixed(1);
             return `Rp ${value.toLocaleString('id-ID')} (${percentage}%)`;
-          }
-        }
-      }
+          },
+        },
+      },
     },
   };
 
   const treatmentChartData = {
-    labels: salesData?.topTreatments.map(treatment => treatment.treatmentName) || [],
+    labels:
+      salesData?.topTreatments.map((treatment) => treatment.treatmentName) || [],
     datasets: [
       {
         label: 'Pendapatan per Treatment',
-        data: salesData?.topTreatments.map(treatment => treatment.totalRevenue) || [],
-        backgroundColor: 'rgba(139, 92, 246, 0.8)',
-        borderColor: 'rgba(139, 92, 246, 1)',
+        data:
+          salesData?.topTreatments.map((treatment) => treatment.totalRevenue) ||
+          [],
+        backgroundColor: 'rgba(180, 138, 90, 0.85)',
+        borderColor: 'rgba(148, 109, 64, 1)',
         borderWidth: 2,
-        borderRadius: 4,
+        borderRadius: 6,
       },
     ],
   };
@@ -354,88 +390,120 @@ export default function SalesReportsPage() {
       title: {
         display: true,
         text: 'Pendapatan per Treatment',
+        color: '#3A3530',
+        font: {
+          size: 14,
+          weight: '600',
+        },
       },
     },
     scales: {
       x: {
         grid: {
-          display: false
-        }
+          display: false,
+        },
+        ticks: {
+          color: '#8B7B63',
+        },
       },
       y: {
         beginAtZero: true,
         ticks: {
-          callback: function(value: any) {
+          callback: function (value: any) {
             return 'Rp ' + value.toLocaleString('id-ID');
-          }
-        }
+          },
+          color: '#8B7B63',
+        },
       },
     },
   };
 
-  const StatCard = ({ title, value, subtitle, icon, color }: any) => (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-      <div className="flex items-center justify-between">
+  const StatCard = ({
+    title,
+    value,
+    subtitle,
+    icon,
+  }: {
+    title: string;
+    value: string | number;
+    subtitle?: string;
+    icon: React.ReactNode;
+  }) => (
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E5D7BE]">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-2">{value}</p>
-          {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+          <p className="text-xs font-semibold tracking-wide text-[#8B7B63] uppercase">
+            {title}
+          </p>
+          <p className="text-2xl font-semibold text-[#3A3530] mt-2">{value}</p>
+          {subtitle && (
+            <p className="text-xs text-[#A08C6A] mt-1">{subtitle}</p>
+          )}
         </div>
-        <div className={`text-2xl ${color}`}>{icon}</div>
+        <div className="w-10 h-10 rounded-full bg-[#F5E4C6] flex items-center justify-center text-[#8F6E45]">
+          {icon}
+        </div>
       </div>
     </div>
   );
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-center min-h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="p-6 bg-[#F8F4E8] min-h-screen">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <IconLoader className="w-10 h-10 animate-spin text-[#B48A5A]" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-[#F8F4E8] min-h-screen">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Laporan Penjualan</h1>
-          <p className="text-gray-600 mt-2">
-            Analisis dan laporan keuangan untuk manajemen bisnis
+          <h1 className="text-2xl md:text-3xl font-semibold text-[#3A3530]">
+            Laporan Penjualan
+          </h1>
+          <p className="text-sm text-[#8B7B63] mt-1">
+            Analisis dan ringkasan performa keuangan klinik.
           </p>
         </div>
         <button
           onClick={handleExport}
           disabled={exporting}
-          className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-green-400 flex items-center gap-2"
+          className="inline-flex items-center gap-2 bg-[#B48A5A] text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-[#8F6E45] disabled:bg-[#D6C7AF] disabled:text-[#F7F0E4] disabled:cursor-not-allowed transition-colors"
         >
           {exporting ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Mengekspor...
+              <IconLoader className="w-4 h-4 animate-spin" />
+              <span>Mengekspor...</span>
             </>
           ) : (
             <>
-              📊 Export CSV
+              <IconDownload className="w-4 h-4" />
+              <span>Export CSV</span>
             </>
           )}
         </button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Filter Laporan</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-white rounded-2xl p-6 md:p-7 shadow-sm border border-[#E5D7BE] mb-6">
+        <h2 className="text-lg font-semibold text-[#3A3530] mb-4">
+          Filter Laporan
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-semibold text-[#6E5A40] mb-1.5">
               Periode
             </label>
             <select
               value={filters.period}
-              onChange={(e) => setFilters({ ...filters, period: e.target.value as any })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              onChange={(e) =>
+                setFilters({ ...filters, period: e.target.value as any })
+              }
+              className="w-full rounded-full border border-[#C9AE84] bg-[#FFFBF3] px-3 py-2.5 text-sm text-[#3A3530] focus:outline-none focus:ring-2 focus:ring-[#E2CBA4] focus:border-[#B48A5A]"
             >
               <option value="today">Hari Ini</option>
               <option value="week">Minggu Ini</option>
@@ -448,25 +516,29 @@ export default function SalesReportsPage() {
           {filters.period === 'custom' && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-semibold text-[#6E5A40] mb-1.5">
                   Dari Tanggal
                 </label>
                 <input
                   type="date"
                   value={filters.startDate}
-                  onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                  onChange={(e) =>
+                    setFilters({ ...filters, startDate: e.target.value })
+                  }
+                  className="w-full rounded-full border border-[#C9AE84] bg-[#FFFBF3] px-3 py-2.5 text-sm text-[#3A3530] focus:outline-none focus:ring-2 focus:ring-[#E2CBA4] focus:border-[#B48A5A]"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-semibold text-[#6E5A40] mb-1.5">
                   Sampai Tanggal
                 </label>
                 <input
                   type="date"
                   value={filters.endDate}
-                  onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                  onChange={(e) =>
+                    setFilters({ ...filters, endDate: e.target.value })
+                  }
+                  className="w-full rounded-full border border-[#C9AE84] bg-[#FFFBF3] px-3 py-2.5 text-sm text-[#3A3530] focus:outline-none focus:ring-2 focus:ring-[#E2CBA4] focus:border-[#B48A5A]"
                 />
               </div>
             </>
@@ -475,7 +547,7 @@ export default function SalesReportsPage() {
           <div className="flex items-end">
             <button
               onClick={fetchSalesData}
-              className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold bg-[#B48A5A] text-white hover:bg-[#8F6E45] transition-colors"
             >
               Terapkan Filter
             </button>
@@ -486,83 +558,102 @@ export default function SalesReportsPage() {
       {/* Summary Stats */}
       {salesData && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
             <StatCard
               title="Total Pendapatan"
               value={formatCurrency(salesData.summary.totalRevenue)}
-              subtitle={`${salesData.summary.totalTransactions} transaksi`}
-              icon="💰"
-              color="text-green-600"
+              subtitle={`${salesData.summary.totalTransactions} transaksi berhasil`}
+              icon={<IconMoney className="w-5 h-5" />}
             />
             <StatCard
               title="Rata-rata Transaksi"
               value={formatCurrency(salesData.summary.averageTransaction)}
               subtitle="Per transaksi"
-              icon="📊"
-              color="text-blue-600"
+              icon={<IconChartAvg className="w-5 h-5" />}
             />
             <StatCard
               title="Total Transaksi"
               value={salesData.summary.totalTransactions}
               subtitle="Transaksi berhasil"
-              icon="🎯"
-              color="text-purple-600"
+              icon={<IconTarget className="w-5 h-5" />}
             />
           </div>
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Revenue Trend Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Trend Pendapatan</h2>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5D7BE]">
+              <h2 className="text-base font-semibold text-[#3A3530] mb-3">
+                Trend Pendapatan
+              </h2>
               <div className="h-80">
                 <Bar data={revenueChartData} options={revenueChartOptions} />
               </div>
             </div>
 
             {/* Payment Methods Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Metode Pembayaran</h2>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5D7BE]">
+              <h2 className="text-base font-semibold text-[#3A3530] mb-3">
+                Metode Pembayaran
+              </h2>
               <div className="h-80">
-                <Doughnut data={paymentMethodChartData} options={paymentMethodChartOptions} />
+                <Doughnut
+                  data={paymentMethodChartData}
+                  options={paymentMethodChartOptions}
+                />
               </div>
             </div>
           </div>
 
           {/* Treatment Performance Chart */}
           {salesData.topTreatments.length > 0 && (
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Performance Treatment</h2>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5D7BE] mb-8">
+              <h2 className="text-base font-semibold text-[#3A3530] mb-3">
+                Performance Treatment
+              </h2>
               <div className="h-80">
                 <Bar data={treatmentChartData} options={treatmentChartOptions} />
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Top Treatments */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Treatment Terpopuler</h2>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5D7BE]">
+              <h2 className="text-base font-semibold text-[#3A3530] mb-4">
+                Treatment Terpopuler
+              </h2>
               <div className="space-y-3">
                 {salesData.topTreatments.map((treatment, index) => (
-                  <div key={treatment._id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  <div
+                    key={treatment._id}
+                    className="flex items-center justify-between p-3 border border-[#F1E3CB] rounded-xl bg-[#FFFCF7]"
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-semibold">
+                      <div className="w-8 h-8 bg-[#F5E4C6] text-[#8F6E45] rounded-full flex items-center justify-center text-sm font-semibold">
                         {index + 1}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{treatment.treatmentName}</p>
-                        <p className="text-sm text-gray-600">{treatment.totalQuantity} treatment</p>
+                        <p className="font-medium text-[#3A3530]">
+                          {treatment.treatmentName}
+                        </p>
+                        <p className="text-xs text-[#8B7B63]">
+                          {treatment.totalQuantity} treatment
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-900">{formatCurrency(treatment.totalRevenue)}</p>
-                      <p className="text-sm text-gray-600">{treatment.transactionCount} transaksi</p>
+                      <p className="font-semibold text-[#3A3530]">
+                        {formatCurrency(treatment.totalRevenue)}
+                      </p>
+                      <p className="text-xs text-[#8B7B63]">
+                        {treatment.transactionCount} transaksi
+                      </p>
                     </div>
                   </div>
                 ))}
                 {salesData.topTreatments.length === 0 && (
-                  <div className="text-center py-4 text-gray-500">
+                  <div className="text-center py-4 text-sm text-[#8B7B63]">
                     Tidak ada data treatment
                   </div>
                 )}
@@ -570,19 +661,35 @@ export default function SalesReportsPage() {
             </div>
 
             {/* Payment Methods */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Metode Pembayaran</h2>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5D7BE]">
+              <h2 className="text-base font-semibold text-[#3A3530] mb-4">
+                Metode Pembayaran
+              </h2>
               <div className="space-y-3">
                 {salesData.paymentMethods.map((method) => (
-                  <div key={method._id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  <div
+                    key={method._id}
+                    className="flex items-center justify-between p-3 border border-[#F1E3CB] rounded-xl bg-[#FFFCF7]"
+                  >
                     <div>
-                      <p className="font-medium text-gray-900 capitalize">{method._id}</p>
-                      <p className="text-sm text-gray-600">{method.transactionCount} transaksi</p>
+                      <p className="font-medium text-[#3A3530] capitalize">
+                        {method._id}
+                      </p>
+                      <p className="text-xs text-[#8B7B63]">
+                        {method.transactionCount} transaksi
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-900">{formatCurrency(method.totalRevenue)}</p>
-                      <p className="text-sm text-gray-600">
-                        {((method.totalRevenue / salesData.summary.totalRevenue) * 100).toFixed(1)}%
+                      <p className="font-semibold text-[#3A3530]">
+                        {formatCurrency(method.totalRevenue)}
+                      </p>
+                      <p className="text-xs text-[#8B7B63]">
+                        {(
+                          (method.totalRevenue /
+                            salesData.summary.totalRevenue) *
+                          100
+                        ).toFixed(1)}
+                        %
                       </p>
                     </div>
                   </div>
@@ -592,45 +699,67 @@ export default function SalesReportsPage() {
           </div>
 
           {/* Recent Transactions */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Transaksi Terbaru</h2>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5D7BE]">
+            <h2 className="text-base font-semibold text-[#3A3530] mb-4">
+              Transaksi Terbaru
+            </h2>
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 font-semibold text-gray-900">ID Transaksi</th>
-                    <th className="text-left py-3 font-semibold text-gray-900">Pelanggan</th>
-                    <th className="text-left py-3 font-semibold text-gray-900">Metode</th>
-                    <th className="text-left py-3 font-semibold text-gray-900">Jumlah</th>
-                    <th className="text-left py-3 font-semibold text-gray-900">Tanggal</th>
+              <table className="w-full text-sm">
+                <thead className="border-b border-[#F1E3CB] text-xs text-[#6E5A40] uppercase tracking-wide bg-[#FBF5E7]">
+                  <tr>
+                    <th className="text-left py-3 px-3 font-semibold">
+                      ID Transaksi
+                    </th>
+                    <th className="text-left py-3 px-3 font-semibold">
+                      Pelanggan
+                    </th>
+                    <th className="text-left py-3 px-3 font-semibold">
+                      Metode
+                    </th>
+                    <th className="text-left py-3 px-3 font-semibold">
+                      Jumlah
+                    </th>
+                    <th className="text-left py-3 px-3 font-semibold">
+                      Tanggal
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {salesData.recentTransactions.map((transaction) => (
-                    <tr key={transaction._id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 text-sm text-gray-600">
+                    <tr
+                      key={transaction._id}
+                      className="border-b border-[#F5E9D3] hover:bg-[#FFF9EB]"
+                    >
+                      <td className="py-3 px-3 text-xs font-mono text-[#8B7B63]">
                         {transaction._id.toString().slice(-8)}
                       </td>
-                      <td className="py-3">
-                        <p className="font-medium text-gray-900">{transaction.user_id?.name}</p>
-                        <p className="text-sm text-gray-600">{transaction.user_id?.email}</p>
+                      <td className="py-3 px-3">
+                        <p className="text-sm font-medium text-[#3A3530]">
+                          {transaction.user_id?.name}
+                        </p>
+                        <p className="text-xs text-[#8B7B63]">
+                          {transaction.user_id?.email}
+                        </p>
                       </td>
-                      <td className="py-3">
-                        <span className="capitalize px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                      <td className="py-3 px-3">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium bg-[#F5E4C6] text-[#6E4E2E] capitalize">
                           {transaction.payment_method}
                         </span>
                       </td>
-                      <td className="py-3 font-semibold text-gray-900">
+                      <td className="py-3 px-3 text-sm font-semibold text-[#3A3530]">
                         {formatCurrency(transaction.amount)}
                       </td>
-                      <td className="py-3 text-sm text-gray-600">
+                      <td className="py-3 px-3 text-xs text-[#8B7B63]">
                         {formatDate(transaction.paid_at)}
                       </td>
                     </tr>
                   ))}
                   {salesData.recentTransactions.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-4 text-center text-gray-500">
+                      <td
+                        colSpan={5}
+                        className="py-5 text-center text-sm text-[#8B7B63]"
+                      >
                         Tidak ada transaksi
                       </td>
                     </tr>
