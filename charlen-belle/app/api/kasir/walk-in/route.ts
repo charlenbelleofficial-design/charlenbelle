@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import connectDB from '@/lib/mongodb';
-import WalkinTransaction from '@/models/WalkinTransaction';
-import WalkinTransactionItem from '@/models/WalkinTransactionItem';
+import connectDB from '../../../lib/mongodb';
+import WalkinTransaction from '../../../models/WalkinTransaction';
+import WalkinTransactionItem from '../../../models/WalkinTransactionItem';
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(); 
     
-    if (!session || !['kasir', 'admin', 'superadmin'].includes(session.user.role)) {
+    const allowedRoles = ['kasir', 'admin', 'superadmin'];
+    if (!session || !session.user?.role || !allowedRoles.includes(session.user.role)) {
       return NextResponse.json(
         { error: 'Tidak memiliki akses' },
         { status: 403 }
