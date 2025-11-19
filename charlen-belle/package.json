@@ -10,7 +10,7 @@
     "test": "jest",
     "deploy": "npm run build && npm run start",
     "seed": "ts-node scripts/seed.ts",
-    "vercel-build": "npm run prepare && next build"
+    "vercel-build": "next build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
