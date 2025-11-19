@@ -16,7 +16,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     // PENTING untuk Next (biarkan "preserve")
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
