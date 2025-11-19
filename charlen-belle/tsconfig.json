@@ -16,7 +16,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     // PENTING untuk Next (biarkan "preserve")
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
     "plugins": [
       {
@@ -42,7 +42,8 @@
     "types/**/*.d.ts",
     "app/**/*",
     "pages/**/*",
-    "components/**/*"
+    "components/**/*",
+    "next.config.ts"
   ],
   "exclude": [
     "node_modules"
