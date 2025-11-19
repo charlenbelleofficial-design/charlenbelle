@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate } from '../../../lib/utils';
 
 export default function ReceiptPage() {
   const params = useParams();
