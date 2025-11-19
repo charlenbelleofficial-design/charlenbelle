@@ -19,7 +19,7 @@ const navigationConfig = {
     { name: 'Booking', href: '/admin/bookings', icon: '📅', roles: ['kasir', 'doctor', 'admin', 'superadmin'] },
     { name: 'Transaksi', href: '/admin/transactions', icon: '💳', roles: ['kasir', 'admin', 'superadmin'] },
     { name: 'Treatment', href: '/admin/treatments', icon: '💆', roles: ['admin', 'superadmin'] },
-    { name: 'Kategori Treatment', href: '/admin/treatment-categories', icon: '💆', roles: ['admin', 'superadmin'] },
+    { name: 'Kategori Treatment', href: '/admin/treatment-categories', icon: '🗂️', roles: ['admin', 'superadmin'] },
     { name: 'Promo', href: '/admin/promos', icon: '🎁', roles: ['admin', 'superadmin'] },
     { name: 'Laporan', href: '/admin/reports', icon: '📈', roles: ['admin', 'superadmin'] },
     { name: 'Users', href: '/admin/users', icon: '👥', roles: ['superadmin'] },

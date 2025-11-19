@@ -42,7 +42,8 @@
     "types/**/*.d.ts",
     "app/**/*",
     "pages/**/*",
-    "components/**/*"
+    "components/**/*",
+    "next.config.ts"
   ],
   "exclude": [
     "node_modules"
