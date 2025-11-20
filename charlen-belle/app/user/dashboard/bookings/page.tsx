@@ -329,7 +329,7 @@ export default function BookingsPage() {
             <p className="text-sm text-[#A18F76]">Buat janji baru untuk treatment favorit Anda.</p>
           </div>
           <button
-            onClick={() => router.push('/user/booking')}
+            onClick={() => router.push('/user/treatments')}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C89B4B] text-white text-xs font-medium hover:bg-[#b48735] transition-colors"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">

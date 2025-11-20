@@ -669,7 +669,7 @@ export default function UserProfilePage() {
                   <span>Lihat Booking Saya</span>
                 </button>
                 <button
-                  onClick={() => router.push('/user/booking')}
+                  onClick={() => router.push('/user/treatments')}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[#7E6A52] hover:bg-[#FBF6EA] transition-colors"
                 >
                   <span className="h-7 w-7 rounded-xl bg-[#E6D8C2] flex items-center justify-center">

@@ -69,7 +69,7 @@ export default function DashboardPage() {
           <h2 className="text-lg font-semibold text-[#3B2A1E] mb-1">Buat Booking</h2>
           <p className="text-sm text-[#A18F76]">Atur jadwal treatment Anda dengan mudah.</p>
         </div>
-        <Link href="/user/booking">
+        <Link href="/user/treatments">
           <Button className="rounded-xl bg-[#C89B4B] hover:bg-[#b48735] border-none text-white flex items-center gap-2">
             <CalendarIconSmall />
             <span>Buat Booking</span>

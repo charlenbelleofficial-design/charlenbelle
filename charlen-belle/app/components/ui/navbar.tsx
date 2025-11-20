@@ -3,31 +3,47 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 export const Navbar: React.FC = () => {
   const { data: session, status } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+
+  // ❗ HIDE NAVBAR di halaman user panel (dashboard, booking, dll)
+  if (
+    pathname?.startsWith("/user/dashboard") ||
+    pathname?.startsWith("/user/booking") ||
+    pathname?.startsWith("/user/treatments") ||
+    pathname?.startsWith("/user/customer-profile") ||
+    pathname?.startsWith("/user/profile")
+  ) {
+    return null;
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/' });
+    await signOut({ callbackUrl: "/" });
   };
 
-  const isLoading = status === 'loading';
+  const isLoading = status === "loading";
 
   return (
     <header className="navbar">
@@ -49,7 +65,7 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center gap-4">
           {isLoading ? (
             // Loading state
-            <div className="animate-pulse bg-gray-200 h-10 w-20 rounded"></div>
+            <div className="animate-pulse bg-gray-200 h-10 w-20 rounded" />
           ) : session ? (
             // User is logged in - Show profile dropdown
             <div className="relative" ref={dropdownRef}>
@@ -58,18 +74,25 @@ export const Navbar: React.FC = () => {
                 className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <div className="w-8 h-8 bg-[#c3aa4c] rounded-full flex items-center justify-center text-white font-medium">
-                  {session.user?.name?.charAt(0).toUpperCase() || 'U'}
+                  {session.user?.name?.charAt(0).toUpperCase() || "U"}
                 </div>
                 <span className="text-sm font-medium text-gray-700">
-                  {session.user?.name || 'User'}
+                  {session.user?.name || "User"}
                 </span>
                 <svg
-                  className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 transition-transform ${
+                    isDropdownOpen ? "rotate-180" : ""
+                  }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
 
@@ -83,13 +106,6 @@ export const Navbar: React.FC = () => {
                   >
                     Profile
                   </Link>
-                  {/* <Link
-                    href="/user/history"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    Riwayat
-                  </Link> */}
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
@@ -108,10 +124,7 @@ export const Navbar: React.FC = () => {
               >
                 Login
               </Link>
-              <Link
-                href="/user/register"
-                className="btn btn-primary text-sm"
-              >
+              <Link href="/user/register" className="btn btn-primary text-sm">
                 Daftar
               </Link>
             </div>
