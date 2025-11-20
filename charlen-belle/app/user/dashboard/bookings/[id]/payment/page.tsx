@@ -1,6 +1,7 @@
+// app/user/dashboard/bookings/[id]/payment/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ReactNode } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '../../../../../components/ui/buttons';
 import { formatCurrency } from '../../../../../lib/utils';
@@ -17,13 +18,11 @@ export default function PaymentPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const bookingId = params.id;
-    
 
   const [booking, setBooking] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState('midtrans_qris');
   const [isLoading, setIsLoading] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
-  
 
   useEffect(() => {
     fetchBookingDetails();
@@ -36,7 +35,11 @@ export default function PaymentPage() {
       setBooking(data.booking);
       
       // Calculate total amount
-      const total = data.booking.treatments?.reduce((sum: number, t: any) => sum + t.price, 0) || 0;
+      const total =
+        data.booking.treatments?.reduce(
+          (sum: number, t: any) => sum + t.price,
+          0
+        ) || 0;
       setTotalAmount(total);
     } catch (error) {
       toast.error('Gagal memuat detail booking');
@@ -67,27 +70,27 @@ export default function PaymentPage() {
       if (paymentMethod.startsWith('midtrans_')) {
         if (window.snap) {
           window.snap.pay(data.payment_token, {
-            onSuccess: function(result: any) {
+            onSuccess: function (result: any) {
               toast.success('Pembayaran berhasil!');
-              router.push(`/user/dashboard/bookings/${bookingId}/success`);
+              router.push(
+                `/user/dashboard/bookings/payment/success?payment_id=${data.payment_id}`
+              );
             },
-            onPending: function(result: any) {
+            onPending: function (result: any) {
               toast('Menunggu pembayaran...', {
                 icon: '⏳',
-                style: { background: '#F3F4F6', color: '#111827' }, // gray info style
+                style: { background: '#F3F4F6', color: '#111827' }
               });
-              router.push(`/user/dashboard/bookings/${bookingId}`);
+              router.push(`/user/dashboard/bookings/payment/pending?order_id=${data.order_id}`);
             },
-            onError: function(result: any) {
+            onError: function (result: any) {
               toast.error('Pembayaran gagal');
             },
-            onClose: function() {
-              
+            onClose: function () {
               toast('Pembayaran dibatalkan...', {
                 icon: 'ℹ️',
-                style: { background: '#F3F4F6', color: '#111827' },
+                style: { background: '#F3F4F6', color: '#111827' }
               });
-
             }
           });
         }
@@ -105,8 +108,11 @@ export default function PaymentPage() {
 
   if (!booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="max-w-3xl mx-auto mt-10">
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-8 shadow-sm flex flex-col items-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#6C3FD1]" />
+          <p className="mt-4 text-sm text-[#A18F76]">Memuat data pembayaran...</p>
+        </div>
       </div>
     );
   }
@@ -114,47 +120,71 @@ export default function PaymentPage() {
   return (
     <>
       <Script
-        src={`https://app.${process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true' ? '' : 'sandbox.'}midtrans.com/snap/snap.js`}
+        src={`https://app.${
+          process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true'
+            ? ''
+            : 'sandbox.'
+        }midtrans.com/snap/snap.js`}
         data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
       />
 
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-6 mt-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Pembayaran</h1>
-          <p className="text-gray-600">Selesaikan pembayaran untuk melanjutkan</p>
+          <p className="text-xs text-[#A18F76] mb-1">Pembayaran Booking</p>
+          <h1 className="text-2xl font-semibold text-[#3B2A1E] mb-1">
+            Selesaikan Pembayaran
+          </h1>
+          <p className="text-sm text-[#A18F76]">
+            Pilih metode pembayaran yang Anda inginkan.
+          </p>
         </div>
 
         {/* Order Summary */}
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-xl font-semibold mb-4">Ringkasan Pesanan</h2>
-          <div className="space-y-3">
+        <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
+          <h2 className="text-sm font-semibold text-[#3B2A1E] mb-4">
+            Ringkasan Pesanan
+          </h2>
+          <div className="space-y-3 text-sm">
             {booking.treatments?.map((treatment: any, index: number) => (
-              <div key={index} className="flex justify-between items-center py-2 border-b">
+              <div
+                key={index}
+                className="flex justify-between items-center py-3 border-b border-[#F1E5D1]"
+              >
                 <div>
-                  <p className="font-medium">{treatment.name}</p>
-                  <p className="text-sm text-gray-500">Qty: {treatment.quantity}</p>
+                  <p className="font-semibold text-[#3B2A1E]">
+                    {treatment.name}
+                  </p>
+                  <p className="text-xs text-[#A18F76]">
+                    Qty: {treatment.quantity}
+                  </p>
                 </div>
-                <p className="font-semibold">{formatCurrency(treatment.price)}</p>
+                <p className="font-semibold text-[#3B2A1E]">
+                  {formatCurrency(treatment.price)}
+                </p>
               </div>
             ))}
-            <div className="flex justify-between items-center pt-4 text-lg font-bold">
-              <span>Total</span>
-              <span className="text-purple-600">{formatCurrency(totalAmount)}</span>
+            <div className="flex justify-between items-center pt-4 text-base font-bold">
+              <span className="text-[#3B2A1E]">Total</span>
+              <span className="text-[#6C3FD1]">
+                {formatCurrency(totalAmount)}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Payment Method */}
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-xl font-semibold mb-4">Metode Pembayaran</h2>
+        <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
+          <h2 className="text-sm font-semibold text-[#3B2A1E] mb-4">
+            Metode Pembayaran
+          </h2>
           <div className="space-y-3">
             <PaymentMethodOption
               value="midtrans_qris"
               selected={paymentMethod}
               onChange={setPaymentMethod}
               label="QRIS"
-              description="Bayar dengan QRIS"
-              icon="📱"
+              description="Bayar cepat dengan QRIS"
+              iconLabel="QR"
             />
             <PaymentMethodOption
               value="midtrans_cc"
@@ -162,7 +192,7 @@ export default function PaymentPage() {
               onChange={setPaymentMethod}
               label="Kartu Kredit/Debit"
               description="Visa, Mastercard, JCB"
-              icon="💳"
+              iconLabel="CC"
             />
             <PaymentMethodOption
               value="midtrans_va"
@@ -170,15 +200,15 @@ export default function PaymentPage() {
               onChange={setPaymentMethod}
               label="Virtual Account"
               description="BCA, BNI, BRI, Mandiri"
-              icon="🏦"
+              iconLabel="VA"
             />
             <PaymentMethodOption
               value="manual_cash"
               selected={paymentMethod}
               onChange={setPaymentMethod}
               label="Tunai di Kasir"
-              description="Bayar langsung di tempat"
-              icon="💵"
+              description="Bayar langsung di klinik"
+              iconLabel="CA"
             />
           </div>
         </div>
@@ -186,10 +216,12 @@ export default function PaymentPage() {
         <Button
           onClick={handlePayment}
           disabled={isLoading}
-          className="w-full"
+          className="w-full rounded-xl bg-[#6C3FD1] hover:bg-[#5b34b3] border-none"
           size="lg"
         >
-          {isLoading ? 'Memproses...' : `Bayar ${formatCurrency(totalAmount)}`}
+          {isLoading
+            ? 'Memproses...'
+            : `Bayar ${formatCurrency(totalAmount)}`}
         </Button>
       </div>
     </>
@@ -202,38 +234,52 @@ function PaymentMethodOption({
   onChange,
   label,
   description,
-  icon
+  iconLabel
 }: {
   value: string;
   selected: string;
   onChange: (value: string) => void;
   label: string;
   description: string;
-  icon: string;
+  iconLabel: string;
 }) {
+  const isActive = selected === value;
+
   return (
     <button
       onClick={() => onChange(value)}
-      className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
-        selected === value
-          ? 'border-purple-600 bg-purple-50'
-          : 'border-gray-200 hover:border-purple-300'
+      className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+        isActive
+          ? 'border-[#6C3FD1] bg-[#F4EDFF]'
+          : 'border-[#E1D4C0] bg-[#FFFDF9] hover:border-[#C89B4B]'
       }`}
     >
-      <span className="text-3xl">{icon}</span>
-      <div className="flex-1 text-left">
-        <p className="font-semibold text-gray-900">{label}</p>
-        <p className="text-sm text-gray-500">{description}</p>
+      <span className="h-10 w-10 rounded-xl bg-[#E6D8C2] flex items-center justify-center text-[11px] font-semibold text-[#3B2A1E]">
+        {iconLabel}
+      </span>
+      <div className="flex-1">
+        <p className="font-semibold text-sm text-[#3B2A1E]">{label}</p>
+        <p className="text-xs text-[#A18F76]">{description}</p>
       </div>
-      <div className={`w-5 h-5 rounded-full border-2 ${
-        selected === value
-          ? 'border-purple-600 bg-purple-600'
-          : 'border-gray-300'
-      }`}>
-        {selected === value && (
-          <div className="w-full h-full flex items-center justify-center text-white text-xs">
-            ✓
-          </div>
+      <div
+        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+          isActive ? 'border-[#6C3FD1] bg-[#6C3FD1]' : 'border-[#D0C3AD]'
+        }`}
+      >
+        {isActive && (
+          <svg
+            className="w-3 h-3 text-white"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+          >
+            <path
+              d="M5 13l4 4L19 7"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         )}
       </div>
     </button>

@@ -163,12 +163,10 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
 
   if (loading) {
     return (
-      <div className="min-h-screen py-12 bg-gradient-to-br from-pink-50 to-purple-50">
-        <div className="max-w-4xl mx-auto bg-white rounded-2xl p-8 shadow">
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-            <p className="mt-4 text-gray-600">Memuat detail booking...</p>
-          </div>
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-8 shadow-sm text-center mt-10">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#6C3FD1]" />
+          <p className="mt-4 text-sm text-[#A18F76]">Memuat detail booking...</p>
         </div>
       </div>
     );
@@ -176,18 +174,18 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
 
   if (!booking) {
     return (
-      <div className="min-h-screen py-12 bg-gradient-to-br from-pink-50 to-purple-50">
-        <div className="max-w-4xl mx-auto bg-white rounded-2xl p-8 shadow">
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Booking Tidak Ditemukan</h2>
-            <p className="text-gray-600 mb-6">Booking yang Anda cari tidak ditemukan atau mungkin telah dihapus.</p>
-            <button 
-              onClick={() => router.push('/user/dashboard')}
-              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              Kembali ke Dashboard
-            </button>
-          </div>
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-8 shadow-sm text-center mt-10">
+          <h2 className="text-2xl font-semibold text-[#3B2A1E] mb-3">Booking Tidak Ditemukan</h2>
+          <p className="text-sm text-[#A18F76] mb-6">
+            Booking yang Anda cari tidak ditemukan atau mungkin telah dihapus.
+          </p>
+          <button 
+            onClick={() => router.push('/user/dashboard')}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#C89B4B] text-white px-6 py-2.5 text-sm font-medium hover:bg-[#b48735] transition-colors"
+          >
+            <span>Kembali ke Dashboard</span>
+          </button>
         </div>
       </div>
     );
@@ -214,30 +212,37 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
   };
 
   return (
-    <div className="min-h-screen py-12 bg-gradient-to-br from-pink-50 to-purple-50">
+    <>
       {/* Payment Modal */}
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">Pembayaran</h3>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#E1D4C0] bg-[#FBF6EA]">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-xl bg-[#E6D8C2] flex items-center justify-center">
+                  <svg className="h-4 w-4 text-[#3B2A1E]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm12 7H5v10h14V9z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-semibold text-[#3B2A1E]">Pembayaran</h3>
+              </div>
               <button
                 onClick={() => setShowPaymentModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                className="text-[#A18F76] hover:text-[#3B2A1E] transition-colors p-1"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
             
-            <div className="p-4">
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="p-5">
+              <p className="text-xs text-[#A18F76] mb-4">
                 Silakan selesaikan pembayaran Anda di halaman berikut. Status akan diperbarui otomatis.
               </p>
               
               {/* Payment iframe */}
-              <div className="border rounded-lg overflow-hidden">
+              <div className="border border-[#E1D4C0] rounded-xl overflow-hidden bg-white">
                 <iframe
                   src={paymentUrl}
                   className="w-full h-96 border-0"
@@ -246,8 +251,8 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
                 />
               </div>
               
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
+              <div className="mt-4 p-3 bg-[#E3F2FD] rounded-xl">
+                <p className="text-xs text-[#1E4E8C]">
                   <strong>Tips:</strong> Setelah menyelesaikan pembayaran, halaman ini akan otomatis menutup dan mengarahkan Anda ke halaman konfirmasi.
                 </p>
               </div>
@@ -256,16 +261,17 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* Main Content - KEEP YOUR EXISTING CODE BELOW */}
-      <div className="max-w-4xl mx-auto">
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-2xl p-8 shadow mb-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-6 shadow-sm mt-4">
+          <div className="flex items-center justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Detail Booking</h1>
-              <p className="text-gray-600">ID: {booking._id}</p>
+              <p className="text-xs text-[#A18F76] mb-1">Detail Booking</p>
+              <h1 className="text-2xl font-semibold text-[#3B2A1E]">Booking Treatment</h1>
+              <p className="text-xs text-[#A18F76] mt-1">ID: {booking._id}</p>
             </div>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(booking.status)}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
               {getStatusText(booking.status)}
             </span>
           </div>
@@ -273,41 +279,53 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
           <div className="grid md:grid-cols-2 gap-6">
             {/* Booking Information */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Informasi Booking</h3>
-              <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-[#3B2A1E] mb-3">Informasi Booking</h3>
+              <div className="space-y-2 text-sm">
                 <div>
-                  <p className="text-sm text-gray-600">Tanggal</p>
-                  <p className="font-medium">{formatDate(booking.slot_id.date)}</p>
+                  <p className="text-[#A18F76]">Tanggal</p>
+                  <p className="font-semibold text-[#3B2A1E]">
+                    {formatDate(booking.slot_id.date)}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Waktu</p>
-                  <p className="font-medium">{booking.slot_id.start_time} - {booking.slot_id.end_time}</p>
+                  <p className="text-[#A18F76]">Waktu</p>
+                  <p className="font-semibold text-[#3B2A1E]">
+                    {booking.slot_id.start_time} - {booking.slot_id.end_time}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Jenis</p>
-                  <p className="font-medium capitalize">{booking.type}</p>
+                  <p className="text-[#A18F76]">Jenis</p>
+                  <p className="font-semibold text-[#3B2A1E] capitalize">
+                    {booking.type}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Dibuat Pada</p>
-                  <p className="font-medium">{formatDate(booking.created_at)}</p>
+                  <p className="text-[#A18F76]">Dibuat Pada</p>
+                  <p className="font-semibold text-[#3B2A1E]">
+                    {formatDate(booking.created_at)}
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Staff Information */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Staff</h3>
-              <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-[#3B2A1E] mb-3">Staff</h3>
+              <div className="space-y-2 text-sm">
                 {booking.slot_id.doctor_id && (
                   <div>
-                    <p className="text-sm text-gray-600">Dokter</p>
-                    <p className="font-medium">{booking.slot_id.doctor_id.name}</p>
+                    <p className="text-[#A18F76]">Dokter</p>
+                    <p className="font-semibold text-[#3B2A1E]">
+                      {booking.slot_id.doctor_id.name}
+                    </p>
                   </div>
                 )}
                 {booking.slot_id.therapist_id && (
                   <div>
-                    <p className="text-sm text-gray-600">Therapist</p>
-                    <p className="font-medium">{booking.slot_id.therapist_id.name}</p>
+                    <p className="text-[#A18F76]">Therapist</p>
+                    <p className="font-semibold text-[#3B2A1E]">
+                      {booking.slot_id.therapist_id.name}
+                    </p>
                   </div>
                 )}
               </div>
@@ -315,59 +333,84 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
           </div>
 
           {booking.notes && (
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-2">Catatan</h3>
-              <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{booking.notes}</p>
+            <div className="mt-5">
+              <h3 className="text-sm font-semibold text-[#3B2A1E] mb-2">Catatan</h3>
+              <p className="text-sm text-[#3B2A1E] bg-[#FBF6EA] border border-[#E1D4C0] p-3 rounded-xl">
+                {booking.notes}
+              </p>
             </div>
           )}
         </div>
 
         {/* Treatments List */}
-        <div className="bg-white rounded-2xl p-8 shadow mb-6">
-          <h3 className="text-lg font-semibold mb-4">Treatment yang Dipilih</h3>
-          <div className="space-y-4">
-            {treatments.map((item) => (
-              <div key={item._id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <p className="font-medium">{item.treatment_id.name}</p>
-                  <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-6 shadow-sm">
+          <h3 className="text-sm font-semibold text-[#3B2A1E] mb-4">Treatment yang Dipilih</h3>
+          {treatments.length === 0 ? (
+            <p className="text-sm text-[#A18F76]">Tidak ada treatment yang tercatat.</p>
+          ) : (
+            <div className="space-y-3">
+              {treatments.map((item) => (
+                <div
+                  key={item._id}
+                  className="flex items-center justify-between gap-4 p-4 rounded-xl border border-[#E1D4C0] bg-[#FBF6EA]"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-[#3B2A1E]">
+                      {item.treatment_id.name}
+                    </p>
+                    <p className="text-xs text-[#A18F76] mt-1">
+                      Qty: {item.quantity}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs">
+                    <p className="font-semibold text-[#3B2A1E]">
+                      {formatCurrency(item.price)}
+                    </p>
+                    <p className="text-[#A18F76] mt-1">
+                      Total:{' '}
+                      <span className="font-semibold text-[#3B2A1E]">
+                        {formatCurrency(item.price * item.quantity)}
+                      </span>
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium">{formatCurrency(item.price)}</p>
-                  <p className="text-sm text-gray-600">Total: {formatCurrency(item.price * item.quantity)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Total Amount */}
-        <div className="bg-white rounded-2xl p-8 shadow">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Total Pembayaran</h3>
-            <p className="text-2xl font-bold text-purple-600">{formatCurrency(booking.total_amount)}</p>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3 mt-6">
-          <button 
-            onClick={() => router.push('/user/dashboard')}
-            className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Kembali ke Dashboard
-          </button>
-          {booking.status === 'pending' && (
-            <button 
-              onClick={handlePayment}
-              disabled={isProcessingPayment}
-              className="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-400 disabled:cursor-not-allowed"
-            >
-              {isProcessingPayment ? 'Memproses...' : 'Bayar Sekarang'}
-            </button>
+              ))}
+            </div>
           )}
         </div>
+
+        {/* Total Amount + Actions */}
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-[#3B2A1E]">
+                Total Pembayaran
+              </h3>
+              <p className="text-2xl font-bold text-[#6C3FD1] mt-1">
+                {formatCurrency(booking.total_amount)}
+              </p>
+            </div>
+
+            <div className="flex flex-1 md:flex-none gap-3">
+              <button 
+                onClick={() => router.push('/user/dashboard/bookings')}
+                className="flex-1 rounded-xl border border-[#E1D4C0] text-[#7E6A52] py-2.5 text-sm font-medium hover:bg-[#FBF6EA] transition-colors"
+              >
+                Kembali ke Booking
+              </button>
+              {booking.status === 'pending' && (
+                <button 
+                  onClick={handlePayment}
+                  disabled={isProcessingPayment}
+                  className="flex-1 rounded-xl bg-[#6C3FD1] text-white py-2.5 text-sm font-medium hover:bg-[#5b34b3] disabled:bg-[#A68FEA] disabled:cursor-not-allowed transition-colors"
+                >
+                  {isProcessingPayment ? 'Memproses...' : 'Bayar Sekarang'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

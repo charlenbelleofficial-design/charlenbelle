@@ -6,14 +6,16 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { formatCurrency, formatDate } from '../../lib/utils';
 
-type Slot = { _id: string; start_time: string; end_time: string; date: string; };
+type Slot = { _id: string; start_time: string; end_time: string; date: string };
 type AvailableDate = { date: string; hasSlots: boolean; slotCount: number };
 
 export default function BookingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [selectedTreatments, setSelectedTreatments] = useState<{ id: string; name?: string; quantity: number }[]>([]);
+  const [selectedTreatments, setSelectedTreatments] = useState<
+    { id: string; name?: string; quantity: number }[]
+  >([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState('');
@@ -33,7 +35,7 @@ export default function BookingPage() {
     if (status === 'unauthenticated') {
       router.push('/user/login?redirect=/user/booking');
     }
-  }, [status]);
+  }, [status, router]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -45,15 +47,14 @@ export default function BookingPage() {
     fetchAvailableDates();
   }, [currentMonth]);
 
-  // Add this check in app/user/booking/page.tsx before allowing booking
+  // Cek customer profile sebelum booking
   useEffect(() => {
     const checkCustomerProfile = async () => {
       try {
         const response = await fetch('/api/user/customer-profile');
         const data = await response.json();
-        
+
         if (data.success && !data.customer_profile?.completed_at) {
-          // Redirect to profile completion if not completed
           router.push('/user/customer-profile?redirect=/user/booking');
         }
       } catch (error) {
@@ -66,21 +67,22 @@ export default function BookingPage() {
     }
   }, [session, router]);
 
-  // In your fetchAvailableDates function, add this:
   async function fetchAvailableDates() {
     setIsLoadingDates(true);
     try {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1;
       console.log('Fetching available dates for:', year, month);
-      
-      const res = await fetch(`/api/slots/available-dates?year=${year}&month=${month}`);
+
+      const res = await fetch(
+        `/api/slots/available-dates?year=${year}&month=${month}`
+      );
       const data = await res.json();
-      
+
       console.log('Available dates API response:', data);
       console.log('Calendar days:', calendarDays);
       console.log('Available dates:', availableDates);
-      
+
       if (data.success) {
         console.log('Available dates data:', data.dates);
         setAvailableDates(data.dates || []);
@@ -109,43 +111,58 @@ export default function BookingPage() {
   }
 
   function removeTreatment(id: string) {
-    const next = selectedTreatments.filter(t => t.id !== id);
+    const next = selectedTreatments.filter((t) => t.id !== id);
     setSelectedTreatments(next);
     localStorage.setItem('selectedTreatments', JSON.stringify(next));
   }
 
   function changeQty(id: string, qty: number) {
-    const next = selectedTreatments.map(t => t.id === id ? { ...t, quantity: qty } : t);
+    const next = selectedTreatments.map((t) =>
+      t.id === id ? { ...t, quantity: qty } : t
+    );
     setSelectedTreatments(next);
     localStorage.setItem('selectedTreatments', JSON.stringify(next));
   }
 
   async function handleSubmitBooking() {
-    if (!selectedSlot) { toast.error('Pilih slot'); return; }
-    if (selectedTreatments.length === 0) { toast.error('Pilih minimal 1 treatment'); return; }
+    if (!selectedSlot) {
+      toast.error('Pilih slot');
+      return;
+    }
+    if (selectedTreatments.length === 0) {
+      toast.error('Pilih minimal 1 treatment');
+      return;
+    }
     setIsLoading(true);
     try {
       // Check if this is a consultation booking
-      const isConsultation = selectedTreatments.some(t => t.id === 'consultation');
-      
+      const isConsultation = selectedTreatments.some(
+        (t) => t.id === 'consultation'
+      );
+
       const body = {
         slot_id: selectedSlot,
         type: isConsultation ? 'consultation' : 'treatment',
         notes,
-        treatments: isConsultation ? [] : selectedTreatments.map(t => ({ treatment_id: t.id, quantity: t.quantity }))
+        treatments: isConsultation
+          ? []
+          : selectedTreatments.map((t) => ({
+              treatment_id: t.id,
+              quantity: t.quantity
+            }))
       };
-      
+
       console.log('Booking request body:', body); // Debug log
-      
+
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Gagal buat booking');
-      
+
       toast.success('Booking berhasil dibuat!');
       localStorage.removeItem('selectedTreatments');
       router.push(`/user/dashboard/bookings/${data.booking._id}`);
@@ -159,7 +176,7 @@ export default function BookingPage() {
 
   // Calendar navigation
   const navigateMonth = (direction: 'prev' | 'next') => {
-    setCurrentMonth(prev => {
+    setCurrentMonth((prev) => {
       const newDate = new Date(prev);
       if (direction === 'prev') {
         newDate.setMonth(prev.getMonth() - 1);
@@ -174,30 +191,32 @@ export default function BookingPage() {
   const generateCalendarDays = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-    
+
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startingDay = firstDay.getDay(); // 0 = Sunday
     const totalDays = lastDay.getDate();
-    
-    const days = [];
-    
-    // Add empty cells for days before the first day of month
+
+    const days: any[] = [];
+
+    // empty cells
     for (let i = 0; i < startingDay; i++) {
       days.push(null);
     }
-    
-    // Add days of the month
+
+    // month days
     for (let day = 1; day <= totalDays; day++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      
-      // Find matching available date - use exact string comparison
-      const availableDate = availableDates.find(d => {
-        // Ensure both dates are in the same format
-        const availableDateStr = new Date(d.date).toISOString().split('T')[0];
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(
+        day
+      ).padStart(2, '0')}`;
+
+      const availableDate = availableDates.find((d) => {
+        const availableDateStr = new Date(d.date)
+          .toISOString()
+          .split('T')[0];
         return availableDateStr === dateStr;
       });
-      
+
       days.push({
         date: dateStr,
         day,
@@ -205,52 +224,84 @@ export default function BookingPage() {
         slotCount: availableDate ? availableDate.slotCount : 0
       });
     }
-    
+
     return days;
   };
 
   const calendarDays = generateCalendarDays();
-  const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const monthNames = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember'
+  ];
   const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
   return (
-    <div className="min-h-screen py-12 bg-gradient-to-br from-pink-50 to-purple-50">
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl p-8 shadow">
-        <h1 className="text-2xl font-bold mb-6">Buat Booking Baru</h1>
-
+    <div className="min-h-screen bg-[#F6F0E3] py-10">
+      <div className="max-w-4xl mx-auto bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-8 shadow-sm">
+        {/* Header */}
         <div className="mb-6">
-          <h3 className="font-semibold mb-3">Treatment Terpilih</h3>
+          <p className="text-xs text-[#A18F76] mb-1">Booking</p>
+          <h1 className="text-2xl font-semibold text-[#3B2A1E]">
+            Buat Booking Baru
+          </h1>
+          <p className="text-sm text-[#A18F76] mt-1">
+            Pilih treatment, tanggal, dan waktu yang sesuai untuk kunjungan Anda.
+          </p>
+        </div>
+
+        {/* Treatment selected */}
+        <div className="mb-7">
+          <h3 className="text-sm font-semibold text-[#3B2A1E] mb-3">
+            Treatment Terpilih
+          </h3>
           {selectedTreatments.length === 0 ? (
-            <div className="text-gray-500 p-4 border rounded-lg text-center">
-              Belum ada treatment. Pilih dari halaman layanan.
+            <div className="text-sm text-[#A18F76] p-4 border border-dashed border-[#E1D4C0] rounded-xl bg-[#FBF6EA] text-center">
+              Belum ada treatment. Pilih dari halaman layanan terlebih dahulu.
             </div>
           ) : (
             <div className="space-y-3">
-              {selectedTreatments.map(t => (
-                <div key={t.id} className="flex items-center justify-between p-4 border rounded-lg">
+              {selectedTreatments.map((t) => (
+                <div
+                  key={t.id}
+                  className="flex items-center justify-between p-4 rounded-xl border border-[#E1D4C0] bg-[#FBF6EA]"
+                >
                   <div className="flex-1">
-                    <div className="font-semibold text-lg">{t.name || t.id}</div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      Qty: 
-                      <button 
-                        onClick={() => changeQty(t.id, Math.max(1, t.quantity - 1))} 
-                        className="ml-3 px-3 py-1 border rounded-lg hover:bg-gray-50"
+                    <div className="font-semibold text-sm text-[#3B2A1E]">
+                      {t.name || t.id}
+                    </div>
+                    <div className="text-xs text-[#A18F76] mt-2 flex items-center gap-2">
+                      <span>Qty:</span>
+                      <button
+                        onClick={() =>
+                          changeQty(t.id, Math.max(1, t.quantity - 1))
+                        }
+                        className="px-2 py-1 rounded-lg border border-[#E1D4C0] bg-[#FFFDF9] text-xs hover:bg-[#F1E5D1] transition-colors"
                       >
                         -
                       </button>
-                      <span className="px-3 py-1 mx-1 border rounded-lg bg-gray-50 min-w-[40px] inline-block text-center">
+                      <span className="px-3 py-1 rounded-lg bg-[#FFFDF9] border border-[#E1D4C0] min-w-[40px] text-center">
                         {t.quantity}
                       </span>
-                      <button 
-                        onClick={() => changeQty(t.id, t.quantity + 1)} 
-                        className="px-3 py-1 border rounded-lg hover:bg-gray-50"
+                      <button
+                        onClick={() => changeQty(t.id, t.quantity + 1)}
+                        className="px-2 py-1 rounded-lg border border-[#E1D4C0] bg-[#FFFDF9] text-xs hover:bg-[#F1E5D1] transition-colors"
                       >
                         +
                       </button>
                     </div>
                   </div>
-                  <button 
-                    className="text-sm text-red-600 hover:text-red-800 px-3 py-1 border border-red-200 rounded-lg hover:bg-red-50" 
+                  <button
+                    className="text-xs font-medium text-red-700 px-3 py-1 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
                     onClick={() => removeTreatment(t.id)}
                   >
                     Hapus
@@ -262,25 +313,32 @@ export default function BookingPage() {
         </div>
 
         {/* Calendar Section */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-3">Pilih Tanggal</label>
-          <div className="border rounded-lg p-4 bg-white">
+        <div className="mb-7">
+          <label className="block text-sm font-semibold text-[#3B2A1E] mb-3">
+            Pilih Tanggal
+          </label>
+          <div className="border border-[#E1D4C0] rounded-2xl p-4 bg-[#FFFDF9]">
             {/* Calendar Header */}
             <div className="flex items-center justify-between mb-4">
-              <button 
+              <button
                 onClick={() => navigateMonth('prev')}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 rounded-xl hover:bg-[#FBF6EA] text-[#7E6A52] disabled:opacity-50"
                 disabled={isLoadingDates}
               >
                 ←
               </button>
-              <h3 className="text-lg font-semibold">
-                {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                {isLoadingDates && <span className="text-sm text-gray-500 ml-2">(memuat...)</span>}
+              <h3 className="text-sm font-semibold text-[#3B2A1E]">
+                {monthNames[currentMonth.getMonth()]}{' '}
+                {currentMonth.getFullYear()}
+                {isLoadingDates && (
+                  <span className="text-xs text-[#A18F76] ml-2">
+                    (memuat…)
+                  </span>
+                )}
               </h3>
-              <button 
+              <button
                 onClick={() => navigateMonth('next')}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 rounded-xl hover:bg-[#FBF6EA] text-[#7E6A52] disabled:opacity-50"
                 disabled={isLoadingDates}
               >
                 →
@@ -288,15 +346,20 @@ export default function BookingPage() {
             </div>
 
             {isLoadingDates ? (
-              <div className="flex justify-center items-center h-48">
-                <div className="text-gray-500">Memuat kalender...</div>
+              <div className="flex justify-center items-center h-40">
+                <span className="text-sm text-[#A18F76]">
+                  Memuat kalender...
+                </span>
               </div>
             ) : (
               <>
                 {/* Day Names */}
                 <div className="grid grid-cols-7 gap-1 mb-2">
-                  {dayNames.map(day => (
-                    <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
+                  {dayNames.map((day) => (
+                    <div
+                      key={day}
+                      className="text-center text-[11px] font-medium text-[#A18F76] py-2"
+                    >
                       {day}
                     </div>
                   ))}
@@ -306,36 +369,47 @@ export default function BookingPage() {
                 <div className="grid grid-cols-7 gap-1">
                   {calendarDays.map((day, index) => {
                     if (day === null) {
-                      return <div key={`empty-${index}`} className="h-12" />;
+                      return <div key={`empty-${index}`} className="h-10" />;
                     }
 
                     const isSelected = selectedDate === day.date;
-                    const isToday = day.date === new Date().toISOString().split('T')[0];
-                    const isPast = new Date(day.date) < new Date(new Date().setHours(0, 0, 0, 0));
+                    const todayStr = new Date()
+                      .toISOString()
+                      .split('T')[0];
+                    const isToday = day.date === todayStr;
+                    const isPast =
+                      new Date(day.date) <
+                      new Date(new Date().setHours(0, 0, 0, 0));
 
                     return (
                       <button
                         key={day.date}
-                        onClick={() => !isPast && day.hasSlots && setSelectedDate(day.date)}
+                        onClick={() =>
+                          !isPast && day.hasSlots && setSelectedDate(day.date)
+                        }
                         disabled={isPast || !day.hasSlots}
-                        className={`
-                          h-12 rounded-lg text-sm font-medium transition-all
-                          ${isSelected 
-                            ? 'bg-purple-600 text-white shadow-lg transform scale-105' 
-                            : isToday
-                            ? 'border-2 border-purple-300 bg-white text-gray-900'
-                            : day.hasSlots
-                            ? 'bg-green-50 text-green-800 hover:bg-green-100 hover:shadow-md'
-                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        className={`h-10 rounded-xl text-xs font-medium transition-all
+                          ${
+                            isSelected
+                              ? 'bg-[#6C3FD1] text-white shadow-md'
+                              : isToday
+                              ? 'border border-[#C89B4B] bg-[#FFFDF9] text-[#3B2A1E]'
+                              : day.hasSlots
+                              ? 'bg-[#E9F3E3] text-[#4F6F52] hover:bg-[#DBEAD5]'
+                              : 'bg-[#F0ECE4] text-[#B4A592] cursor-not-allowed'
                           }
                           ${isPast ? 'opacity-50 cursor-not-allowed' : ''}
                         `}
-                        title={day.hasSlots ? `${day.slotCount} slot tersedia` : 'Tidak ada slot'}
+                        title={
+                          day.hasSlots
+                            ? `${day.slotCount} slot tersedia`
+                            : 'Tidak ada slot'
+                        }
                       >
                         <div className="flex flex-col items-center justify-center h-full">
                           <span>{day.day}</span>
                           {day.hasSlots && day.slotCount > 0 && (
-                            <span className="text-xs opacity-75">
+                            <span className="text-[10px] opacity-80">
                               {day.slotCount}
                             </span>
                           )}
@@ -344,48 +418,48 @@ export default function BookingPage() {
                     );
                   })}
                 </div>
+
+                {/* Legend */}
+                <div className="flex flex-wrap gap-4 mt-4 text-[11px] text-[#7E6A52]">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded bg-[#E9F3E3] border border-[#C5E0BF]" />
+                    <span>Tersedia</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded bg-[#6C3FD1]" />
+                    <span>Terpilih</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded bg-[#F0ECE4]" />
+                    <span>Tidak tersedia</span>
+                  </div>
+                </div>
               </>
             )}
-
-            {/* Calendar Legend */}
-            <div className="flex flex-wrap gap-4 mt-4 text-xs text-gray-600">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-50 border border-green-200 rounded"></div>
-                <span>Tersedia</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-purple-600 rounded"></div>
-                <span>Terpilih</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-gray-100 rounded"></div>
-                <span>Tidak Tersedia</span>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Time Slots Section */}
         {selectedDate && (
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-3">
+          <div className="mb-7">
+            <label className="block text-sm font-semibold text-[#3B2A1E] mb-3">
               Pilih Waktu untuk {formatDate(selectedDate)}
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {availableSlots.length === 0 ? (
-                <div className="col-span-3 text-center text-gray-500 p-4 border rounded-lg">
-                  Tidak ada slot tersedia untuk tanggal ini
+                <div className="col-span-3 text-center text-sm text-[#A18F76] p-4 border border-dashed border-[#E1D4C0] rounded-xl bg-[#FBF6EA]">
+                  Tidak ada slot tersedia untuk tanggal ini.
                 </div>
               ) : (
-                availableSlots.map(s => (
-                  <button 
-                    key={s._id} 
+                availableSlots.map((s) => (
+                  <button
+                    key={s._id}
                     onClick={() => setSelectedSlot(s._id)}
-                    className={`
-                      p-3 border rounded-lg text-sm font-medium transition-all
-                      ${selectedSlot === s._id 
-                        ? 'bg-purple-600 text-white border-purple-600 shadow-lg transform scale-105' 
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-purple-300 hover:bg-purple-50'
+                    className={`p-3 rounded-xl text-sm font-medium border transition-all
+                      ${
+                        selectedSlot === s._id
+                          ? 'bg-[#6C3FD1] text-white border-[#6C3FD1] shadow-md'
+                          : 'bg-[#FFFDF9] text-[#3B2A1E] border-[#E1D4C0] hover:bg-[#F1E5D1]'
                       }
                     `}
                   >
@@ -398,33 +472,37 @@ export default function BookingPage() {
         )}
 
         {/* Notes Section */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-3">Catatan (opsional)</label>
-          <textarea 
-            value={notes} 
-            onChange={(e) => setNotes(e.target.value)} 
-            rows={3} 
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-colors" 
+        <div className="mb-8">
+          <label className="block text-sm font-semibold text-[#3B2A1E] mb-3">
+            Catatan (opsional)
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+            className="w-full border border-[#E1D4C0] rounded-2xl px-4 py-3 text-sm text-[#3B2A1E] bg-[#FFFDF9] focus:outline-none focus:ring-2 focus:ring-[#C89B4B]/40 focus:border-[#C89B4B] transition-colors"
             placeholder="Tambahkan catatan khusus untuk terapis atau dokter..."
           />
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <button 
-            onClick={() => router.back()} 
-            className="flex-1 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition-colors"
+          <button
+            onClick={() => router.back()}
+            className="flex-1 py-3 rounded-xl border border-[#E1D4C0] text-sm font-medium text-[#7E6A52] bg-[#FFFDF9] hover:bg-[#FBF6EA] transition-colors"
           >
             Kembali
           </button>
-          <button 
-            onClick={handleSubmitBooking} 
-            disabled={isLoading || !selectedSlot || selectedTreatments.length === 0}
-            className={`
-              flex-1 py-3 rounded-lg font-medium transition-all
-              ${isLoading || !selectedSlot || selectedTreatments.length === 0
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg hover:shadow-xl'
+          <button
+            onClick={handleSubmitBooking}
+            disabled={
+              isLoading || !selectedSlot || selectedTreatments.length === 0
+            }
+            className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all
+              ${
+                isLoading || !selectedSlot || selectedTreatments.length === 0
+                  ? 'bg-[#C7B9A2] text-white cursor-not-allowed'
+                  : 'bg-[#6C3FD1] text-white hover:bg-[#5b34b3] shadow-md hover:shadow-lg'
               }
             `}
           >

@@ -43,7 +43,7 @@ export default function CustomerProfilePage() {
       router.push('/user/login');
       return;
     }
-    
+
     if (session) {
       fetchProfile();
     }
@@ -58,14 +58,14 @@ export default function CustomerProfilePage() {
   };
 
   const hideSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, isVisible: false }));
+    setSnackbar((prev) => ({ ...prev, isVisible: false }));
   };
 
   const fetchProfile = async () => {
     try {
       const response = await fetch('/api/user/customer-profile');
       const data = await response.json();
-      
+
       if (data.success && data.customer_profile) {
         setProfile(data.customer_profile);
       }
@@ -87,10 +87,9 @@ export default function CustomerProfilePage() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         showSnackbar('Profil berhasil disimpan', 'success');
-        // Redirect to booking page or previous page
         setTimeout(() => {
           router.push('/user/booking');
         }, 2000);
@@ -107,7 +106,7 @@ export default function CustomerProfilePage() {
 
   const addAllergy = () => {
     if (newAllergy.trim()) {
-      setProfile(prev => ({
+      setProfile((prev) => ({
         ...prev,
         allergies: [...prev.allergies, newAllergy.trim()]
       }));
@@ -116,7 +115,7 @@ export default function CustomerProfilePage() {
   };
 
   const removeAllergy = (index: number) => {
-    setProfile(prev => ({
+    setProfile((prev) => ({
       ...prev,
       allergies: prev.allergies.filter((_, i) => i !== index)
     }));
@@ -124,7 +123,7 @@ export default function CustomerProfilePage() {
 
   const addCondition = () => {
     if (newCondition.trim()) {
-      setProfile(prev => ({
+      setProfile((prev) => ({
         ...prev,
         medical_conditions: [...prev.medical_conditions, newCondition.trim()]
       }));
@@ -133,7 +132,7 @@ export default function CustomerProfilePage() {
   };
 
   const removeCondition = (index: number) => {
-    setProfile(prev => ({
+    setProfile((prev) => ({
       ...prev,
       medical_conditions: prev.medical_conditions.filter((_, i) => i !== index)
     }));
@@ -141,7 +140,7 @@ export default function CustomerProfilePage() {
 
   const addMedication = () => {
     if (newMedication.trim()) {
-      setProfile(prev => ({
+      setProfile((prev) => ({
         ...prev,
         medications: [...prev.medications, newMedication.trim()]
       }));
@@ -150,7 +149,7 @@ export default function CustomerProfilePage() {
   };
 
   const removeMedication = (index: number) => {
-    setProfile(prev => ({
+    setProfile((prev) => ({
       ...prev,
       medications: prev.medications.filter((_, i) => i !== index)
     }));
@@ -158,31 +157,43 @@ export default function CustomerProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F6F0E3]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6C3FD1]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[#F6F0E3] py-10">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Profil Kesehatan</h1>
-          <p className="text-gray-600 mb-8">
-            Lengkapi profil kesehatan Anda untuk pengalaman perawatan yang lebih baik dan aman.
-          </p>
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl shadow-sm p-8">
+          {/* Header */}
+          <div className="mb-6">
+            <p className="text-xs text-[#A18F76] mb-1">Profil</p>
+            <h1 className="text-2xl font-semibold text-[#3B2A1E] mb-2">
+              Profil Kesehatan
+            </h1>
+            <p className="text-sm text-[#A18F76]">
+              Lengkapi profil kesehatan Anda untuk pengalaman perawatan yang
+              lebih aman dan personal.
+            </p>
+          </div>
 
-          <div className="space-y-8">
+          <div className="space-y-7">
             {/* Skin Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-[#3B2A1E] mb-2">
                 Jenis Kulit
               </label>
               <select
                 value={profile.skin_type}
-                onChange={(e) => setProfile(prev => ({ ...prev, skin_type: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                onChange={(e) =>
+                  setProfile((prev) => ({
+                    ...prev,
+                    skin_type: e.target.value
+                  }))
+                }
+                className="w-full border border-[#E1D4C0] rounded-xl px-3 py-2 text-sm bg-[#FFFDF9] text-[#3B2A1E] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
               >
                 <option value="">Pilih jenis kulit</option>
                 <option value="normal">Normal</option>
@@ -195,7 +206,7 @@ export default function CustomerProfilePage() {
 
             {/* Allergies */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-[#3B2A1E] mb-2">
                 Alergi
               </label>
               <div className="space-y-2">
@@ -205,12 +216,12 @@ export default function CustomerProfilePage() {
                     value={newAllergy}
                     onChange={(e) => setNewAllergy(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addAllergy()}
-                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
+                    className="flex-1 border border-[#E1D4C0] rounded-xl px-3 py-2 text-sm bg-[#FFFDF9] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
                     placeholder="Tambahkan alergi (contoh: Latex, Lidocaine)"
                   />
                   <button
                     onClick={addAllergy}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 rounded-xl bg-[#C89B4B] text-white text-sm font-medium hover:bg-[#b48735] transition-colors"
                   >
                     Tambah
                   </button>
@@ -219,12 +230,12 @@ export default function CustomerProfilePage() {
                   {profile.allergies.map((allergy, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm"
+                      className="inline-flex items-center gap-1 bg-red-50 text-red-700 px-3 py-1 rounded-full text-xs border border-red-200"
                     >
                       {allergy}
                       <button
                         onClick={() => removeAllergy(index)}
-                        className="text-red-600 hover:text-red-800"
+                        className="hover:text-red-900"
                       >
                         ×
                       </button>
@@ -236,7 +247,7 @@ export default function CustomerProfilePage() {
 
             {/* Medical Conditions */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-[#3B2A1E] mb-2">
                 Kondisi Medis
               </label>
               <div className="space-y-2">
@@ -246,12 +257,12 @@ export default function CustomerProfilePage() {
                     value={newCondition}
                     onChange={(e) => setNewCondition(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addCondition()}
-                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
+                    className="flex-1 border border-[#E1D4C0] rounded-xl px-3 py-2 text-sm bg-[#FFFDF9] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
                     placeholder="Tambahkan kondisi medis (contoh: Diabetes, Hipertensi)"
                   />
                   <button
                     onClick={addCondition}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 rounded-xl bg-[#C89B4B] text-white text-sm font-medium hover:bg-[#b48735] transition-colors"
                   >
                     Tambah
                   </button>
@@ -260,12 +271,12 @@ export default function CustomerProfilePage() {
                   {profile.medical_conditions.map((condition, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm"
+                      className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 px-3 py-1 rounded-full text-xs border border-amber-200"
                     >
                       {condition}
                       <button
                         onClick={() => removeCondition(index)}
-                        className="text-yellow-600 hover:text-yellow-800"
+                        className="hover:text-amber-900"
                       >
                         ×
                       </button>
@@ -277,7 +288,7 @@ export default function CustomerProfilePage() {
 
             {/* Medications */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-[#3B2A1E] mb-2">
                 Obat yang Dikonsumsi
               </label>
               <div className="space-y-2">
@@ -287,12 +298,12 @@ export default function CustomerProfilePage() {
                     value={newMedication}
                     onChange={(e) => setNewMedication(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addMedication()}
-                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
+                    className="flex-1 border border-[#E1D4C0] rounded-xl px-3 py-2 text-sm bg-[#FFFDF9] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
                     placeholder="Tambahkan obat (contoh: Warfarin, Aspirin)"
                   />
                   <button
                     onClick={addMedication}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 rounded-xl bg-[#C89B4B] text-white text-sm font-medium hover:bg-[#b48735] transition-colors"
                   >
                     Tambah
                   </button>
@@ -301,12 +312,12 @@ export default function CustomerProfilePage() {
                   {profile.medications.map((medication, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
+                      className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full text-xs border border-emerald-200"
                     >
                       {medication}
                       <button
                         onClick={() => removeMedication(index)}
-                        className="text-green-600 hover:text-green-800"
+                        className="hover:text-emerald-900"
                       >
                         ×
                       </button>
@@ -318,30 +329,32 @@ export default function CustomerProfilePage() {
 
             {/* Additional Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-[#3B2A1E] mb-2">
                 Catatan Tambahan
               </label>
               <textarea
                 value={profile.notes}
-                onChange={(e) => setProfile(prev => ({ ...prev, notes: e.target.value }))}
+                onChange={(e) =>
+                  setProfile((prev) => ({ ...prev, notes: e.target.value }))
+                }
                 rows={4}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                className="w-full border border-[#E1D4C0] rounded-2xl px-3 py-2 text-sm bg-[#FFFDF9] text-[#3B2A1E] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
                 placeholder="Informasi tambahan tentang kesehatan Anda..."
               />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-6">
+            <div className="flex gap-3 pt-4">
               <button
                 onClick={() => router.back()}
-                className="flex-1 bg-gray-500 text-white py-3 rounded-lg hover:bg-gray-600 transition-colors"
+                className="flex-1 py-3 rounded-xl bg-[#E1D4C0] text-sm font-medium text-[#3B2A1E] hover:bg-[#D3C2A6] transition-colors"
               >
                 Kembali
               </button>
               <button
                 onClick={saveProfile}
                 disabled={saving}
-                className="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-400"
+                className="flex-1 py-3 rounded-xl bg-[#6C3FD1] text-sm font-semibold text-white hover:bg-[#5b34b3] disabled:bg-[#A68FEA] transition-colors"
               >
                 {saving ? 'Menyimpan...' : 'Simpan Profil'}
               </button>

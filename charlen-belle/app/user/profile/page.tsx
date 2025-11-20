@@ -60,7 +60,7 @@ export default function UserProfilePage() {
       router.push('/user/login');
       return;
     }
-    
+
     if (session) {
       fetchProfile();
     }
@@ -75,14 +75,14 @@ export default function UserProfilePage() {
   };
 
   const hideSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, isVisible: false }));
+    setSnackbar((prev) => ({ ...prev, isVisible: false }));
   };
 
   const fetchProfile = async () => {
     try {
       const response = await fetch('/api/user/profile');
       const data = await response.json();
-      
+
       if (data.success) {
         setProfile(data.user);
       }
@@ -107,7 +107,7 @@ export default function UserProfilePage() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         showSnackbar('Profil berhasil diperbarui', 'success');
         setEditing(false);
@@ -133,7 +133,7 @@ export default function UserProfilePage() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         showSnackbar('Profil kesehatan berhasil disimpan', 'success');
         setEditingCustomerProfile(false);
@@ -152,7 +152,7 @@ export default function UserProfilePage() {
   // Helper functions for customer profile
   const addAllergy = () => {
     if (newAllergy.trim()) {
-      setProfile(prev => ({
+      setProfile((prev) => ({
         ...prev,
         customer_profile: {
           ...prev.customer_profile!,
@@ -164,7 +164,7 @@ export default function UserProfilePage() {
   };
 
   const removeAllergy = (index: number) => {
-    setProfile(prev => ({
+    setProfile((prev) => ({
       ...prev,
       customer_profile: {
         ...prev.customer_profile!,
@@ -175,7 +175,7 @@ export default function UserProfilePage() {
 
   const addCondition = () => {
     if (newCondition.trim()) {
-      setProfile(prev => ({
+      setProfile((prev) => ({
         ...prev,
         customer_profile: {
           ...prev.customer_profile!,
@@ -187,7 +187,7 @@ export default function UserProfilePage() {
   };
 
   const removeCondition = (index: number) => {
-    setProfile(prev => ({
+    setProfile((prev) => ({
       ...prev,
       customer_profile: {
         ...prev.customer_profile!,
@@ -198,7 +198,7 @@ export default function UserProfilePage() {
 
   const addMedication = () => {
     if (newMedication.trim()) {
-      setProfile(prev => ({
+      setProfile((prev) => ({
         ...prev,
         customer_profile: {
           ...prev.customer_profile!,
@@ -210,7 +210,7 @@ export default function UserProfilePage() {
   };
 
   const removeMedication = (index: number) => {
-    setProfile(prev => ({
+    setProfile((prev) => ({
       ...prev,
       customer_profile: {
         ...prev.customer_profile!,
@@ -221,68 +221,91 @@ export default function UserProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F6F0E3]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6C3FD1]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f9f7f1] py-8">
+    <div className="min-h-screen bg-[#F6F0E3] py-10">
       <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-[#2d2617]">Profil Saya</h1>
-          <div className="flex gap-2">
-            {!editing && !editingCustomerProfile && (
-              <button
-                onClick={() => setEditing(true)}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                Edit Profil
-              </button>
-            )}
+          <div>
+            <p className="text-xs text-[#A18F76] mb-1 uppercase tracking-[0.15em]">
+              Akun
+            </p>
+            <h1 className="text-2xl font-semibold text-[#3B2A1E]">Profil Saya</h1>
           </div>
+          {!editing && !editingCustomerProfile && (
+            <button
+              onClick={() => setEditing(true)}
+              className="bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors shadow-sm"
+            >
+              Edit Profil
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Profile Information */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Informasi Pribadi</h2>
-              
+            <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-[#3B2A1E] mb-4">
+                Informasi Pribadi
+              </h2>
+
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nama</label>
+                  <label className="block text-sm font-medium text-[#3B2A1E] mb-2">
+                    Nama
+                  </label>
                   {editing ? (
                     <input
                       type="text"
                       value={profile.name}
-                      onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                      onChange={(e) =>
+                        setProfile((prev) => ({ ...prev, name: e.target.value }))
+                      }
+                      className="w-full border border-[#E1D4C0] rounded-xl px-3 py-2 text-sm bg-[#FFFDF9] text-[#3B2A1E] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
                     />
                   ) : (
-                    <p className="text-lg">{profile.name}</p>
+                    <p className="text-base text-[#3B2A1E]">{profile.name}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <p className="text-lg text-gray-600">{profile.email}</p>
-                  <p className="text-sm text-gray-500 mt-1">Email tidak dapat diubah</p>
+                  <label className="block text-sm font-medium text-[#3B2A1E] mb-2">
+                    Email
+                  </label>
+                  <p className="text-base text-[#7E6A52]">{profile.email}</p>
+                  <p className="text-xs text-[#A18F76] mt-1">
+                    Email tidak dapat diubah
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nomor Telepon</label>
+                  <label className="block text-sm font-medium text-[#3B2A1E] mb-2">
+                    Nomor Telepon
+                  </label>
                   {editing ? (
                     <input
                       type="tel"
                       value={profile.phone_number || ''}
-                      onChange={(e) => setProfile(prev => ({ ...prev, phone_number: e.target.value }))}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          phone_number: e.target.value
+                        }))
+                      }
+                      className="w-full border border-[#E1D4C0] rounded-xl px-3 py-2 text-sm bg-[#FFFDF9] text-[#3B2A1E] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
                       placeholder="Masukkan nomor telepon"
                     />
                   ) : (
-                    <p className="text-lg">{profile.phone_number || 'Belum diisi'}</p>
+                    <p className="text-base text-[#3B2A1E]">
+                      {profile.phone_number || 'Belum diisi'}
+                    </p>
                   )}
                 </div>
 
@@ -290,14 +313,14 @@ export default function UserProfilePage() {
                   <div className="flex gap-3 pt-4">
                     <button
                       onClick={() => setEditing(false)}
-                      className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                      className="flex-1 bg-[#E1D4C0] text-[#3B2A1E] py-2.5 rounded-xl text-sm font-medium hover:bg-[#D3C2A6] transition-colors"
                     >
                       Batal
                     </button>
                     <button
                       onClick={saveProfile}
                       disabled={saving}
-                      className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-400"
+                      className="flex-1 bg-[#6C3FD1] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#5b34b3] transition-colors disabled:bg-[#A68FEA]"
                     >
                       {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
                     </button>
@@ -306,17 +329,22 @@ export default function UserProfilePage() {
               </div>
             </div>
 
-            {/* Customer Profile - Integrated Editing */}
+            {/* Customer Profile */}
             {profile.role === 'customer' && (
-              <div className="bg-white rounded-2xl shadow-xl p-6">
+              <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Profil Kesehatan</h2>
+                  <h2 className="text-lg font-semibold text-[#3B2A1E]">
+                    Profil Kesehatan
+                  </h2>
                   {!editingCustomerProfile && !editing && (
                     <button
                       onClick={() => setEditingCustomerProfile(true)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                      className="bg-[#C89B4B] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#b48735] transition-colors"
                     >
-                      {profile.customer_profile?.completed_at ? 'Edit' : 'Lengkapi'} Profil Kesehatan
+                      {profile.customer_profile?.completed_at
+                        ? 'Edit'
+                        : 'Lengkapi'}{' '}
+                      Profil
                     </button>
                   )}
                 </div>
@@ -325,19 +353,21 @@ export default function UserProfilePage() {
                   <div className="space-y-6">
                     {/* Skin Type */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-[#3B2A1E] mb-2">
                         Jenis Kulit
                       </label>
                       <select
                         value={profile.customer_profile?.skin_type || ''}
-                        onChange={(e) => setProfile(prev => ({
-                          ...prev,
-                          customer_profile: {
-                            ...prev.customer_profile!,
-                            skin_type: e.target.value
-                          }
-                        }))}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                        onChange={(e) =>
+                          setProfile((prev) => ({
+                            ...prev,
+                            customer_profile: {
+                              ...prev.customer_profile!,
+                              skin_type: e.target.value
+                            }
+                          }))
+                        }
+                        className="w-full border border-[#E1D4C0] rounded-xl px-3 py-2 text-sm bg-[#FFFDF9] text-[#3B2A1E] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
                       >
                         <option value="">Pilih jenis kulit</option>
                         <option value="normal">Normal</option>
@@ -350,7 +380,7 @@ export default function UserProfilePage() {
 
                     {/* Allergies */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-[#3B2A1E] mb-2">
                         Alergi
                       </label>
                       <div className="space-y-2">
@@ -359,39 +389,43 @@ export default function UserProfilePage() {
                             type="text"
                             value={newAllergy}
                             onChange={(e) => setNewAllergy(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAllergy())}
-                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                            onKeyPress={(e) =>
+                              e.key === 'Enter' && (e.preventDefault(), addAllergy())
+                            }
+                            className="flex-1 border border-[#E1D4C0] rounded-xl px-3 py-2 text-sm bg-[#FFFDF9] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
                             placeholder="Tambahkan alergi (contoh: Latex, Lidocaine)"
                           />
                           <button
                             onClick={addAllergy}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            className="bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors"
                           >
                             Tambah
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {(profile.customer_profile?.allergies || []).map((allergy: string, index: number) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm"
-                            >
-                              {allergy}
-                              <button
-                                onClick={() => removeAllergy(index)}
-                                className="text-red-600 hover:text-red-800 text-lg font-bold"
+                          {(profile.customer_profile?.allergies || []).map(
+                            (allergy, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 bg-red-50 text-red-700 px-3 py-1 rounded-full text-xs border border-red-200"
                               >
-                                ×
-                              </button>
-                            </span>
-                          ))}
+                                {allergy}
+                                <button
+                                  onClick={() => removeAllergy(index)}
+                                  className="hover:text-red-900"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            )
+                          )}
                         </div>
                       </div>
                     </div>
 
                     {/* Medical Conditions */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-[#3B2A1E] mb-2">
                         Kondisi Medis
                       </label>
                       <div className="space-y-2">
@@ -400,27 +434,32 @@ export default function UserProfilePage() {
                             type="text"
                             value={newCondition}
                             onChange={(e) => setNewCondition(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCondition())}
-                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                            onKeyPress={(e) =>
+                              e.key === 'Enter' &&
+                              (e.preventDefault(), addCondition())
+                            }
+                            className="flex-1 border border-[#E1D4C0] rounded-xl px-3 py-2 text-sm bg-[#FFFDF9] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
                             placeholder="Tambahkan kondisi medis (contoh: Diabetes, Hipertensi)"
                           />
                           <button
                             onClick={addCondition}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            className="bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors"
                           >
                             Tambah
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {(profile.customer_profile?.medical_conditions || []).map((condition: string, index: number) => (
+                          {(
+                            profile.customer_profile?.medical_conditions || []
+                          ).map((condition, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm"
+                              className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 px-3 py-1 rounded-full text-xs border border-amber-200"
                             >
                               {condition}
                               <button
                                 onClick={() => removeCondition(index)}
-                                className="text-yellow-600 hover:text-yellow-800 text-lg font-bold"
+                                className="hover:text-amber-900"
                               >
                                 ×
                               </button>
@@ -432,7 +471,7 @@ export default function UserProfilePage() {
 
                     {/* Medications */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-[#3B2A1E] mb-2">
                         Obat yang Dikonsumsi
                       </label>
                       <div className="space-y-2">
@@ -441,52 +480,59 @@ export default function UserProfilePage() {
                             type="text"
                             value={newMedication}
                             onChange={(e) => setNewMedication(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addMedication())}
-                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                            onKeyPress={(e) =>
+                              e.key === 'Enter' &&
+                              (e.preventDefault(), addMedication())
+                            }
+                            className="flex-1 border border-[#E1D4C0] rounded-xl px-3 py-2 text-sm bg-[#FFFDF9] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
                             placeholder="Tambahkan obat (contoh: Warfarin, Aspirin)"
                           />
                           <button
                             onClick={addMedication}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            className="bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors"
                           >
                             Tambah
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {(profile.customer_profile?.medications || []).map((medication: string, index: number) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
-                            >
-                              {medication}
-                              <button
-                                onClick={() => removeMedication(index)}
-                                className="text-green-600 hover:text-green-800 text-lg font-bold"
+                          {(profile.customer_profile?.medications || []).map(
+                            (medication, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full text-xs border border-emerald-200"
                               >
-                                ×
-                              </button>
-                            </span>
-                          ))}
+                                {medication}
+                                <button
+                                  onClick={() => removeMedication(index)}
+                                  className="hover:text-emerald-900"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            )
+                          )}
                         </div>
                       </div>
                     </div>
 
                     {/* Additional Notes */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-[#3B2A1E] mb-2">
                         Catatan Tambahan
                       </label>
                       <textarea
                         value={profile.customer_profile?.notes || ''}
-                        onChange={(e) => setProfile(prev => ({
-                          ...prev,
-                          customer_profile: {
-                            ...prev.customer_profile!,
-                            notes: e.target.value
-                          }
-                        }))}
+                        onChange={(e) =>
+                          setProfile((prev) => ({
+                            ...prev,
+                            customer_profile: {
+                              ...prev.customer_profile!,
+                              notes: e.target.value
+                            }
+                          }))
+                        }
                         rows={4}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                        className="w-full border border-[#E1D4C0] rounded-2xl px-3 py-2 text-sm bg-[#FFFDF9] text-[#3B2A1E] focus:outline-none focus:border-[#C89B4B] focus:ring-2 focus:ring-[#C89B4B]/30"
                         placeholder="Informasi tambahan tentang kesehatan..."
                       />
                     </div>
@@ -496,99 +542,146 @@ export default function UserProfilePage() {
                       <button
                         onClick={() => {
                           setEditingCustomerProfile(false);
-                          // Reset customer profile data
                           fetchProfile();
                           setNewAllergy('');
                           setNewCondition('');
                           setNewMedication('');
                         }}
-                        className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                        className="flex-1 bg-[#E1D4C0] text-[#3B2A1E] py-2.5 rounded-xl text-sm font-medium hover:bg-[#D3C2A6] transition-colors"
                       >
                         Batal
                       </button>
                       <button
                         onClick={saveCustomerProfile}
                         disabled={saving}
-                        className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400"
+                        className="flex-1 bg-[#2F855A] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#276749] transition-colors disabled:bg-[#9AE6B4]"
                       >
                         {saving ? 'Menyimpan...' : 'Simpan Profil Kesehatan'}
                       </button>
                     </div>
                   </div>
+                ) : profile.customer_profile?.completed_at ? (
+                  // View mode when completed
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#7E6A52]">Jenis Kulit</span>
+                      <span className="font-medium text-[#3B2A1E]">
+                        {profile.customer_profile.skin_type || 'Belum diisi'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#7E6A52]">Alergi</span>
+                      <span className="font-medium text-[#3B2A1E]">
+                        {profile.customer_profile.allergies?.length || 0} item
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#7E6A52]">Kondisi Medis</span>
+                      <span className="font-medium text-[#3B2A1E]">
+                        {profile.customer_profile.medical_conditions?.length ||
+                          0}{' '}
+                        item
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#7E6A52]">Obat</span>
+                      <span className="font-medium text-[#3B2A1E]">
+                        {profile.customer_profile.medications?.length || 0}{' '}
+                        item
+                      </span>
+                    </div>
+                    <div className="text-xs text-[#A18F76] mt-2">
+                      Terakhir diperbarui:{' '}
+                      {new Date(
+                        profile.customer_profile.completed_at
+                      ).toLocaleDateString('id-ID')}
+                    </div>
+                  </div>
                 ) : (
-                  // View mode for customer profile
-                  profile.customer_profile?.completed_at ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Jenis Kulit:</span>
-                        <span className="font-medium">{profile.customer_profile.skin_type || 'Belum diisi'}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Alergi:</span>
-                        <span className="font-medium">{profile.customer_profile.allergies?.length || 0} item</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Kondisi Medis:</span>
-                        <span className="font-medium">{profile.customer_profile.medical_conditions?.length || 0} item</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Obat:</span>
-                        <span className="font-medium">{profile.customer_profile.medications?.length || 0} item</span>
-                      </div>
-                      <div className="text-sm text-gray-500 mt-2">
-                        Terakhir diperbarui: {new Date(profile.customer_profile.completed_at).toLocaleDateString('id-ID')}
-                      </div>
+                  // Empty state
+                  <div className="text-center py-6">
+                    <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-[#FBF6EA] flex items-center justify-center">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-6 w-6 text-[#C89B4B]"
+                        fill="currentColor"
+                      >
+                        <path d="M12 2a7 7 0 0 0-7 7v4.5l-1.7 3.4A1 1 0 0 0 4.2 18H8v-2H5.6l1.1-2.2A1 1 0 0 0 7 13V9a5 5 0 0 1 10 0v4a1 1 0 0 0 .3.7l1.1 1.1A3 3 0 0 1 16 21h-3v2h3a5 5 0 0 0 3.5-8.5l-.8-.8V9a7 7 0 0 0-7-7z" />
+                      </svg>
                     </div>
-                  ) : (
-                    <div className="text-center py-6">
-                      <div className="text-6xl mb-4">🏥</div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Profil Kesehatan Belum Dilengkapi</h3>
-                      <p className="text-gray-600 mb-4">
-                        Lengkapi profil kesehatan Anda untuk pengalaman perawatan yang lebih baik.
-                      </p>
-                    </div>
-                  )
+                    <h3 className="text-sm font-semibold text-[#3B2A1E] mb-1">
+                      Profil Kesehatan Belum Dilengkapi
+                    </h3>
+                    <p className="text-xs text-[#A18F76]">
+                      Lengkapi profil kesehatan Anda untuk pengalaman perawatan
+                      yang lebih baik.
+                    </p>
+                  </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Sidebar - Quick Actions */}
+          {/* Sidebar - Quick info */}
           <div className="space-y-6">
             {/* Account Status */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Status Akun</h3>
-              <div className="space-y-2">
+            <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
+              <h3 className="font-semibold text-sm text-[#3B2A1E] mb-3">
+                Status Akun
+              </h3>
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Status:</span>
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                  <span className="text-[#7E6A52]">Status</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-[11px] font-medium">
                     Aktif
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Bergabung:</span>
-                  <span className="font-medium">
-                    {profile.created_at ? new Date(profile.created_at).toLocaleDateString('id-ID') : '-'}
+                  <span className="text-[#7E6A52]">Bergabung</span>
+                  <span className="font-medium text-[#3B2A1E]">
+                    {profile.created_at
+                      ? new Date(profile.created_at).toLocaleDateString('id-ID')
+                      : '-'}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Aksi Cepat</h3>
-              <div className="space-y-2">
+            <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
+              <h3 className="font-semibold text-sm text-[#3B2A1E] mb-3">
+                Aksi Cepat
+              </h3>
+              <div className="space-y-2 text-sm">
                 <button
-                  onClick={() => router.push('/user/booking')}
-                  className="w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                  onClick={() => router.push('/user/dashboard/bookings')}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[#7E6A52] hover:bg-[#FBF6EA] transition-colors"
                 >
-                  📅 Lihat Booking Saya
+                  <span className="h-7 w-7 rounded-xl bg-[#E6D8C2] flex items-center justify-center">
+                    <svg
+                      className="h-4 w-4 text-[#3B2A1E]"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm12 7H5v10h14V9z" />
+                    </svg>
+                  </span>
+                  <span>Lihat Booking Saya</span>
                 </button>
                 <button
-                  onClick={() => router.push('/user/booking/new')}
-                  className="w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                  onClick={() => router.push('/user/booking')}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[#7E6A52] hover:bg-[#FBF6EA] transition-colors"
                 >
-                  ➕ Buat Booking Baru
+                  <span className="h-7 w-7 rounded-xl bg-[#E6D8C2] flex items-center justify-center">
+                    <svg
+                      className="h-4 w-4 text-[#3B2A1E]"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M7 2v2H5a2 2 0 0 0-2 2v2h2V6h14v12H5v-2H3v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm5 7v3H9v2h3v3h2v-3h3v-2h-3V9h-2z" />
+                    </svg>
+                  </span>
+                  <span>Buat Booking Baru</span>
                 </button>
               </div>
             </div>

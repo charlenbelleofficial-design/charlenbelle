@@ -34,91 +34,118 @@ export default function PaymentPendingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 py-12">
-      <div className="max-w-2xl mx-auto px-4">
-        {/* Pending Header */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-10 h-10 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Menunggu Pembayaran</h1>
-          <p className="text-gray-600">Silakan selesaikan pembayaran Anda</p>
-        </div>
-
-        {/* Payment Details */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Detail Transaksi</h2>
-          <div className="space-y-3">
-            {orderId && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Order ID</span>
-                <span className="font-medium">{orderId}</span>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span className="text-gray-600">Status</span>
-              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
-                Menunggu
-              </span>
-            </div>
-            {paymentData && (
-              <>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Total</span>
-                  <span className="font-medium text-purple-600">
-                    {formatCurrency(paymentData.amount)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Metode</span>
-                  <span className="font-medium capitalize">
-                    {paymentData.payment_method?.replace('midtrans_', '')}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Instructions */}
-        <div className="bg-blue-50 rounded-2xl p-6 mb-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-3">Instruksi Pembayaran</h3>
-          <div className="space-y-3 text-blue-800">
-            <p>Bergantung pada metode pembayaran yang Anda pilih:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li><strong>Virtual Account:</strong> Transfer ke nomor VA yang diberikan</li>
-              <li><strong>QRIS:</strong> Scan QR code dengan aplikasi e-wallet</li>
-              <li><strong>E-wallet:</strong> Selesaikan di aplikasi GoPay/ShopeePay</li>
-              <li><strong>Credit Card:</strong> Ikuti instruksi 3D Secure</li>
-            </ul>
-            <p className="text-sm mt-3">Pembayaran akan diproses otomatis dalam beberapa menit.</p>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-4">
-          <Link
-            href="/user/dashboard"
-            className="flex-1 bg-white border border-gray-300 text-gray-700 py-3 rounded-lg text-center hover:bg-gray-50 transition-colors"
+    <div className="max-w-2xl mx-auto py-10">
+      {/* Pending Header */}
+      <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-8 shadow-sm text-center mb-6">
+        <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg
+            className="w-8 h-8 text-yellow-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            Kembali ke Dashboard
-          </Link>
-          {paymentData?.booking_id && (
-            <Link
-              href={`/user/dashboard/bookings/${paymentData.booking_id}`}
-              className="flex-1 bg-purple-600 text-white py-3 rounded-lg text-center hover:bg-purple-700 transition-colors"
-            >
-              Lihat Booking
-            </Link>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+        <h1 className="text-2xl font-semibold text-[#3B2A1E] mb-2">
+          Menunggu Pembayaran
+        </h1>
+        <p className="text-sm text-[#A18F76]">
+          Silakan selesaikan pembayaran Anda.
+        </p>
+      </div>
+
+      {/* Payment Details */}
+      <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-6 shadow-sm mb-6 text-sm">
+        <h2 className="text-sm font-semibold text-[#3B2A1E] mb-4">
+          Detail Transaksi
+        </h2>
+        <div className="space-y-3">
+          {orderId && (
+            <div className="flex justify-between">
+              <span className="text-[#A18F76]">Order ID</span>
+              <span className="font-semibold text-[#3B2A1E]">{orderId}</span>
+            </div>
+          )}
+          <div className="flex justify-between items-center">
+            <span className="text-[#A18F76]">Status</span>
+            <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+              Menunggu
+            </span>
+          </div>
+          {paymentData && (
+            <>
+              <div className="flex justify-between">
+                <span className="text-[#A18F76]">Total</span>
+                <span className="font-semibold text-[#6C3FD1]">
+                  {formatCurrency(paymentData.amount)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#A18F76]">Metode</span>
+                <span className="font-semibold text-[#3B2A1E] capitalize">
+                  {paymentData.payment_method?.replace('midtrans_', '')}
+                </span>
+              </div>
+            </>
           )}
         </div>
+      </div>
 
-        {/* Auto Refresh Notice */}
-        <div className="text-center mt-6 text-sm text-gray-500">
-          <p>Halaman ini akan diperbarui otomatis ketika pembayaran berhasil</p>
+      {/* Instructions */}
+      <div className="bg-[#E3F2FD] border border-[#C9E0FA] rounded-2xl p-6 mb-6 text-sm">
+        <h3 className="text-sm font-semibold text-[#1E4E8C] mb-3">
+          Instruksi Pembayaran
+        </h3>
+        <div className="space-y-2 text-[#1E4E8C]">
+          <p>Bergantung pada metode pembayaran yang Anda pilih:</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>
+              <strong>Virtual Account:</strong> Transfer ke nomor VA yang
+              diberikan
+            </li>
+            <li>
+              <strong>QRIS:</strong> Scan QR code dengan aplikasi e-wallet
+            </li>
+            <li>
+              <strong>E-wallet:</strong> Selesaikan di aplikasi GoPay/ShopeePay
+            </li>
+            <li>
+              <strong>Credit Card:</strong> Ikuti instruksi 3D Secure
+            </li>
+          </ul>
+          <p className="text-xs mt-3">
+            Pembayaran akan diproses otomatis dalam beberapa menit.
+          </p>
         </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-4">
+        <Link
+          href="/user/dashboard"
+          className="flex-1 bg-[#FFFDF9] border border-[#E1D4C0] text-[#7E6A52] py-3 rounded-xl text-center text-sm font-medium hover:bg-[#FBF6EA] transition-colors"
+        >
+          Kembali ke Dashboard
+        </Link>
+        {paymentData?.booking_id && (
+          <Link
+            href={`/user/dashboard/bookings/${paymentData.booking_id}`}
+            className="flex-1 bg-[#6C3FD1] text-white py-3 rounded-xl text-center text-sm font-medium hover:bg-[#5b34b3] transition-colors"
+          >
+            Lihat Booking
+          </Link>
+        )}
+      </div>
+
+      {/* Auto Refresh Notice */}
+      <div className="text-center mt-6 text-xs text-[#A18F76]">
+        <p>Halaman ini akan diperbarui otomatis ketika pembayaran berhasil.</p>
       </div>
     </div>
   );
