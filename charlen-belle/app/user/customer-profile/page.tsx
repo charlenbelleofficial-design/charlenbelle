@@ -164,13 +164,13 @@ export default function CustomerProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F0E3] py-10">
+    <div className="min-h-screen bg-[#F6F0E3] py-8 sm:py-10">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl shadow-sm p-8">
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl shadow-sm p-6 sm:p-8">
           {/* Header */}
           <div className="mb-6">
             <p className="text-xs text-[#A18F76] mb-1">Profil</p>
-            <h1 className="text-2xl font-semibold text-[#3B2A1E] mb-2">
+            <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E] mb-2">
               Profil Kesehatan
             </h1>
             <p className="text-sm text-[#A18F76]">
@@ -210,7 +210,7 @@ export default function CustomerProfilePage() {
                 Alergi
               </label>
               <div className="space-y-2">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={newAllergy}
@@ -221,7 +221,7 @@ export default function CustomerProfilePage() {
                   />
                   <button
                     onClick={addAllergy}
-                    className="px-4 py-2 rounded-xl bg-[#C89B4B] text-white text-sm font-medium hover:bg-[#b48735] transition-colors"
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#C89B4B] text-white text-sm font-medium hover:bg-[#b48735] transition-colors"
                   >
                     Tambah
                   </button>
@@ -251,7 +251,7 @@ export default function CustomerProfilePage() {
                 Kondisi Medis
               </label>
               <div className="space-y-2">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={newCondition}
@@ -262,7 +262,7 @@ export default function CustomerProfilePage() {
                   />
                   <button
                     onClick={addCondition}
-                    className="px-4 py-2 rounded-xl bg-[#C89B4B] text-white text-sm font-medium hover:bg-[#b48735] transition-colors"
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#C89B4B] text-white text-sm font-medium hover:bg-[#b48735] transition-colors"
                   >
                     Tambah
                   </button>
@@ -292,7 +292,7 @@ export default function CustomerProfilePage() {
                 Obat yang Dikonsumsi
               </label>
               <div className="space-y-2">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={newMedication}
@@ -303,7 +303,7 @@ export default function CustomerProfilePage() {
                   />
                   <button
                     onClick={addMedication}
-                    className="px-4 py-2 rounded-xl bg-[#C89B4B] text-white text-sm font-medium hover:bg-[#b48735] transition-colors"
+                    className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#C89B4B] text-white text-sm font-medium hover:bg-[#b48735] transition-colors"
                   >
                     Tambah
                   </button>
@@ -344,17 +344,17 @@ export default function CustomerProfilePage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <button
                 onClick={() => router.back()}
-                className="flex-1 py-3 rounded-xl bg-[#E1D4C0] text-sm font-medium text-[#3B2A1E] hover:bg-[#D3C2A6] transition-colors"
+                className="w-full sm:flex-1 py-3 rounded-xl bg-[#E1D4C0] text-sm font-medium text-[#3B2A1E] hover:bg-[#D3C2A6] transition-colors"
               >
                 Kembali
               </button>
               <button
                 onClick={saveProfile}
                 disabled={saving}
-                className="flex-1 py-3 rounded-xl bg-[#6C3FD1] text-sm font-semibold text-white hover:bg-[#5b34b3] disabled:bg-[#A68FEA] transition-colors"
+                className="w-full sm:flex-1 py-3 rounded-xl bg-[#6C3FD1] text-sm font-semibold text-white hover:bg-[#5b34b3] disabled:bg-[#A68FEA] transition-colors"
               >
                 {saving ? 'Menyimpan...' : 'Simpan Profil'}
               </button>

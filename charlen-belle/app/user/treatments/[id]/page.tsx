@@ -107,8 +107,8 @@ export default function TreatmentDetail({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#F6F0E3] py-10">
-        <div className="max-w-3xl mx-auto bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl shadow-sm p-6">
+      <div className="min-h-screen bg-[#F6F0E3] py-8 sm:py-10">
+        <div className="max-w-3xl mx-auto bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl shadow-sm p-6 sm:p-7 px-4 sm:px-6">
           <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
             {error}
           </div>
@@ -126,8 +126,8 @@ export default function TreatmentDetail({
 
   if (!treatment) {
     return (
-      <div className="min-h-screen bg-[#F6F0E3] py-10">
-        <div className="max-w-3xl mx-auto bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl shadow-sm p-6 text-sm text-[#7E6A52]">
+      <div className="min-h-screen bg-[#F6F0E3] py-8 sm:py-10">
+        <div className="max-w-3xl mx-auto bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl shadow-sm p-6 sm:p-7 text-sm text-[#7E6A52] px-4 sm:px-6">
           Treatment tidak ditemukan.
         </div>
       </div>
@@ -135,9 +135,9 @@ export default function TreatmentDetail({
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F0E3] py-10">
+    <div className="min-h-screen bg-[#F6F0E3] py-8 sm:py-10">
       <div className="max-w-3xl mx-auto px-4">
-        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl shadow-sm p-6">
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl shadow-sm p-5 sm:p-6">
           {/* Image */}
           {treatment.images && treatment.images.length > 0 ? (
             <div className="mb-6 space-y-4">
@@ -164,7 +164,7 @@ export default function TreatmentDetail({
           )}
 
           {/* Title & Description */}
-          <h1 className="text-xl font-semibold text-[#3B2A1E] mb-2">
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E] mb-2">
             {treatment.name}
           </h1>
           <p className="text-sm text-[#A18F76] mb-4">{treatment.description}</p>
@@ -200,9 +200,9 @@ export default function TreatmentDetail({
           )}
 
           {/* Price & Qty */}
-          <div className="flex items-center justify-between mb-4 gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-baseline gap-2 flex-wrap">
                 <p className="text-2xl font-bold text-[#2F855A]">
                   {formatCurrency(displayPrice)}
                 </p>
@@ -259,7 +259,7 @@ export default function TreatmentDetail({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={addToSelection}
               className="flex-1 bg-[#6C3FD1] text-white py-3 rounded-xl text-sm font-semibold hover:bg-[#5b34b3] transition-colors"

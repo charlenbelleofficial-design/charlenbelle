@@ -35,17 +35,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const initial = (session?.user?.name || 'U')[0];
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white flex flex-col md:flex-row">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        {/* Logo area */}
-          <div className="h-20 flex items-center px-6 border-b border-gray-200">
-            <img
-              src="/images/logo-charlen-belle.png"
-              alt="Logo"
-              className="h-full w-full object-contain object-left"
-            />
-          </div>
+      <aside className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-gray-200 flex flex-col">
+        {/* Logo */}
+        <div className="h-16 sm:h-20 flex items-center px-4 sm:px-6 border-b border-gray-200">
+          <img
+            src="/images/logo-charlen-belle.png"
+            alt="Logo"
+            className="h-full w-full object-contain object-left"
+          />
+        </div>
 
         {/* Nav items */}
         <nav className="flex-1 px-3 py-4 space-y-1 text-sm">
@@ -73,20 +73,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   )}
                 >
                   {item.icon === 'home' && (
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 3 3 10h2v10h6v-6h2v6h6V10h2L12 3z" />
                     </svg>
                   )}
                   {item.icon === 'calendar' && (
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm12 7H5v10h14V9z" />
                     </svg>
                   )}
@@ -97,7 +89,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        <div className="px-6 py-4 text-xs text-gray-400 border-t border-gray-200">
+        <div className="px-4 sm:px-6 py-4 text-xs text-gray-400 border-t border-gray-200 mt-auto">
           © {new Date().getFullYear()} Sharlene Belle
         </div>
       </aside>
@@ -105,7 +97,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main */}
       <div className="flex-1 flex flex-col">
         {/* Top navbar */}
-        <header className="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between">
+        <header className="bg-white border-b border-gray-200 px-4 sm:px-6 md:px-8 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
               User Panel
@@ -115,12 +107,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             {/* Profil diarahkan ke /user/profile */}
-            <Link
-              href="/user/profile"
-              className="flex items-center gap-3 group"
-            >
+            <Link href="/user/profile" className="flex items-center gap-3 group">
               <div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-800">
                 {initial}
               </div>
@@ -134,7 +123,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             <button
               onClick={() => signOut()}
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium bg-[#C89B4B] text-white hover:bg-[#b48735] transition-colors"
+              className="inline-flex items-center gap-2 rounded-full px-3 sm:px-4 py-2 text-xs font-medium bg-[#C89B4B] text-white hover:bg-[#b48735] transition-colors"
             >
               <span>Logout</span>
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -144,7 +133,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-8 py-8 bg-white">
+        {/* Content */}
+        <main className="flex-1 px-4 sm:px-6 md:px-8 py-6 bg-[#F9F5EE]">
           {children}
         </main>
       </div>

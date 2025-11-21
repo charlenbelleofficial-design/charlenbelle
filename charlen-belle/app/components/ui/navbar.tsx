@@ -1,4 +1,5 @@
-'use client';
+// app/components/ui/navbar.tsx
+"use client";
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
@@ -11,7 +12,7 @@ export const Navbar: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
-  // ❗ HIDE NAVBAR di halaman user panel (dashboard, booking, dll)
+  // Sembunyikan navbar di halaman panel user
   if (
     pathname?.startsWith("/user/dashboard") ||
     pathname?.startsWith("/user/booking") ||
@@ -22,7 +23,6 @@ export const Navbar: React.FC = () => {
     return null;
   }
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -34,9 +34,7 @@ export const Navbar: React.FC = () => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = async () => {
@@ -46,41 +44,64 @@ export const Navbar: React.FC = () => {
   const isLoading = status === "loading";
 
   return (
-    <header className="navbar">
-      <div className="navbar-inner">
-        {/* Logo */}
-        <Link href="/" className="navbar-logo">
-          <div className="logo-circle">S</div>
-          <span className="logo-text">Charlene Belle Aesthetic</span>
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-slate-200">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
+        {/* Logo persegi panjang di ujung kiri */}
+        <Link href="/" className="flex items-center gap-3">
+          <div className="flex h-10 w-32 items-center justify-center rounded-xl border border-slate-200 bg-gradient-to-r from-[#f7e9dc] via-[#fbeef0] to-[#f3f0ff] text-xs font-semibold tracking-wide text-slate-800 shadow-sm">
+            CHARLENE
+          </div>
+          <span className="hidden text-sm font-medium text-slate-700 sm:block">
+            Charlene Belle Aesthetic
+          </span>
         </Link>
 
         {/* Menu */}
-        <nav className="navbar-menu">
-          <Link href="#tentang-kami">Tentang Kami</Link>
-          <Link href="/user/treatments">Produk</Link>
-          <Link href="#kontak">Kontak</Link>
+        <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
+          <Link
+            href="#hero"
+            className="transition hover:text-[#c3aa4c]"
+          >
+            Beranda
+          </Link>
+          <Link
+            href="#tentang-kami"
+            className="transition hover:text-[#c3aa4c]"
+          >
+            Tentang Kami
+          </Link>
+          <Link
+            href="#layanan"
+            className="transition hover:text-[#c3aa4c]"
+          >
+            Layanan
+          </Link>
+          <Link
+            href="#kontak"
+            className="transition hover:text-[#c3aa4c]"
+          >
+            Kontak
+          </Link>
         </nav>
 
-        {/* Auth Buttons / User Profile */}
-        <div className="flex items-center gap-4">
+        {/* Auth / Profile */}
+        <div className="flex items-center gap-3">
           {isLoading ? (
-            // Loading state
-            <div className="animate-pulse bg-gray-200 h-10 w-20 rounded" />
+            <div className="h-9 w-20 animate-pulse rounded-full bg-slate-200" />
           ) : session ? (
-            // User is logged in - Show profile dropdown
             <div className="relative" ref={dropdownRef}>
               <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={() => setIsDropdownOpen((p) => !p)}
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm shadow-sm transition hover:border-[#c3aa4c]/60 hover:bg-[#fdf7f2]"
               >
-                <div className="w-8 h-8 bg-[#c3aa4c] rounded-full flex items-center justify-center text-white font-medium">
-                  {session.user?.name?.charAt(0).toUpperCase() || "U"}
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#c3aa4c] text-xs font-semibold text-white">
+                  {session.user?.name?.charAt(0).toUpperCase() ?? "U"}
                 </div>
-                <span className="text-sm font-medium text-gray-700">
-                  {session.user?.name || "User"}
+                <span className="hidden text-xs font-medium text-slate-700 sm:block">
+                  {session.user?.name ?? "User"}
                 </span>
                 <svg
-                  className={`w-4 h-4 transition-transform ${
+                  className={`h-4 w-4 transition-transform ${
                     isDropdownOpen ? "rotate-180" : ""
                   }`}
                   fill="none"
@@ -96,19 +117,18 @@ export const Navbar: React.FC = () => {
                 </svg>
               </button>
 
-              {/* Dropdown Menu */}
               {isDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-slate-200 bg-white/95 py-2 text-sm shadow-xl">
                   <Link
                     href="/user/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    className="block px-4 py-2 text-slate-700 hover:bg-slate-50"
                     onClick={() => setIsDropdownOpen(false)}
                   >
                     Profile
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
+                    className="block w-full px-4 py-2 text-left text-red-500 hover:bg-slate-50"
                   >
                     Logout
                   </button>
@@ -116,15 +136,17 @@ export const Navbar: React.FC = () => {
               )}
             </div>
           ) : (
-            // User is not logged in - Show Login and Register buttons
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Link
                 href="/user/login"
-                className="text-sm font-medium text-[#2d2617] hover:text-[#c3aa4c] transition-colors"
+                className="text-xs font-medium text-slate-700 hover:text-[#c3aa4c]"
               >
                 Login
               </Link>
-              <Link href="/user/register" className="btn btn-primary text-sm">
+              <Link
+                href="/user/register"
+                className="rounded-full bg-[#c3aa4c] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#b19a42]"
+              >
                 Daftar
               </Link>
             </div>

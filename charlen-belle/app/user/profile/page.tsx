@@ -202,7 +202,9 @@ export default function UserProfilePage() {
         ...prev,
         customer_profile: {
           ...prev.customer_profile!,
-          medications: [...(prev.customer_profile?.medications || []), newMedication.trim()]
+          medications: (prev.customer_profile?.medications || []).concat(
+            newMedication.trim()
+          )
         }
       }));
       setNewMedication('');
@@ -214,7 +216,9 @@ export default function UserProfilePage() {
       ...prev,
       customer_profile: {
         ...prev.customer_profile!,
-        medications: (prev.customer_profile?.medications || []).filter((_, i) => i !== index)
+        medications: (prev.customer_profile?.medications || []).filter(
+          (_, i) => i !== index
+        )
       }
     }));
   };
@@ -228,30 +232,41 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F0E3] py-10">
+    <div className="min-h-screen bg-[#F6F0E3] py-8 sm:py-10">
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
+            {/* Tombol kembali ke dashboard */}
+            <button
+              onClick={() => router.push('/user/dashboard')}
+              className="inline-flex items-center gap-2 mb-3 px-4 py-2 rounded-xl border border-[#E1D4C0] bg-[#FFFDF9] text-sm text-[#7E6A52] hover:bg-[#FBF6EA] transition-colors"
+            >
+              <span>←</span>
+              <span>Kembali ke Dashboard</span>
+            </button>
+
             <p className="text-xs text-[#A18F76] mb-1 uppercase tracking-[0.15em]">
               Akun
             </p>
-            <h1 className="text-2xl font-semibold text-[#3B2A1E]">Profil Saya</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E]">
+              Profil Saya
+            </h1>
           </div>
           {!editing && !editingCustomerProfile && (
             <button
               onClick={() => setEditing(true)}
-              className="bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors shadow-sm"
+              className="self-start sm:self-auto bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors shadow-sm"
             >
               Edit Profil
             </button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Profile Information */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
+            <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-5 sm:p-6">
               <h2 className="text-lg font-semibold text-[#3B2A1E] mb-4">
                 Informasi Pribadi
               </h2>
@@ -279,7 +294,9 @@ export default function UserProfilePage() {
                   <label className="block text-sm font-medium text-[#3B2A1E] mb-2">
                     Email
                   </label>
-                  <p className="text-base text-[#7E6A52]">{profile.email}</p>
+                  <p className="text-base text-[#7E6A52] break-all">
+                    {profile.email}
+                  </p>
                   <p className="text-xs text-[#A18F76] mt-1">
                     Email tidak dapat diubah
                   </p>
@@ -310,7 +327,7 @@ export default function UserProfilePage() {
                 </div>
 
                 {editing && (
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <button
                       onClick={() => setEditing(false)}
                       className="flex-1 bg-[#E1D4C0] text-[#3B2A1E] py-2.5 rounded-xl text-sm font-medium hover:bg-[#D3C2A6] transition-colors"
@@ -331,15 +348,15 @@ export default function UserProfilePage() {
 
             {/* Customer Profile */}
             {profile.role === 'customer' && (
-              <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
-                <div className="flex justify-between items-center mb-6">
+              <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-5 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                   <h2 className="text-lg font-semibold text-[#3B2A1E]">
                     Profil Kesehatan
                   </h2>
                   {!editingCustomerProfile && !editing && (
                     <button
                       onClick={() => setEditingCustomerProfile(true)}
-                      className="bg-[#C89B4B] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#b48735] transition-colors"
+                      className="self-start sm:self-auto bg-[#C89B4B] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#b48735] transition-colors"
                     >
                       {profile.customer_profile?.completed_at
                         ? 'Edit'
@@ -358,7 +375,8 @@ export default function UserProfilePage() {
                       </label>
                       <select
                         value={profile.customer_profile?.skin_type || ''}
-                        onChange={(e) =>
+
+                    onChange={(e) =>
                           setProfile((prev) => ({
                             ...prev,
                             customer_profile: {
@@ -384,7 +402,7 @@ export default function UserProfilePage() {
                         Alergi
                       </label>
                       <div className="space-y-2">
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <input
                             type="text"
                             value={newAllergy}
@@ -397,7 +415,7 @@ export default function UserProfilePage() {
                           />
                           <button
                             onClick={addAllergy}
-                            className="bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors"
+                            className="w-full sm:w-auto bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors"
                           >
                             Tambah
                           </button>
@@ -429,7 +447,7 @@ export default function UserProfilePage() {
                         Kondisi Medis
                       </label>
                       <div className="space-y-2">
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <input
                             type="text"
                             value={newCondition}
@@ -443,7 +461,7 @@ export default function UserProfilePage() {
                           />
                           <button
                             onClick={addCondition}
-                            className="bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors"
+                            className="w-full sm:w-auto bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors"
                           >
                             Tambah
                           </button>
@@ -475,7 +493,7 @@ export default function UserProfilePage() {
                         Obat yang Dikonsumsi
                       </label>
                       <div className="space-y-2">
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <input
                             type="text"
                             value={newMedication}
@@ -489,7 +507,7 @@ export default function UserProfilePage() {
                           />
                           <button
                             onClick={addMedication}
-                            className="bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors"
+                            className="w-full sm:w-auto bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors"
                           >
                             Tambah
                           </button>
@@ -538,7 +556,7 @@ export default function UserProfilePage() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3 pt-4">
+                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
                       <button
                         onClick={() => {
                           setEditingCustomerProfile(false);
@@ -563,29 +581,29 @@ export default function UserProfilePage() {
                 ) : profile.customer_profile?.completed_at ? (
                   // View mode when completed
                   <div className="space-y-3 text-sm">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <span className="text-[#7E6A52]">Jenis Kulit</span>
-                      <span className="font-medium text-[#3B2A1E]">
+                      <span className="font-medium text-[#3B2A1E] text-right">
                         {profile.customer_profile.skin_type || 'Belum diisi'}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <span className="text-[#7E6A52]">Alergi</span>
-                      <span className="font-medium text-[#3B2A1E]">
+                      <span className="font-medium text-[#3B2A1E] text-right">
                         {profile.customer_profile.allergies?.length || 0} item
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <span className="text-[#7E6A52]">Kondisi Medis</span>
-                      <span className="font-medium text-[#3B2A1E]">
+                      <span className="font-medium text-[#3B2A1E] text-right">
                         {profile.customer_profile.medical_conditions?.length ||
                           0}{' '}
                         item
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <span className="text-[#7E6A52]">Obat</span>
-                      <span className="font-medium text-[#3B2A1E]">
+                      <span className="font-medium text-[#3B2A1E] text-right">
                         {profile.customer_profile.medications?.length || 0}{' '}
                         item
                       </span>
@@ -625,20 +643,20 @@ export default function UserProfilePage() {
           {/* Sidebar - Quick info */}
           <div className="space-y-6">
             {/* Account Status */}
-            <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
+            <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-5 sm:p-6">
               <h3 className="font-semibold text-sm text-[#3B2A1E] mb-3">
                 Status Akun
               </h3>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-3">
                   <span className="text-[#7E6A52]">Status</span>
                   <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-[11px] font-medium">
                     Aktif
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-3">
                   <span className="text-[#7E6A52]">Bergabung</span>
-                  <span className="font-medium text-[#3B2A1E]">
+                  <span className="font-medium text-[#3B2A1E] text-right">
                     {profile.created_at
                       ? new Date(profile.created_at).toLocaleDateString('id-ID')
                       : '-'}
@@ -648,7 +666,7 @@ export default function UserProfilePage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
+            <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-5 sm:p-6">
               <h3 className="font-semibold text-sm text-[#3B2A1E] mb-3">
                 Aksi Cepat
               </h3>

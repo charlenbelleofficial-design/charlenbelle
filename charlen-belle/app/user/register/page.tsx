@@ -57,7 +57,6 @@ export default function RegisterPage() {
 
       showSnackbar('Registrasi berhasil! Silakan login.', 'success');
       
-      // Redirect after a short delay to show the success message
       setTimeout(() => {
         router.push('/user/login');
       }, 1500);
@@ -72,10 +71,10 @@ export default function RegisterPage() {
 
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center bg-[#f9f7f1]">
-        <div className="max-w-md w-full mx-4 bg-white rounded-2xl shadow-xl p-8">
+      <div className="min-h-screen flex items-center justify-center bg-[#f9f7f1] px-4 py-8 sm:py-12">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#2d2617] mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#2d2617] mb-2">
               Daftar Akun Baru
             </h1>
             <p className="text-sm text-gray-600">
@@ -83,7 +82,7 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nama Lengkap
@@ -97,6 +96,7 @@ export default function RegisterPage() {
                 }
                 placeholder="Masukkan nama lengkap"
                 disabled={isLoading}
+                className="text-sm"
               />
             </div>
 
@@ -113,6 +113,7 @@ export default function RegisterPage() {
                 }
                 placeholder="nama@email.com"
                 disabled={isLoading}
+                className="text-sm"
               />
             </div>
 
@@ -131,6 +132,7 @@ export default function RegisterPage() {
                 }
                 placeholder="08xxxxxxxxxx"
                 disabled={isLoading}
+                className="text-sm"
               />
             </div>
 
@@ -147,6 +149,7 @@ export default function RegisterPage() {
                 }
                 placeholder="Minimal 8 karakter"
                 disabled={isLoading}
+                className="text-sm"
               />
             </div>
 
@@ -166,12 +169,13 @@ export default function RegisterPage() {
                 }
                 placeholder="Masukkan password lagi"
                 disabled={isLoading}
+                className="text-sm"
               />
             </div>
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full rounded-xl"
               size="lg"
               disabled={isLoading}
             >
@@ -192,9 +196,10 @@ export default function RegisterPage() {
           <div className="mt-4 text-center">
             <Link
               href="/"
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-1"
             >
-              ← Kembali ke Beranda
+              <span>←</span>
+              <span>Kembali ke Beranda</span>
             </Link>
           </div>
         </div>

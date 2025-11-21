@@ -29,14 +29,14 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F0E3] py-10">
+    <div className="min-h-screen bg-[#F6F0E3] py-8 sm:py-10">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-6">
           <p className="text-xs text-[#A18F76] mb-1 uppercase tracking-[0.15em]">
             Akun
           </p>
-          <h1 className="text-2xl font-semibold text-[#3B2A1E] mb-1">
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E] mb-1">
             Riwayat
           </h1>
           <p className="text-sm text-[#A18F76]">
@@ -45,7 +45,7 @@ export default function HistoryPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-8 flex flex-col items-center text-center">
+        <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6 sm:p-8 flex flex-col items-center text-center">
           <div className="h-14 w-14 rounded-2xl bg-[#E6D8C2] flex items-center justify-center mb-4">
             <svg
               viewBox="0 0 24 24"

@@ -163,7 +163,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto px-4">
         <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-8 shadow-sm text-center mt-10">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#6C3FD1]" />
           <p className="mt-4 text-sm text-[#A18F76]">Memuat detail booking...</p>
@@ -174,7 +174,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
 
   if (!booking) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto px-4">
         <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-8 shadow-sm text-center mt-10">
           <h2 className="text-2xl font-semibold text-[#3B2A1E] mb-3">Booking Tidak Ditemukan</h2>
           <p className="text-sm text-[#A18F76] mb-6">
@@ -245,7 +245,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
               <div className="border border-[#E1D4C0] rounded-xl overflow-hidden bg-white">
                 <iframe
                   src={paymentUrl}
-                  className="w-full h-96 border-0"
+                  className="w-full h-[60vh] sm:h-96 border-0"
                   title="Midtrans Payment"
                   sandbox="allow-scripts allow-same-origin allow-forms"
                 />
@@ -262,21 +262,21 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
       )}
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto px-4 space-y-6">
         {/* Header */}
-        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-6 shadow-sm mt-4">
-          <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-5 sm:p-6 shadow-sm mt-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
               <p className="text-xs text-[#A18F76] mb-1">Detail Booking</p>
-              <h1 className="text-2xl font-semibold text-[#3B2A1E]">Booking Treatment</h1>
-              <p className="text-xs text-[#A18F76] mt-1">ID: {booking._id}</p>
+              <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E]">Booking Treatment</h1>
+              <p className="text-xs text-[#A18F76] mt-1 break-all">ID: {booking._id}</p>
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium self-start sm:self-auto ${getStatusColor(booking.status)}`}>
               {getStatusText(booking.status)}
             </span>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid gap-5 sm:gap-6 md:grid-cols-2">
             {/* Booking Information */}
             <div>
               <h3 className="text-sm font-semibold text-[#3B2A1E] mb-3">Informasi Booking</h3>
@@ -343,7 +343,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
         </div>
 
         {/* Treatments List */}
-        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-6 shadow-sm">
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-5 sm:p-6 shadow-sm">
           <h3 className="text-sm font-semibold text-[#3B2A1E] mb-4">Treatment yang Dipilih</h3>
           {treatments.length === 0 ? (
             <p className="text-sm text-[#A18F76]">Tidak ada treatment yang tercatat.</p>
@@ -352,7 +352,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
               {treatments.map((item) => (
                 <div
                   key={item._id}
-                  className="flex items-center justify-between gap-4 p-4 rounded-xl border border-[#E1D4C0] bg-[#FBF6EA]"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 rounded-xl border border-[#E1D4C0] bg-[#FBF6EA]"
                 >
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-[#3B2A1E]">
@@ -362,7 +362,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
                       Qty: {item.quantity}
                     </p>
                   </div>
-                  <div className="text-right text-xs">
+                  <div className="text-left sm:text-right text-xs">
                     <p className="font-semibold text-[#3B2A1E]">
                       {formatCurrency(item.price)}
                     </p>
@@ -380,7 +380,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
         </div>
 
         {/* Total Amount + Actions */}
-        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-6 shadow-sm">
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-5 sm:p-6 shadow-sm mb-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h3 className="text-sm font-semibold text-[#3B2A1E]">
@@ -391,10 +391,10 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
               </p>
             </div>
 
-            <div className="flex flex-1 md:flex-none gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
               <button 
                 onClick={() => router.push('/user/dashboard/bookings')}
-                className="flex-1 rounded-xl border border-[#E1D4C0] text-[#7E6A52] py-2.5 text-sm font-medium hover:bg-[#FBF6EA] transition-colors"
+                className="w-full sm:w-auto rounded-xl border border-[#E1D4C0] text-[#7E6A52] py-2.5 px-4 text-sm font-medium hover:bg-[#FBF6EA] transition-colors"
               >
                 Kembali ke Booking
               </button>
@@ -402,7 +402,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
                 <button 
                   onClick={handlePayment}
                   disabled={isProcessingPayment}
-                  className="flex-1 rounded-xl bg-[#6C3FD1] text-white py-2.5 text-sm font-medium hover:bg-[#5b34b3] disabled:bg-[#A68FEA] disabled:cursor-not-allowed transition-colors"
+                  className="w-full sm:w-auto rounded-xl bg-[#6C3FD1] text-white py-2.5 px-4 text-sm font-medium hover:bg-[#5b34b3] disabled:bg-[#A68FEA] disabled:cursor-not-allowed transition-colors"
                 >
                   {isProcessingPayment ? 'Memproses...' : 'Bayar Sekarang'}
                 </button>

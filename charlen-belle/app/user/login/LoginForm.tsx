@@ -57,10 +57,10 @@ export default function LoginForm() {
 
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center bg-[#f9f7f1]">
-        <div className="max-w-md w-full mx-4 bg-white rounded-2xl shadow-xl p-8">
+      <div className="min-h-screen flex items-center justify-center bg-[#f9f7f1] px-4 py-8">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-6 sm:p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#2d2617] mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#2d2617] mb-2 leading-snug">
               Selamat Datang Kembali
             </h1>
             <p className="text-sm text-gray-600">
@@ -68,7 +68,7 @@ export default function LoginForm() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
@@ -82,6 +82,7 @@ export default function LoginForm() {
                 }
                 placeholder="nama@email.com"
                 disabled={isLoading}
+                className="text-sm"
               />
             </div>
 
@@ -98,13 +99,14 @@ export default function LoginForm() {
                 }
                 placeholder="••••••••"
                 disabled={isLoading}
+                className="text-sm"
               />
             </div>
 
-            <div className="flex justify-end -mt-2">
+            <div className="flex justify-end -mt-1">
               <Link
                 href="/forgot-password"
-                className="text-sm font-medium text-[#c3aa4c] hover:text-[#b0963d]"
+                className="text-xs sm:text-sm font-medium text-[#c3aa4c] hover:text-[#b0963d]"
               >
                 Lupa password?
               </Link>
@@ -112,7 +114,7 @@ export default function LoginForm() {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full rounded-xl"
               size="lg"
               disabled={isLoading}
             >
@@ -133,9 +135,10 @@ export default function LoginForm() {
           <div className="mt-4 text-center">
             <Link
               href="/"
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-1"
             >
-              ← Kembali ke Beranda
+              <span>←</span>
+              <span>Kembali ke Beranda</span>
             </Link>
           </div>
         </div>

@@ -159,14 +159,14 @@ export default function TreatmentsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F0E3] py-10">
+    <div className="min-h-screen bg-[#F6F0E3] py-8 sm:py-10">
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="mb-6">
           <p className="text-xs text-[#A18F76] mb-1 uppercase tracking-[0.15em]">
             Layanan
           </p>
-          <h1 className="text-2xl font-semibold text-[#3B2A1E]">
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E]">
             Layanan & Konsultasi
           </h1>
           <p className="text-sm text-[#A18F76] mt-1">
@@ -239,7 +239,7 @@ export default function TreatmentsPage() {
             </p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {treatments.map((t) => {
               const isConsultation = t._id === 'consultation';
               const hasPromo = !!t.promo;
@@ -296,7 +296,7 @@ export default function TreatmentsPage() {
                     {t.description}
                   </p>
 
-                  <div className="mt-auto flex items-end justify-between gap-2">
+                  <div className="mt-auto flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                     <div>
                       {hasPromo ? (
                         <div className="space-y-1">
@@ -328,7 +328,7 @@ export default function TreatmentsPage() {
 
                     <button
                       onClick={() => handleBookNow(t)}
-                      className={`px-4 py-2 rounded-xl text-xs font-medium transition-colors ${
+                      className={`px-4 py-2 rounded-xl text-xs font-medium transition-colors w-full sm:w-auto ${
                         isConsultation
                           ? 'bg-[#1E4E8C] text-white hover:bg-[#163C6A]'
                           : 'bg-[#6C3FD1] text-white hover:bg-[#5b34b3]'

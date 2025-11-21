@@ -172,28 +172,13 @@ export default function UnifiedLayout({
     <div className="min-h-screen bg-white flex">
       {/* SIDEBAR */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        {/* Logo */}
-        <div className="h-20 flex items-center gap-3 px-6 border-b border-gray-200">
-          <Link href="/admin/dashboard" className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-[#C89B4B] flex items-center justify-center overflow-hidden">
-              {/* logo: public/images/logo-charlen-belle.png */}
-              <img
-                src="/images/logo-charlen-belle.png"
-                alt="Sharlene Belle"
-                className="h-10 w-10 object-contain"
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-semibold text-gray-900 text-sm tracking-wide">
-                Sharlene Belle
-              </span>
-              <span className="text-xs text-gray-500 capitalize">
-                {userRole} panel
-              </span>
-            </div>
-          </Link>
-        </div>
-
+          <div className="h-20 flex items-center px-6 border-b border-gray-200">
+            <img
+              src="/images/logo-charlen-belle.png"
+              alt="Logo"
+              className="h-full w-full object-contain object-left"
+            />
+          </div>
         {/* Menu */}
         <nav className="flex-1 px-3 py-4 space-y-1 text-sm">
           {navigation.map((item) => {

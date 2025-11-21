@@ -108,7 +108,7 @@ export default function PaymentPage() {
 
   if (!booking) {
     return (
-      <div className="max-w-3xl mx-auto mt-10">
+      <div className="max-w-3xl mx-auto mt-10 px-4">
         <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-8 shadow-sm flex flex-col items-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#6C3FD1]" />
           <p className="mt-4 text-sm text-[#A18F76]">Memuat data pembayaran...</p>
@@ -128,10 +128,10 @@ export default function PaymentPage() {
         data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
       />
 
-      <div className="max-w-3xl mx-auto space-y-6 mt-4">
+      <div className="max-w-3xl mx-auto space-y-6 mt-4 px-4">
         <div>
           <p className="text-xs text-[#A18F76] mb-1">Pembayaran Booking</p>
-          <h1 className="text-2xl font-semibold text-[#3B2A1E] mb-1">
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E] mb-1">
             Selesaikan Pembayaran
           </h1>
           <p className="text-sm text-[#A18F76]">
@@ -140,7 +140,7 @@ export default function PaymentPage() {
         </div>
 
         {/* Order Summary */}
-        <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
+        <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-5 sm:p-6">
           <h2 className="text-sm font-semibold text-[#3B2A1E] mb-4">
             Ringkasan Pesanan
           </h2>
@@ -148,7 +148,7 @@ export default function PaymentPage() {
             {booking.treatments?.map((treatment: any, index: number) => (
               <div
                 key={index}
-                className="flex justify-between items-center py-3 border-b border-[#F1E5D1]"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3 border-b border-[#F1E5D1]"
               >
                 <div>
                   <p className="font-semibold text-[#3B2A1E]">
@@ -158,12 +158,12 @@ export default function PaymentPage() {
                     Qty: {treatment.quantity}
                   </p>
                 </div>
-                <p className="font-semibold text-[#3B2A1E]">
+                <p className="font-semibold text-[#3B2A1E] sm:text-right">
                   {formatCurrency(treatment.price)}
                 </p>
               </div>
             ))}
-            <div className="flex justify-between items-center pt-4 text-base font-bold">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 text-base font-bold gap-1">
               <span className="text-[#3B2A1E]">Total</span>
               <span className="text-[#6C3FD1]">
                 {formatCurrency(totalAmount)}
@@ -173,7 +173,7 @@ export default function PaymentPage() {
         </div>
 
         {/* Payment Method */}
-        <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-6">
+        <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-5 sm:p-6">
           <h2 className="text-sm font-semibold text-[#3B2A1E] mb-4">
             Metode Pembayaran
           </h2>
@@ -248,7 +248,7 @@ function PaymentMethodOption({
   return (
     <button
       onClick={() => onChange(value)}
-      className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+      className={`w-full flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 rounded-xl border-2 transition-all text-left ${
         isActive
           ? 'border-[#6C3FD1] bg-[#F4EDFF]'
           : 'border-[#E1D4C0] bg-[#FFFDF9] hover:border-[#C89B4B]'
@@ -262,7 +262,7 @@ function PaymentMethodOption({
         <p className="text-xs text-[#A18F76]">{description}</p>
       </div>
       <div
-        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center self-start sm:self-auto ${
           isActive ? 'border-[#6C3FD1] bg-[#6C3FD1]' : 'border-[#D0C3AD]'
         }`}
       >

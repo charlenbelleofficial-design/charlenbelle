@@ -38,8 +38,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F6F0E3] px-4">
-      <div className="max-w-md w-full bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl shadow-sm p-8">
+    <div className="min-h-screen flex items-center justify-center bg-[#F6F0E3] px-4 py-8">
+      <div className="w-full max-w-md bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl shadow-sm p-6 sm:p-8">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-[#E6D8C2] flex items-center justify-center">
@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
               <path d="M12 12a4 4 0 1 0-4-4 4.003 4.003 0 0 0 4 4zm0 2c-3.33 0-6 1.567-6 3.5V20h12v-2.5C18 15.567 15.33 14 12 14z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-semibold text-[#3B2A1E] mb-2">
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E] mb-2">
             Lupa Password
           </h1>
           <p className="text-sm text-[#A18F76]">
@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-[#3B2A1E] mb-2">
               Email
