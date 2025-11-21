@@ -128,9 +128,9 @@ export default function AdminDashboard() {
     href: string;
   }) => (
     <Link href={href} className="block">
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#E5D7BE] hover:shadow-md transition-shadow">
+      <div className="bg:white rounded-2xl p-5 shadow-sm border border-[#E5D7BE] hover:shadow-md transition-shadow">
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#B89038] text-white flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#B89038] text:white flex items-center justify-center">
             {icon}
           </div>
           <div>
@@ -190,12 +190,17 @@ export default function AdminDashboard() {
           icon={<BookingIcon />}
           href="/admin/bookings"
         />
-        <QuickAction
-          title="Kelola Transaksi"
-          description="Lihat dan proses pembayaran"
-          icon={<TransactionIcon />}
-          href="/admin/transactions"
-        />
+
+        {/* ⬇️ PERUBAHAN DI SINI: hide untuk dokter */}
+        {session?.user?.role !== 'doctor' && (
+          <QuickAction
+            title="Kelola Transaksi"
+            description="Lihat dan proses pembayaran"
+            icon={<TransactionIcon />}
+            href="/admin/transactions"
+          />
+        )}
+
         {(session?.user?.role === 'admin' ||
           session?.user?.role === 'superadmin') && (
           <QuickAction
@@ -239,9 +244,21 @@ export default function AdminDashboard() {
             Ringkasan Hari Ini
           </h2>
           <div className="space-y-3">
-            <SummaryRow label="Transaksi Sukses" value="12" valueColor="text-[#2F7C38]" />
-            <SummaryRow label="Pelanggan Baru" value="8" valueColor="text-[#1D4ED8]" />
-            <SummaryRow label="Treatment Populer" value="Facial" valueColor="text-[#B89038]" />
+            <SummaryRow
+              label="Transaksi Sukses"
+              value="12"
+              valueColor="text-[#2F7C38]"
+            />
+            <SummaryRow
+              label="Pelanggan Baru"
+              value="8"
+              valueColor="text-[#1D4ED8]"
+            />
+            <SummaryRow
+              label="Treatment Populer"
+              value="Facial"
+              valueColor="text-[#B89038]"
+            />
           </div>
         </div>
       </div>
@@ -261,7 +278,11 @@ function SummaryRow({
   return (
     <div className="flex items-center justify-between py-2 border-b border-dashed border-[#E5D7BE] last:border-b-0">
       <span className="text-sm text-[#8B816D]">{label}</span>
-      <span className={`text-sm font-semibold ${valueColor || 'text-[#3A3530]'}`}>
+      <span
+        className={`text-sm font-semibold ${
+          valueColor || 'text-[#3A3530]'
+        }`}
+      >
         {value}
       </span>
     </div>
