@@ -87,9 +87,15 @@ export async function POST(req: NextRequest) {
       amount,
       payment_method,
       payment_gateway: gateway,
-      ...(gateway === 'doku' 
-        ? { doku_transaction_id: orderId }
-        : { midtrans_transaction_id: orderId }
+       ...(gateway === 'doku' 
+        ? { 
+            doku_order_id: orderId,          // ← ADD THIS LINE
+            doku_transaction_id: orderId     // ← KEEP THIS LINE
+          }
+        : { 
+            midtrans_order_id: orderId,      // ← ADD THIS FOR CONSISTENCY
+            midtrans_transaction_id: orderId 
+          }
       ),
       status: 'pending',
       created_at: new Date()

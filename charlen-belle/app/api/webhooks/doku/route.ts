@@ -108,9 +108,9 @@ export async function POST(req: NextRequest) {
     
     const payment = await Payment.findOne({
       $or: [
-        { doku_order_id: invoiceNumber },
-        { doku_transaction_id: invoiceNumber },
-        { midtrans_order_id: invoiceNumber }
+        { doku_order_id: invoiceNumber },           // Search by Doku order ID
+        { doku_transaction_id: invoiceNumber },     // Search by Doku transaction ID  
+        { midtrans_order_id: invoiceNumber }        // Fallback for Midtrans
       ]
     }).populate('booking_id');
 
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
       console.error('❌ [WEBHOOK] Payment not found for invoice:', invoiceNumber);
       
       // Log all payments for debugging
-      const allPayments = await Payment.find({}).select('doku_order_id doku_transaction_id midtrans_order_id invoice_number').limit(10);
+      const allPayments = await Payment.find({}).select('doku_order_id doku_transaction_id midtrans_order_id').limit(10);
       console.log('🔍 [WEBHOOK] Recent payments for debugging:', allPayments);
       
       return NextResponse.json(
