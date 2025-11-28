@@ -5,12 +5,15 @@ import Payment from '../../../../models/Payment';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // params is now a Promise
 ) {
   try {
     await connectDB();
 
-    const payment = await Payment.findById(params.id);
+    // Await the params Promise
+    const { id } = await params;
+    
+    const payment = await Payment.findById(id);
     
     if (!payment) {
       return NextResponse.json(
