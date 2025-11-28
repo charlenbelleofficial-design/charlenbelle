@@ -6,6 +6,10 @@ import Booking from '../../../models/Booking';
 import { verifyDokuSignature } from '../../../lib/doku';
 
 export async function POST(req: NextRequest) {
+  console.log('🎯 [WEBHOOK] DOKU Webhook called at:', new Date().toISOString());
+  console.log('🎯 [WEBHOOK] Request method:', req.method);
+  console.log('🎯 [WEBHOOK] Request URL:', req.url);
+
   let notification: any = null;
   
   try {

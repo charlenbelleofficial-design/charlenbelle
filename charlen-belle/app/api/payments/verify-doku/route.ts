@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../lib/mongodb';
 import Payment from '../../../models/Payment';
+import mongoose from 'mongoose';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,26 +22,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Build search query - FIXED: Don't try to search by _id for non-ObjectId values
+    const searchConditions: any[] = [
+      { doku_order_id: order_id },
+      { doku_transaction_id: order_id },
+      { midtrans_order_id: order_id },
+      { doku_transaction_id: transaction_id }
+    ];
+
+    // Only add _id search if it's a valid MongoDB ObjectId
+    if (order_id && mongoose.Types.ObjectId.isValid(order_id)) {
+      searchConditions.push({ _id: new mongoose.Types.ObjectId(order_id) });
+    }
+
     // Search for payment by multiple fields
     const payment = await Payment.findOne({
-      $or: [
-        { doku_order_id: order_id },
-        { doku_transaction_id: order_id },
-        { midtrans_order_id: order_id },
-        { doku_transaction_id: transaction_id },
-        { _id: order_id } // Also try searching by payment ID
-      ]
+      $or: searchConditions
     }).populate('booking_id');
 
     if (!payment) {
       console.error('❌ [VERIFY] Payment not found for:', { order_id, transaction_id });
       
       // Log available payments for debugging
-      const recentPayments = await Payment.find({})
-        .select('doku_order_id doku_transaction_id midtrans_order_id status')
+      const recentPayments = await Payment.find({
+        payment_gateway: 'doku'
+      })
+        .select('doku_order_id doku_transaction_id midtrans_order_id status amount created_at')
         .sort({ created_at: -1 })
         .limit(5);
-      console.log('📋 [VERIFY] Recent payments:', recentPayments);
+      console.log('📋 [VERIFY] Recent Doku payments:', recentPayments);
       
       return NextResponse.json(
         { error: 'Payment not found' },
@@ -53,7 +63,8 @@ export async function POST(req: NextRequest) {
       status: payment.status,
       dokuOrderId: payment.doku_order_id,
       dokuTransactionId: payment.doku_transaction_id,
-      amount: payment.amount
+      amount: payment.amount,
+      paid_at: payment.paid_at
     });
 
     return NextResponse.json({

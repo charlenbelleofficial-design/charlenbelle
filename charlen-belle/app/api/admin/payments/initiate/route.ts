@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
 
     // Create or update payment record
     let payment;
+    // In the payment creation section, ensure you're storing the order ID correctly:
     if (existingPayment) {
       payment = await Payment.findByIdAndUpdate(
         existingPayment._id,
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
           ...(gateway === 'doku' 
             ? { 
                 doku_transaction_id: orderId,
-                doku_order_id: orderId // ✅ Also store in doku_order_id field
+                doku_order_id: orderId // ✅ Make sure this is set
               }
             : { 
                 midtrans_transaction_id: orderId,
@@ -116,26 +117,26 @@ export async function POST(req: NextRequest) {
         { new: true }
       );
     } else {
-      payment = await Payment.create({
-        booking_id,
-        user_id: booking.user_id._id,
-        amount: booking.total_amount,
-        payment_method: `${gateway}_admin`,
-        payment_gateway: gateway,
-        ...(gateway === 'doku' 
-          ? { 
-              doku_transaction_id: orderId,
-              doku_order_id: orderId // ✅ Also store in doku_order_id field
-            }
-          : { 
-              midtrans_transaction_id: orderId,
-              midtrans_order_id: orderId
-            }
-        ),
-        status: 'pending',
-        created_at: new Date()
-      });
-    }
+        payment = await Payment.create({
+          booking_id,
+          user_id: booking.user_id._id,
+          amount: booking.total_amount,
+          payment_method: `${gateway}_admin`,
+          payment_gateway: gateway,
+          ...(gateway === 'doku' 
+            ? { 
+                doku_transaction_id: orderId,
+                doku_order_id: orderId // ✅ Make sure this is set
+              }
+            : { 
+                midtrans_transaction_id: orderId,
+                midtrans_order_id: orderId
+              }
+          ),
+          status: 'pending',
+          created_at: new Date()
+        });
+      }
 
     try {
       const customerDetails = {
