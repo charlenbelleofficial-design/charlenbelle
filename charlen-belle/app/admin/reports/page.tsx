@@ -264,7 +264,7 @@ export default function SalesReportsPage() {
         color: '#3A3530',
         font: {
           size: 14,
-          weight: '600',
+          weight: 'bold' as const, // Ganti '600' dengan 'bold'
         },
       },
       tooltip: {
@@ -345,7 +345,7 @@ export default function SalesReportsPage() {
         color: '#3A3530',
         font: {
           size: 14,
-          weight: '600',
+          weight: 'bold' as const, // Ganti '600' dengan 'bold'
         },
       },
       tooltip: {
@@ -363,6 +363,7 @@ export default function SalesReportsPage() {
       },
     },
   };
+
 
   const treatmentChartData = {
     labels:
@@ -393,7 +394,7 @@ export default function SalesReportsPage() {
         color: '#3A3530',
         font: {
           size: 14,
-          weight: '600',
+          weight: 'bold' as const, // Ganti '600' dengan 'bold'
         },
       },
     },

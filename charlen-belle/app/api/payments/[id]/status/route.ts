@@ -7,7 +7,7 @@ import { authOptions } from '../../../../lib/auth-config';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // params sekarang Promise
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -21,7 +21,8 @@ export async function GET(
 
     await connectDB();
 
-    const paymentId = params.id;
+    // Tunggu params diselesaikan
+    const { id: paymentId } = await params;
 
     // Find payment
     const payment = await Payment.findById(paymentId)
