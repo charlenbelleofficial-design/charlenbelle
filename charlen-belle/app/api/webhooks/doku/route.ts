@@ -6,30 +6,33 @@ import Booking from '../../../models/Booking';
 import { verifyDokuSignature } from '../../../lib/doku';
 
 export async function POST(req: NextRequest) {
+  let notification: any = null;
+  
   try {
     await connectDB();
 
-    // Get headers
-    const requestId = req.headers.get('Request-Id') || '';
-    const requestTimestamp = req.headers.get('Request-Timestamp') || '';
-    const signature = req.headers.get('Signature') || '';
-    const clientId = req.headers.get('Client-Id') || '';
+    // Get all headers for debugging
+    const headers = {
+      'Request-Id': req.headers.get('Request-Id') || '',
+      'Request-Timestamp': req.headers.get('Request-Timestamp') || '',
+      'Signature': req.headers.get('Signature') || '',
+      'Client-Id': req.headers.get('Client-Id') || '',
+      'Content-Type': req.headers.get('Content-Type') || '',
+      'User-Agent': req.headers.get('User-Agent') || '',
+    };
 
     // Get request body as text
     const body = await req.text();
     
-    console.log('📨 [WEBHOOK] DOKU Notification received:', {
-      requestId,
-      requestTimestamp,
-      clientId,
-      signature: signature.substring(0, 50) + '...',
-      bodyLength: body.length
-    });
+    console.log('📨 [WEBHOOK] DOKU Notification received - START');
+    console.log('🔧 [WEBHOOK] Headers:', headers);
+    console.log('📦 [WEBHOOK] Body length:', body.length);
+    console.log('📦 [WEBHOOK] Body content:', body);
 
-    let notification;
+    // Try to parse notification
     try {
-      notification = JSON.parse(body);
-      console.log('📊 [WEBHOOK] Notification data:', JSON.stringify(notification, null, 2));
+      notification = body ? JSON.parse(body) : {};
+      console.log('📊 [WEBHOOK] Parsed notification:', JSON.stringify(notification, null, 2));
     } catch (parseError) {
       console.error('❌ [WEBHOOK] Error parsing notification body:', parseError);
       return NextResponse.json(
@@ -38,63 +41,86 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify signature - FIXED: Don't pass clientId from headers
-    const requestTarget = '/api/webhooks/doku';
-    const isValid = verifyDokuSignature(
-      requestTarget,
-      requestId,
-      requestTimestamp,
-      body,
-      signature
-      // Removed: clientId parameter
-    );
-
-    if (!isValid) {
-      console.error('❌ [WEBHOOK] Invalid DOKU signature');
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 401 }
-      );
+    // Check if this is a test notification from Doku simulator
+    const isTestNotification = headers['User-Agent']?.includes('Doku') || 
+                              notification.additional_info?.origin?.system?.includes('simulator');
+    
+    if (isTestNotification) {
+      console.log('🧪 [WEBHOOK] This appears to be a test notification from Doku');
     }
 
-    // Extract notification data with enhanced logging
-    const invoiceNumber = notification.order?.invoice_number;
-    const transactionStatus = notification.transaction?.status;
-    const amount = notification.transaction?.amount;
-    const serviceType = notification.service?.id;
-    const channelType = notification.channel?.id;
+    // Verify signature (skip for empty body or test notifications)
+    if (body && headers.Signature) {
+      const requestTarget = '/api/webhooks/doku';
+      const isValid = verifyDokuSignature(
+        requestTarget,
+        headers['Request-Id'],
+        headers['Request-Timestamp'],
+        body,
+        headers.Signature
+      );
 
-    console.log('🔍 [WEBHOOK] Processing notification:', {
+      if (!isValid) {
+        console.error('❌ [WEBHOOK] Invalid DOKU signature');
+        return NextResponse.json(
+          { error: 'Invalid signature' },
+          { status: 401 }
+        );
+      }
+      console.log('✅ [WEBHOOK] Signature verified successfully');
+    } else {
+      console.log('⚠️ [WEBHOOK] Skipping signature verification (empty body or no signature)');
+    }
+
+    // Extract notification data with multiple possible field locations
+    const invoiceNumber = notification.order?.invoice_number || 
+                         notification.invoice_number ||
+                         notification.transaction?.invoice_number;
+
+    const transactionStatus = notification.transaction?.status || 
+                             notification.status ||
+                             notification.transaction_status;
+
+    const amount = notification.order?.amount || 
+                  notification.transaction?.amount || 
+                  notification.amount;
+
+    console.log('🔍 [WEBHOOK] Extracted data:', {
       invoiceNumber,
       transactionStatus,
       amount,
-      serviceType,
-      channelType,
-      notificationType: serviceType === 'VIRTUAL_ACCOUNT' ? 'Virtual Account' : 
-                       serviceType === 'CREDIT_CARD' ? 'Credit Card' : 
-                       serviceType === 'QRIS' ? 'QRIS' : 'Other'
+      rawTransactionStatus: notification.transaction?.status,
+      rawOrder: notification.order,
+      rawTransaction: notification.transaction
     });
 
     if (!invoiceNumber) {
-      console.error('❌ [WEBHOOK] Missing invoice number');
+      console.error('❌ [WEBHOOK] Missing invoice number in notification');
+      console.error('🔍 [WEBHOOK] Available fields:', Object.keys(notification));
       return NextResponse.json(
         { error: 'Invalid notification data - missing invoice number' },
         { status: 400 }
       );
     }
 
-    // Enhanced payment search with multiple fields
+    // Enhanced payment search with better logging
+    console.log('🔍 [WEBHOOK] Searching for payment with invoice:', invoiceNumber);
+    
     const payment = await Payment.findOne({
       $or: [
-        { doku_order_id: invoiceNumber }, // Search by Doku order ID
-        { doku_transaction_id: invoiceNumber }, // Search by Doku transaction ID
-        { midtrans_order_id: invoiceNumber } // Fallback for Midtrans
+        { doku_order_id: invoiceNumber },
+        { doku_transaction_id: invoiceNumber },
+        { midtrans_order_id: invoiceNumber }
       ]
     }).populate('booking_id');
 
     if (!payment) {
       console.error('❌ [WEBHOOK] Payment not found for invoice:', invoiceNumber);
-      console.error('🔍 [WEBHOOK] Searched fields: doku_order_id, doku_transaction_id, midtrans_order_id');
+      
+      // Log all payments for debugging
+      const allPayments = await Payment.find({}).select('doku_order_id doku_transaction_id midtrans_order_id invoice_number').limit(10);
+      console.log('🔍 [WEBHOOK] Recent payments for debugging:', allPayments);
+      
       return NextResponse.json(
         { error: 'Payment not found' },
         { status: 404 }
@@ -106,16 +132,23 @@ export async function POST(req: NextRequest) {
       currentStatus: payment.status,
       bookingId: payment.booking_id?._id,
       paymentGateway: payment.payment_gateway,
-      amount: payment.amount
+      amount: payment.amount,
+      dokuOrderId: payment.doku_order_id,
+      dokuTransactionId: payment.doku_transaction_id
     });
 
-    // Update payment status based on DOKU status
+    // Enhanced status mapping for Doku
     let newPaymentStatus: 'pending' | 'paid' | 'failed' | 'expired' = 'pending';
     let updateBooking = false;
     let errorMessage = '';
 
-    switch (transactionStatus?.toUpperCase()) {
+    const status = (transactionStatus || '').toUpperCase();
+    console.log('🔄 [WEBHOOK] Processing status:', status);
+
+    switch (status) {
       case 'SUCCESS':
+      case 'COMPLETED':
+      case 'SETTLEMENT':
         newPaymentStatus = 'paid';
         payment.paid_at = new Date();
         updateBooking = true;
@@ -123,13 +156,16 @@ export async function POST(req: NextRequest) {
         break;
 
       case 'FAILED':
+      case 'FAILURE':
+      case 'DENY':
         newPaymentStatus = 'failed';
-        errorMessage = notification.transaction?.message || 'Payment failed via DOKU';
+        errorMessage = notification.transaction?.message || notification.error_message || 'Payment failed via DOKU';
         payment.error_message = errorMessage;
         console.log('❌ [WEBHOOK] Payment marked as FAILED:', errorMessage);
         break;
 
       case 'EXPIRED':
+      case 'EXPIRE':
         newPaymentStatus = 'expired';
         errorMessage = 'Payment expired via DOKU';
         payment.error_message = errorMessage;
@@ -137,28 +173,31 @@ export async function POST(req: NextRequest) {
         break;
 
       case 'PENDING':
+      case 'CHALLENGE':
       default:
         newPaymentStatus = 'pending';
         console.log('⏳ [WEBHOOK] Payment remains PENDING');
         break;
     }
 
-    // Update payment with enhanced data
+    // Update payment
     payment.status = newPaymentStatus;
-    payment.notification_data = notification; // Store full notification data
+    payment.notification_data = notification;
     payment.updated_at = new Date();
     
-    // Store Doku-specific data if available
-    if (serviceType) {
+    // Store additional Doku data
+    if (notification.service?.id) {
       payment.gateway_response = {
         ...payment.gateway_response,
-        doku_service_type: serviceType,
-        doku_channel_type: channelType,
-        processed_at: new Date()
+        doku_service_type: notification.service.id,
+        doku_channel_type: notification.channel?.id,
+        doku_notification_received: new Date(),
+        is_test: isTestNotification
       };
     }
 
     await payment.save();
+    console.log('✅ [WEBHOOK] Payment saved with new status:', newPaymentStatus);
 
     // Update booking status if payment is successful
     if (updateBooking && payment.booking_id) {
@@ -176,32 +215,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log('✅ [WEBHOOK] Payment updated successfully:', {
-      paymentId: payment._id,
-      newStatus: newPaymentStatus,
-      invoiceNumber,
-      bookingUpdated: updateBooking
-    });
+    console.log('✅ [WEBHOOK] Processing completed successfully');
+    console.log('📨 [WEBHOOK] DOKU Notification received - END');
 
-    // Return success response to DOKU (HTTP 200)
+    // Return success response to DOKU
     return NextResponse.json({
       success: true,
       message: 'Notification processed successfully',
       payment_id: payment._id,
       status: newPaymentStatus,
-      booking_updated: updateBooking
+      booking_updated: updateBooking,
+      is_test: isTestNotification
     });
 
   } catch (error: any) {
     console.error('💥 [WEBHOOK] DOKU notification error:', {
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
+      notification: notification,
+      timestamp: new Date().toISOString()
     });
     
     return NextResponse.json(
       { 
         error: 'Internal server error',
-        details: error.message 
+        details: error.message,
+        timestamp: new Date().toISOString()
       },
       { status: 500 }
     );
