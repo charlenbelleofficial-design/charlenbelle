@@ -49,6 +49,7 @@ const PaymentSchema: Schema = new Schema({
   midtrans_order_id: { type: String },
   
   // DOKU fields
+  doku_order_id: { type: String }, // Add this field
   doku_transaction_id: { type: String },
   doku_redirect_url: { type: String },
   doku_session_id: { type: String },

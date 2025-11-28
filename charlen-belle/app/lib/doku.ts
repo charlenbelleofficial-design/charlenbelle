@@ -19,6 +19,7 @@ export interface DokuTransactionResponse {
   token: string;
   redirect_url: string;
   session_id?: string;
+  order_id?: string; // Added
 }
 
 export interface DokuPaymentRequest {
@@ -124,17 +125,33 @@ export class DokuPayment {
     return requestId;
   }
 
- async createTransaction(
+  // Add request body validation
+  private validateRequestBody(requestBody: DokuPaymentRequest): void {
+    if (!requestBody.order.amount || requestBody.order.amount <= 0) {
+      throw new Error('Invalid amount: Amount must be greater than 0');
+    }
+    if (!requestBody.order.invoice_number) {
+      throw new Error('Invoice number is required');
+    }
+    if (!requestBody.customer?.id || !requestBody.customer?.name) {
+      throw new Error('Customer information (id and name) is required');
+    }
+    if (!requestBody.customer.email || !requestBody.customer.phone) {
+      throw new Error('Customer email and phone are required');
+    }
+  }
+
+  async createTransaction(
     orderId: string,
     amount: number,
     customer: DokuCustomer,
     frontendUrls: { success: string; error: string; pending: string }
-    ): Promise<DokuTransactionResponse> {
+  ): Promise<DokuTransactionResponse> {
     try {
-        console.log('🚀 [DOKU] Starting transaction creation...');
-        
-        // Validate and get base URL
-        const getBaseUrl = () => {
+      console.log('🚀 [DOKU] Starting transaction creation...');
+      
+      // Validate and get base URL
+      const getBaseUrl = () => {
         // Priority: Use provided frontendUrls, then environment variable, then fallback
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
                         process.env.VERCEL_URL || 
@@ -145,42 +162,42 @@ export class DokuPayment {
             return baseUrl;
         }
         return `https://${baseUrl}`;
-        };
+      };
 
-        const baseUrl = getBaseUrl();
-        console.log('🌐 [DOKU] Base URL:', baseUrl);
+      const baseUrl = getBaseUrl();
+      console.log('🌐 [DOKU] Base URL:', baseUrl);
 
-        // Validate URLs
-        const successUrl = frontendUrls.success || `${baseUrl}/user/dashboard/bookings/payment/success`;
-        const errorUrl = frontendUrls.error || `${baseUrl}/user/dashboard/bookings/payment/error`;
-        const pendingUrl = frontendUrls.pending || `${baseUrl}/user/dashboard/bookings/payment/pending`;
+      // Validate URLs
+      const successUrl = frontendUrls.success || `${baseUrl}/user/dashboard/bookings/payment/doku-success`;
+      const errorUrl = frontendUrls.error || `${baseUrl}/user/dashboard/bookings/payment/error`;
+      const pendingUrl = frontendUrls.pending || `${baseUrl}/user/dashboard/bookings/payment/pending`;
 
-        console.log('🔗 [DOKU] Callback URLs:', {
+      console.log('🔗 [DOKU] Callback URLs:', {
         success: successUrl,
         error: errorUrl,
         pending: pendingUrl
-        });
+      });
 
-        const requestId = this.generateRequestId();
-        const requestTimestamp = this.getCurrentUTCTimestamp();
-        const requestTarget = '/checkout/v1/payment';
+      const requestId = this.generateRequestId();
+      const requestTimestamp = this.getCurrentUTCTimestamp();
+      const requestTarget = '/checkout/v1/payment';
 
-        // Prepare request body
-        const requestBody: DokuPaymentRequest = {
+      // Prepare request body
+      const requestBody: DokuPaymentRequest = {
         order: {
-            amount: amount,
-            invoice_number: orderId,
-            currency: 'IDR',
-            callback_url: successUrl,
-            callback_url_cancel: errorUrl,
-            callback_url_result: successUrl,
-            language: 'ID',
-            auto_redirect: true,
-            disable_retry_payment: false
+          amount: amount,
+          invoice_number: orderId,
+          currency: 'IDR',
+          callback_url: `${baseUrl}/user/dashboard/bookings/payment/doku-success`,
+          callback_url_cancel: `${baseUrl}/user/dashboard/bookings/payment/error`,
+          callback_url_result: `${baseUrl}/user/dashboard/bookings/payment/doku-success`,
+          language: 'ID',
+          auto_redirect: true,
+          disable_retry_payment: false
         },
         payment: {
-            payment_due_date: 60,
-            payment_method_types: [
+          payment_due_date: 60,
+          payment_method_types: [
             'VIRTUAL_ACCOUNT_BCA',
             'VIRTUAL_ACCOUNT_BANK_MANDIRI',
             'VIRTUAL_ACCOUNT_BRI', 
@@ -189,16 +206,20 @@ export class DokuPayment {
             'QRIS',
             'EMONEY_OVO',
             'EMONEY_SHOPEEPAY'
-            ]
+          ]
         },
         customer: {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            country: 'ID'
+          id: customer.id,
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          country: 'ID'
         }
-        };
+      };
+
+      // Validate request body
+      this.validateRequestBody(requestBody);
+
       const bodyString = JSON.stringify(requestBody);
       console.log('📄 [REQUEST] Request Body:', bodyString);
 
@@ -249,32 +270,56 @@ export class DokuPayment {
           data: errorData
         });
 
-        // Check for specific signature errors
-        if (response.status === 400 && errorData.error?.code === 'invalid_signature') {
-          console.error('🔍 [DEBUG] Signature verification failed');
-          console.error('🔍 [DEBUG] Please double-check:');
-          console.error('🔍 [DEBUG] 1. Client ID:', this.config.clientId);
-          console.error('🔍 [DEBUG] 2. Secret Key length:', this.config.secretKey?.length);
-          console.error('🔍 [DEBUG] 3. Environment:', this.config.isProduction ? 'Production' : 'Sandbox');
+        // Enhanced error handling for specific Doku errors
+        if (response.status === 400) {
+          if (errorData.error?.code === 'invalid_signature') {
+            console.error('🔍 [DEBUG] Signature verification failed');
+            console.error('🔍 [DEBUG] Please double-check:');
+            console.error('🔍 [DEBUG] 1. Client ID:', this.config.clientId);
+            console.error('🔍 [DEBUG] 2. Secret Key length:', this.config.secretKey?.length);
+            console.error('🔍 [DEBUG] 3. Environment:', this.config.isProduction ? 'Production' : 'Sandbox');
+          } else if (errorData.error?.code === 'invalid_client_id') {
+            console.error('🔍 [DEBUG] Invalid Client ID');
+          } else if (errorData.error?.code === 'invalid_amount') {
+            console.error('🔍 [DEBUG] Invalid amount format');
+          } else if (errorData.error?.code === 'invalid_customer') {
+            console.error('🔍 [DEBUG] Invalid customer data');
+          }
         }
 
         throw new Error(`DOKU API Error: ${errorData.error?.message || response.statusText}`);
       }
 
       const data = JSON.parse(responseText);
-      
-      if (data.response && data.response.payment) {
+      console.log('📨 [RESPONSE] Full Response:', JSON.stringify(data, null, 2));
+
+      // Enhanced response parsing for different Doku response formats
+      if (data.response && (data.response.payment || data.response.order)) {
+        const paymentData = data.response.payment || {};
+        const orderData = data.response.order || {};
+        
         console.log('✅ [SUCCESS] DOKU Transaction Created');
-        console.log('🔗 [SUCCESS] Redirect URL:', data.response.payment.url);
-        console.log('🎫 [SUCCESS] Token:', data.response.payment.token_id);
+        console.log('🔗 [SUCCESS] Redirect URL:', paymentData.url);
+        console.log('🎫 [SUCCESS] Token:', paymentData.token_id);
+        console.log('📋 [SUCCESS] Order ID:', orderData.invoice_number);
         
         return {
-          token: data.response.payment.token_id,
-          redirect_url: data.response.payment.url,
-          session_id: data.response.order.session_id
+          token: paymentData.token_id,
+          redirect_url: paymentData.url,
+          session_id: orderData.session_id,
+          order_id: orderData.invoice_number
+        };
+      } else if (data.payment) {
+        // Alternative response format
+        console.log('✅ [SUCCESS] DOKU Transaction Created (Alternative Format)');
+        return {
+          token: data.payment.token_id,
+          redirect_url: data.payment.url,
+          session_id: data.order?.session_id,
+          order_id: data.order?.invoice_number
         };
       } else {
-        console.error('❌ [ERROR] Invalid DOKU Response Format:', data);
+        console.error('❌ [ERROR] Unexpected DOKU Response Format:', data);
         throw new Error('Invalid response format from DOKU API');
       }
 
@@ -285,18 +330,24 @@ export class DokuPayment {
   }
 }
 
-// Tambahkan fungsi ini di lib/doku.ts (setelah class DokuPayment)
-
+// Fixed webhook signature verification
 export function verifyDokuSignature(
   requestTarget: string,
   requestId: string,
   requestTimestamp: string,
   requestBody: string,
-  signature: string,
-  clientId: string
+  signature: string
 ): boolean {
   try {
     console.log('🔐 [WEBHOOK] Verifying DOKU signature...');
+
+    // Use YOUR client ID from environment, not from headers
+    const yourClientId = process.env.DOKU_CLIENT_ID!;
+    
+    if (!yourClientId) {
+      console.error('❌ [WEBHOOK] DOKU_CLIENT_ID not found in environment');
+      return false;
+    }
 
     // Clean request body
     const cleanBody = requestBody.replace(/\r/g, '');
@@ -306,9 +357,9 @@ export function verifyDokuSignature(
     hash.update(cleanBody);
     const digest = hash.digest().toString('base64');
 
-    // Prepare signature components
+    // Prepare signature components - use YOUR client ID
     const signatureComponents = [
-      `Client-Id:${clientId}`,
+      `Client-Id:${yourClientId}`, // Use your configured client ID
       `Request-Id:${requestId}`,
       `Request-Timestamp:${requestTimestamp}`,
       `Request-Target:${requestTarget}`,

@@ -38,15 +38,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify signature
+    // Verify signature - FIXED: Don't pass clientId from headers
     const requestTarget = '/api/webhooks/doku';
     const isValid = verifyDokuSignature(
       requestTarget,
       requestId,
       requestTimestamp,
       body,
-      signature,
-      clientId
+      signature
+      // Removed: clientId parameter
     );
 
     if (!isValid) {
@@ -57,15 +57,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Extract notification data
+    // Extract notification data with enhanced logging
     const invoiceNumber = notification.order?.invoice_number;
     const transactionStatus = notification.transaction?.status;
     const amount = notification.transaction?.amount;
+    const serviceType = notification.service?.id;
+    const channelType = notification.channel?.id;
 
     console.log('🔍 [WEBHOOK] Processing notification:', {
       invoiceNumber,
       transactionStatus,
-      amount
+      amount,
+      serviceType,
+      channelType,
+      notificationType: serviceType === 'VIRTUAL_ACCOUNT' ? 'Virtual Account' : 
+                       serviceType === 'CREDIT_CARD' ? 'Credit Card' : 
+                       serviceType === 'QRIS' ? 'QRIS' : 'Other'
     });
 
     if (!invoiceNumber) {
@@ -76,16 +83,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Find payment by invoice number (DOKU transaction ID)
+    // Enhanced payment search with multiple fields
     const payment = await Payment.findOne({
       $or: [
-        { doku_transaction_id: invoiceNumber },
-        { midtrans_order_id: invoiceNumber } // Fallback
+        { doku_order_id: invoiceNumber }, // Search by Doku order ID
+        { doku_transaction_id: invoiceNumber }, // Search by Doku transaction ID
+        { midtrans_order_id: invoiceNumber } // Fallback for Midtrans
       ]
     }).populate('booking_id');
 
     if (!payment) {
       console.error('❌ [WEBHOOK] Payment not found for invoice:', invoiceNumber);
+      console.error('🔍 [WEBHOOK] Searched fields: doku_order_id, doku_transaction_id, midtrans_order_id');
       return NextResponse.json(
         { error: 'Payment not found' },
         { status: 404 }
@@ -95,12 +104,15 @@ export async function POST(req: NextRequest) {
     console.log('✅ [WEBHOOK] Payment found:', {
       paymentId: payment._id,
       currentStatus: payment.status,
-      bookingId: payment.booking_id?._id
+      bookingId: payment.booking_id?._id,
+      paymentGateway: payment.payment_gateway,
+      amount: payment.amount
     });
 
     // Update payment status based on DOKU status
     let newPaymentStatus: 'pending' | 'paid' | 'failed' | 'expired' = 'pending';
     let updateBooking = false;
+    let errorMessage = '';
 
     switch (transactionStatus?.toUpperCase()) {
       case 'SUCCESS':
@@ -112,13 +124,15 @@ export async function POST(req: NextRequest) {
 
       case 'FAILED':
         newPaymentStatus = 'failed';
-        payment.error_message = 'Payment failed via DOKU';
-        console.log('❌ [WEBHOOK] Payment marked as FAILED');
+        errorMessage = notification.transaction?.message || 'Payment failed via DOKU';
+        payment.error_message = errorMessage;
+        console.log('❌ [WEBHOOK] Payment marked as FAILED:', errorMessage);
         break;
 
       case 'EXPIRED':
         newPaymentStatus = 'expired';
-        payment.error_message = 'Payment expired via DOKU';
+        errorMessage = 'Payment expired via DOKU';
+        payment.error_message = errorMessage;
         console.log('⏰ [WEBHOOK] Payment marked as EXPIRED');
         break;
 
@@ -129,11 +143,21 @@ export async function POST(req: NextRequest) {
         break;
     }
 
-    // Update payment
+    // Update payment with enhanced data
     payment.status = newPaymentStatus;
-    payment.notification_data = notification; // Store notification data
+    payment.notification_data = notification; // Store full notification data
     payment.updated_at = new Date();
     
+    // Store Doku-specific data if available
+    if (serviceType) {
+      payment.gateway_response = {
+        ...payment.gateway_response,
+        doku_service_type: serviceType,
+        doku_channel_type: channelType,
+        processed_at: new Date()
+      };
+    }
+
     await payment.save();
 
     // Update booking status if payment is successful
@@ -155,7 +179,8 @@ export async function POST(req: NextRequest) {
     console.log('✅ [WEBHOOK] Payment updated successfully:', {
       paymentId: payment._id,
       newStatus: newPaymentStatus,
-      invoiceNumber
+      invoiceNumber,
+      bookingUpdated: updateBooking
     });
 
     // Return success response to DOKU (HTTP 200)
@@ -163,7 +188,8 @@ export async function POST(req: NextRequest) {
       success: true,
       message: 'Notification processed successfully',
       payment_id: payment._id,
-      status: newPaymentStatus
+      status: newPaymentStatus,
+      booking_updated: updateBooking
     });
 
   } catch (error: any) {

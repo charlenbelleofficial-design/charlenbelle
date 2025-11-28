@@ -133,7 +133,23 @@ function PaymentModal({ booking, onClose, onPaymentSuccess }: any) {
   }, [booking._id]);
 
   const handleIframeLoad = () => {
-    // optional: handle after load
+    // Check if we're in Doku payment and handle redirects
+    const iframe = document.querySelector('iframe');
+    if (iframe && gateway === 'doku') {
+      // Doku will redirect within the iframe, we need to detect completion
+      const checkDokuCompletion = setInterval(() => {
+        try {
+          const iframeUrl = iframe.contentWindow?.location.href;
+          if (iframeUrl && iframeUrl.includes('/payment/doku-success')) {
+            clearInterval(checkDokuCompletion);
+            onPaymentSuccess();
+            onClose();
+          }
+        } catch (error) {
+          // Cross-origin restriction, we'll rely on webhooks
+        }
+      }, 2000);
+    }
   };
 
   const handleIframeError = () => {
