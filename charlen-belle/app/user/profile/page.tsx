@@ -253,23 +253,26 @@ export default function UserProfilePage() {
               Profil Saya
             </h1>
           </div>
-          {!editing && !editingCustomerProfile && (
-            <button
-              onClick={() => setEditing(true)}
-              className="self-start sm:self-auto bg-[#6C3FD1] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#5b34b3] transition-colors shadow-sm"
-            >
-              Edit Profil
-            </button>
-          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Profile Information */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-5 sm:p-6">
-              <h2 className="text-lg font-semibold text-[#3B2A1E] mb-4">
-                Informasi Pribadi
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-[#3B2A1E]">
+                  Informasi Pribadi
+                </h2>
+
+                {!editing && (
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="bg-[#C89B4B] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#b48735] transition-colors shadow-sm"
+                  >
+                    Edit Profil
+                  </button>
+                )}
+              </div>
 
               <div className="space-y-4">
                 <div>
@@ -337,7 +340,7 @@ export default function UserProfilePage() {
                     <button
                       onClick={saveProfile}
                       disabled={saving}
-                      className="flex-1 bg-[#6C3FD1] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#5b34b3] transition-colors disabled:bg-[#A68FEA]"
+                      className="flex-1 bg-[#C89B4B] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#b48735] transition-colors disabled:bg-[#e2c691]"
                     >
                       {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
                     </button>
@@ -375,8 +378,7 @@ export default function UserProfilePage() {
                       </label>
                       <select
                         value={profile.customer_profile?.skin_type || ''}
-
-                    onChange={(e) =>
+                        onChange={(e) =>
                           setProfile((prev) => ({
                             ...prev,
                             customer_profile: {

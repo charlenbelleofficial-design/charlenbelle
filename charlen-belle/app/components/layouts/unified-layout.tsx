@@ -105,9 +105,9 @@ const staffNavigation: StaffNavItem[] = [
 ];
 
 function getProfilePath(role?: string | null) {
-  if (!role) return '/user/profile';
+  if (!role) return '/admin/users';
   if (['kasir', 'doctor', 'admin', 'superadmin'].includes(role)) {
-    return '/admin/profile';
+    return '/admin/users';
   }
   return '/user/profile';
 }
