@@ -81,8 +81,9 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({
             success: true,
             message: 'Payment already initiated',
-            redirect_url: redirectUrl,
-            payment_id: existingPayment._id,
+            payment_id: existingPayment._id, // ✅ Use existingPayment, not payment
+            order_id: existingPayment.doku_transaction_id || existingPayment.midtrans_transaction_id, // ✅ Use existing payment's transaction ID
+            redirect_url: redirectUrl, // ✅ Use the redirectUrl we defined above
             gateway: gateway
           });
         }
@@ -100,8 +101,14 @@ export async function POST(req: NextRequest) {
         {
           payment_gateway: gateway,
           ...(gateway === 'doku' 
-            ? { doku_transaction_id: orderId }
-            : { midtrans_transaction_id: orderId }
+            ? { 
+                doku_transaction_id: orderId,
+                doku_order_id: orderId // ✅ Also store in doku_order_id field
+              }
+            : { 
+                midtrans_transaction_id: orderId,
+                midtrans_order_id: orderId
+              }
           ),
           status: 'pending',
           updated_at: new Date()
@@ -116,8 +123,14 @@ export async function POST(req: NextRequest) {
         payment_method: `${gateway}_admin`,
         payment_gateway: gateway,
         ...(gateway === 'doku' 
-          ? { doku_transaction_id: orderId }
-          : { midtrans_transaction_id: orderId }
+          ? { 
+              doku_transaction_id: orderId,
+              doku_order_id: orderId // ✅ Also store in doku_order_id field
+            }
+          : { 
+              midtrans_transaction_id: orderId,
+              midtrans_order_id: orderId
+            }
         ),
         status: 'pending',
         created_at: new Date()
@@ -166,6 +179,7 @@ export async function POST(req: NextRequest) {
         success: true,
         message: 'Payment initiated',
         payment_id: payment._id,
+        order_id: orderId, // ✅ ADD THIS LINE - return the order ID
         redirect_url: transaction.redirect_url,
         gateway: gateway
       }, { status: 201 });

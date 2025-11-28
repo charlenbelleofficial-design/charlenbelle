@@ -112,6 +112,13 @@ function PaymentModal({ booking, onClose, onPaymentSuccess }: any) {
         const data = await response.json();
 
         if (data.success && data.redirect_url) {
+          // Store the order ID from the API response
+          const orderId = data.order_id || data.payment_id;
+          if (orderId) {
+            sessionStorage.setItem('doku_last_order_id', orderId);
+            console.log('💾 [PAYMENT] Stored order ID in sessionStorage:', orderId);
+          }
+          
           setPaymentUrl(data.redirect_url);
           setGateway(data.gateway || 'midtrans');
         } else {
@@ -298,7 +305,8 @@ export default function AdminTransactionsPage() {
     }
   };
 
-  const handleInitiatePayment = async (booking: Booking) => {
+  // CORRECT: Simple function to open payment modal
+  const handleInitiatePayment = (booking: Booking) => {
     setSelectedBooking(booking);
     setShowPaymentModal(true);
   };

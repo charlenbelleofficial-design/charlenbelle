@@ -14,32 +14,59 @@ export default function DokuPaymentSuccessPage() {
   const [loading, setLoading] = useState(true);
   const [verificationAttempts, setVerificationAttempts] = useState(0);
 
-  const orderId = searchParams.get('order_id');
-  const transactionId = searchParams.get('transaction_id');
-  const status = searchParams.get('status');
-
   useEffect(() => {
-    if (orderId || transactionId) {
-      verifyDokuPayment();
-    } else {
-      console.error('Missing order_id or transaction_id in URL');
-      toast.error('Data pembayaran tidak valid');
-      router.push('/user/dashboard/bookings');
-    }
-  }, [orderId, transactionId]);
+    verifyDokuPayment();
+  }, []);
 
   const verifyDokuPayment = async () => {
     try {
       setLoading(true);
       
-      // Use the order_id from URL parameters to check payment status
+      // Try to get order_id from URL parameters first
+      const orderId = searchParams.get('order_id');
+      const transactionId = searchParams.get('transaction_id');
+      
+      console.log('🔍 [SUCCESS PAGE] URL Parameters:', {
+        orderId,
+        transactionId,
+        allParams: Object.fromEntries(searchParams.entries())
+      });
+
+      // If no order_id in URL, try to get from sessionStorage (fallback)
+      let finalOrderId = orderId;
+      if (!finalOrderId) {
+        finalOrderId = sessionStorage.getItem('doku_last_order_id');
+        console.log('🔍 [SUCCESS PAGE] Using order_id from sessionStorage:', finalOrderId);
+      }
+
+      if (!finalOrderId && !transactionId) {
+        console.error('❌ [SUCCESS PAGE] Missing both order_id and transaction_id');
+        
+        // Try to find recent payment from localStorage as last resort
+        const recentPayment = await findRecentPayment();
+        if (recentPayment) {
+          console.log('✅ [SUCCESS PAGE] Found recent payment:', recentPayment);
+          setPaymentData(recentPayment);
+          if (recentPayment.status === 'paid') {
+            toast.success('Pembayaran berhasil!');
+          }
+          setLoading(false);
+          return;
+        }
+        
+        toast.error('Data pembayaran tidak valid. Silakan cek dashboard untuk status terbaru.');
+        setLoading(false);
+        return;
+      }
+
+      // Use the order_id to check payment status
       const verifyResponse = await fetch('/api/payments/verify-doku', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          order_id: orderId,
+          order_id: finalOrderId,
           transaction_id: transactionId
         }),
       });
@@ -51,6 +78,8 @@ export default function DokuPaymentSuccessPage() {
         
         if (data.payment.status === 'paid') {
           toast.success('Pembayaran berhasil diverifikasi!');
+          // Clear the session storage after successful verification
+          sessionStorage.removeItem('doku_last_order_id');
         } else if (data.payment.status === 'pending') {
           // If still pending, retry after a delay
           if (verificationAttempts < 5) {
@@ -63,7 +92,7 @@ export default function DokuPaymentSuccessPage() {
           }
         }
       } else {
-        toast.error('Gagal memverifikasi pembayaran');
+        toast.error('Gagal memverifikasi pembayaran: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error verifying Doku payment:', error);
@@ -73,12 +102,33 @@ export default function DokuPaymentSuccessPage() {
     }
   };
 
+  const findRecentPayment = async () => {
+    try {
+      // Try to get the most recent payment for the current user
+      const response = await fetch('/api/payments/recent-doku');
+      const data = await response.json();
+      
+      if (data.success && data.payment) {
+        return data.payment;
+      }
+    } catch (error) {
+      console.error('Error finding recent payment:', error);
+    }
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto py-8 sm:py-10 px-4 sm:px-6">
         <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-8 shadow-sm text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4" />
-          <p className="text-sm text-[#A18F76]">Memverifikasi pembayaran...</p>
+          <h2 className="text-lg font-semibold text-[#3B2A1E] mb-2">Memverifikasi Pembayaran</h2>
+          <p className="text-sm text-[#A18F76]">
+            {verificationAttempts > 0 
+              ? `Memeriksa status... (${verificationAttempts}/5)`
+              : 'Memverifikasi pembayaran...'
+            }
+          </p>
         </div>
       </div>
     );
@@ -104,67 +154,75 @@ export default function DokuPaymentSuccessPage() {
           </svg>
         </div>
         <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E] mb-2">
-          Pembayaran Berhasil!
+          {paymentData?.status === 'paid' ? 'Pembayaran Berhasil!' : 'Pembayaran Diproses'}
         </h1>
         <p className="text-sm text-[#A18F76]">
-          Terima kasih telah melakukan pembayaran melalui DOKU.
+          {paymentData?.status === 'paid' 
+            ? 'Terima kasih telah melakukan pembayaran melalui DOKU.'
+            : 'Pembayaran Anda sedang diproses. Status akan diperbarui otomatis.'
+          }
         </p>
       </div>
 
       {/* Payment Details */}
-      <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-5 sm:p-6 shadow-sm mb-6 text-sm">
-        <h2 className="text-sm font-semibold text-[#3B2A1E] mb-4">
-          Detail Pembayaran DOKU
-        </h2>
-        <div className="space-y-3">
-          {orderId && (
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-              <span className="text-[#A18F76]">Order ID</span>
-              <span className="font-semibold text-[#3B2A1E] break-all sm:text-right">
-                {orderId}
+      {paymentData && (
+        <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-5 sm:p-6 shadow-sm mb-6 text-sm">
+          <h2 className="text-sm font-semibold text-[#3B2A1E] mb-4">
+            Detail Pembayaran DOKU
+          </h2>
+          <div className="space-y-3">
+            {paymentData.doku_order_id && (
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="text-[#A18F76]">Order ID</span>
+                <span className="font-semibold text-[#3B2A1E] break-all sm:text-right">
+                  {paymentData.doku_order_id}
+                </span>
+              </div>
+            )}
+            {paymentData.doku_transaction_id && (
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="text-[#A18F76]">Transaction ID</span>
+                <span className="font-semibold text-[#3B2A1E] break-all sm:text-right">
+                  {paymentData.doku_transaction_id}
+                </span>
+              </div>
+            )}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+              <span className="text-[#A18F76]">Status</span>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium self-start sm:self-auto ${
+                paymentData.status === 'paid' 
+                  ? 'bg-green-100 text-green-800'
+                  : paymentData.status === 'pending'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {paymentData.status === 'paid' ? 'Berhasil' : 
+                 paymentData.status === 'pending' ? 'Diproses' : 'Gagal'}
               </span>
             </div>
-          )}
-          {transactionId && (
             <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-              <span className="text-[#A18F76]">Transaction ID</span>
-              <span className="font-semibold text-[#3B2A1E] break-all sm:text-right">
-                {transactionId}
+              <span className="text-[#A18F76]">Total Pembayaran</span>
+              <span className="font-semibold text-[#2F855A] sm:text-right">
+                {formatCurrency(paymentData.amount)}
               </span>
             </div>
-          )}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-            <span className="text-[#A18F76]">Status</span>
-            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium self-start sm:self-auto">
-              Berhasil
-            </span>
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+              <span className="text-[#A18F76]">Metode Pembayaran</span>
+              <span className="font-semibold text-[#3B2A1E] capitalize sm:text-right">
+                {paymentData.payment_method}
+              </span>
+            </div>
+            {paymentData.paid_at && (
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="text-[#A18F76]">Waktu Pembayaran</span>
+                <span className="font-semibold text-[#3B2A1E] sm:text-right">
+                  {new Date(paymentData.paid_at).toLocaleString('id-ID')}
+                </span>
+              </div>
+            )}
           </div>
-          {paymentData && (
-            <>
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                <span className="text-[#A18F76]">Total Pembayaran</span>
-                <span className="font-semibold text-[#2F855A] sm:text-right">
-                  {formatCurrency(paymentData.amount)}
-                </span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                <span className="text-[#A18F76]">Metode Pembayaran</span>
-                <span className="font-semibold text-[#3B2A1E] capitalize sm:text-right">
-                  {paymentData.payment_method}
-                </span>
-              </div>
-              {paymentData.paid_at && (
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-[#A18F76]">Waktu Pembayaran</span>
-                  <span className="font-semibold text-[#3B2A1E] sm:text-right">
-                    {new Date(paymentData.paid_at).toLocaleString('id-ID')}
-                  </span>
-                </div>
-              )}
-            </>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Next Steps */}
       <div className="bg-[#E3F2FD] border border-[#C9E0FA] rounded-2xl p-5 sm:p-6 mb-6 text-sm">

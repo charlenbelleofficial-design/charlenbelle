@@ -185,15 +185,15 @@ export class DokuPayment {
       // Prepare request body
       const requestBody: DokuPaymentRequest = {
         order: {
-          amount: amount,
-          invoice_number: orderId,
-          currency: 'IDR',
-          callback_url: `${baseUrl}/user/dashboard/bookings/payment/doku-success`,
-          callback_url_cancel: `${baseUrl}/user/dashboard/bookings/payment/error`,
-          callback_url_result: `${baseUrl}/user/dashboard/bookings/payment/doku-success`,
-          language: 'ID',
-          auto_redirect: true,
-          disable_retry_payment: false
+            amount: amount,
+            invoice_number: orderId,
+            currency: 'IDR',
+            callback_url: `${baseUrl}/user/dashboard/bookings/payment/doku-success?order_id=${orderId}`,
+            callback_url_cancel: `${baseUrl}/user/dashboard/bookings/payment/error?order_id=${orderId}`,
+            callback_url_result: `${baseUrl}/user/dashboard/bookings/payment/doku-success?order_id=${orderId}`,
+            language: 'ID',
+            auto_redirect: true,
+            disable_retry_payment: false
         },
         payment: {
           payment_due_date: 60,
