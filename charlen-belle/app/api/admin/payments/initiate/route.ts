@@ -5,7 +5,7 @@ import Payment from '../../../../models/Payment';
 import Booking from '../../../../models/Booking';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../../lib/auth-config';
-import { createTransaction } from '../../../../lib/midtrans';
+import { createPaymentTransaction, getPaymentGateway, isPaymentGatewayConfigured } from '../../../../lib/payment';
 import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
@@ -24,14 +24,14 @@ export async function POST(req: NextRequest) {
     const userRole = session.user?.role;
 
     if (!userRole || !allowedRoles.includes(userRole)) {
-    return NextResponse.json(
+      return NextResponse.json(
         { error: 'Akses ditolak' },
         { status: 403 }
-    );
+      );
     }
 
-    // Check if Midtrans is configured
-    if (!process.env.MIDTRANS_SERVER_KEY || !process.env.MIDTRANS_CLIENT_KEY) {
+    // Check if payment gateway is configured
+    if (!isPaymentGatewayConfigured()) {
       return NextResponse.json(
         { error: 'Konfigurasi pembayaran belum siap' },
         { status: 503 }
@@ -59,6 +59,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const gateway = getPaymentGateway();
+
     // Check if booking already has a pending or paid payment
     const existingPayment = await Payment.findOne({ booking_id });
     if (existingPayment) {
@@ -69,14 +71,21 @@ export async function POST(req: NextRequest) {
         );
       }
       
-      if (existingPayment.status === 'pending' && existingPayment.midtrans_redirect_url) {
-        // Return existing payment URL
-        return NextResponse.json({
-          success: true,
-          message: 'Payment already initiated',
-          redirect_url: existingPayment.midtrans_redirect_url,
-          payment_id: existingPayment._id
-        });
+      // Return existing payment URL based on gateway
+      if (existingPayment.status === 'pending') {
+        const redirectUrl = gateway === 'doku' 
+          ? existingPayment.doku_redirect_url 
+          : existingPayment.midtrans_redirect_url;
+          
+        if (redirectUrl) {
+          return NextResponse.json({
+            success: true,
+            message: 'Payment already initiated',
+            redirect_url: redirectUrl,
+            payment_id: existingPayment._id,
+            gateway: gateway
+          });
+        }
       }
     }
 
@@ -89,7 +98,11 @@ export async function POST(req: NextRequest) {
       payment = await Payment.findByIdAndUpdate(
         existingPayment._id,
         {
-          midtrans_transaction_id: orderId,
+          payment_gateway: gateway,
+          ...(gateway === 'doku' 
+            ? { doku_transaction_id: orderId }
+            : { midtrans_transaction_id: orderId }
+          ),
           status: 'pending',
           updated_at: new Date()
         },
@@ -100,37 +113,53 @@ export async function POST(req: NextRequest) {
         booking_id,
         user_id: booking.user_id._id,
         amount: booking.total_amount,
-        payment_method: 'midtrans_admin',
+        payment_method: `${gateway}_admin`,
+        payment_gateway: gateway,
+        ...(gateway === 'doku' 
+          ? { doku_transaction_id: orderId }
+          : { midtrans_transaction_id: orderId }
+        ),
         status: 'pending',
-        midtrans_transaction_id: orderId,
         created_at: new Date()
       });
     }
 
     try {
       const customerDetails = {
-        first_name: booking.user_id.name || 'Customer',
+        id: booking.user_id._id.toString(),
+        name: booking.user_id.name || 'Customer',
         email: booking.user_id.email || '',
         phone: booking.user_id.phone_number || '081234567890'
       };
 
-      // Define frontend URLs for Midtrans redirects
+      // Define frontend URLs for redirects
       const frontendUrls = {
         success: `${process.env.NEXT_PUBLIC_SITE_URL}/user/dashboard/bookings/payment/success`,
         error: `${process.env.NEXT_PUBLIC_SITE_URL}/user/dashboard/bookings/payment/error`,
         pending: `${process.env.NEXT_PUBLIC_SITE_URL}/user/dashboard/bookings/payment/pending`
       };
 
-      // Create Midtrans transaction
-      const transaction = await createTransaction(
+      // Create transaction using unified payment library
+      const transaction = await createPaymentTransaction(
         orderId, 
         booking.total_amount, 
         customerDetails,
         frontendUrls
       );
 
-      // Update payment with Midtrans data
-      payment.midtrans_redirect_url = transaction.redirect_url;
+      // Update payment with gateway-specific data
+      if (gateway === 'doku') {
+        payment.doku_redirect_url = transaction.redirect_url;
+        payment.doku_token_id = transaction.token;
+        
+        // Only assign session_id if it exists
+        if ('session_id' in transaction) {
+          payment.doku_session_id = transaction.session_id;
+        }
+      } else {
+        payment.midtrans_redirect_url = transaction.redirect_url;
+      }
+      
       await payment.save();
 
       return NextResponse.json({
@@ -138,20 +167,21 @@ export async function POST(req: NextRequest) {
         message: 'Payment initiated',
         payment_id: payment._id,
         redirect_url: transaction.redirect_url,
+        gateway: gateway
       }, { status: 201 });
 
-    } catch (midtransError: any) {
+    } catch (gatewayError: any) {
       // Update payment status to failed
       payment.status = 'failed';
-      payment.error_message = midtransError.message;
+      payment.error_message = gatewayError.message;
       await payment.save();
 
-      console.error('Midtrans transaction failed:', midtransError);
+      console.error(`${gateway.toUpperCase()} transaction failed:`, gatewayError);
       
       return NextResponse.json(
         { 
-          error: 'Gagal memproses pembayaran melalui Midtrans',
-          details: midtransError.message || 'Pastikan konfigurasi Midtrans sudah benar'
+          error: `Gagal memproses pembayaran melalui ${gateway.toUpperCase()}`,
+          details: gatewayError.message || `Pastikan konfigurasi ${gateway.toUpperCase()} sudah benar`
         },
         { status: 500 }
       );

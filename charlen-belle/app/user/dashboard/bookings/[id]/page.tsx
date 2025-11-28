@@ -41,6 +41,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState('');
   const [currentPaymentId, setCurrentPaymentId] = useState('');
+  const [paymentGateway, setPaymentGateway] = useState<'midtrans' | 'doku'>('midtrans');
 
   useEffect(() => {
     if (id) {
@@ -84,7 +85,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           booking_id: booking._id,
-          payment_method: 'midtrans_qris',
+          payment_method: 'online_payment',
           amount: booking.total_amount
         })
       });
@@ -92,7 +93,7 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Gagal memproses pembayaran');
+        throw new Error(data.error || data.details || 'Gagal memproses pembayaran');
       }
 
       // Store payment ID for verification
@@ -101,7 +102,10 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
         setCurrentPaymentId(data.payment_id);
       }
 
-      // For Midtrans payments - Show in modal instead of new tab
+      // Set gateway type
+      setPaymentGateway(data.gateway || 'midtrans');
+
+      // Show payment modal with redirect URL
       if (data.redirect_url) {
         setPaymentUrl(data.redirect_url);
         setShowPaymentModal(true);
@@ -160,6 +164,10 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
       document.body.style.overflow = 'unset';
     };
   }, [showPaymentModal]);
+
+  const getGatewayTitle = () => {
+    return paymentGateway === 'doku' ? 'DOKU' : 'Midtrans';
+  };
 
   if (loading) {
     return (
@@ -224,7 +232,9 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
                     <path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm12 7H5v10h14V9z" />
                   </svg>
                 </div>
-                <h3 className="text-sm font-semibold text-[#3B2A1E]">Pembayaran</h3>
+                <h3 className="text-sm font-semibold text-[#3B2A1E]">
+                  Pembayaran via {getGatewayTitle()}
+                </h3>
               </div>
               <button
                 onClick={() => setShowPaymentModal(false)}
@@ -246,8 +256,8 @@ export default function BookingDetail({ params }: { params: Promise<{ id: string
                 <iframe
                   src={paymentUrl}
                   className="w-full h-[60vh] sm:h-96 border-0"
-                  title="Midtrans Payment"
-                  sandbox="allow-scripts allow-same-origin allow-forms"
+                  title={`${getGatewayTitle()} Payment`}
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
                 />
               </div>
               

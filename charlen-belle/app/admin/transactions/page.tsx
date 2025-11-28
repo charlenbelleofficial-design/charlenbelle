@@ -1,3 +1,4 @@
+// app/admin/transactions/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -33,8 +34,10 @@ interface Booking {
     _id: string;
     status: string;
     payment_method: string;
+    payment_gateway: 'midtrans' | 'doku';
     amount: number;
     midtrans_redirect_url?: string;
+    doku_redirect_url?: string;
     created_at: string;
   };
 }
@@ -45,124 +48,47 @@ interface SnackbarState {
   type: SnackbarType;
 }
 
-// ==== ICONS (solid, senada tema cream–gold) ====
+// Icons remain the same...
 const IconCreditCard = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" {...props}>
-    <rect
-      x="3"
-      y="5"
-      width="18"
-      height="14"
-      rx="2"
-      stroke="currentColor"
-      strokeWidth={1.6}
-    />
-    <path
-      d="M3 9h18"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-    />
-    <rect
-      x="7"
-      y="12"
-      width="4"
-      height="2"
-      rx="0.5"
-      fill="currentColor"
-    />
+    <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth={1.6} />
+    <path d="M3 9h18" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" />
+    <rect x="7" y="12" width="4" height="2" rx="0.5" fill="currentColor" />
   </svg>
 );
 
 const IconFilter = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" {...props}>
-    <path
-      d="M4 6h16M7 12h10M10 18h4"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-    />
+    <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
   </svg>
 );
 
 const IconRefresh = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" {...props}>
-    <path
-      d="M5 8a7 7 0 0 1 11-2l1 1"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M19 8V4h-4"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M19 16a7 7 0 0 1-11 2l-1-1"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M5 16v4h4"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    <path d="M5 8a7 7 0 0 1 11-2l1 1" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M19 8V4h-4" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M19 16a7 7 0 0 1-11 2l-1-1" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M5 16v4h4" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
 const IconClose = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" {...props}>
-    <path
-      d="M6 6l12 12M18 6L6 18"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-    />
+    <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
   </svg>
 );
 
 const IconSearch = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" {...props}>
-    <circle
-      cx="11"
-      cy="11"
-      r="6"
-      stroke="currentColor"
-      strokeWidth={1.8}
-    />
-    <path
-      d="M16 16l4 4"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-    />
+    <circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth={1.8} />
+    <path d="M16 16l4 4" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
   </svg>
 );
 
 const IconLoader = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" {...props}>
-    <circle
-      cx="12"
-      cy="12"
-      r="8"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      opacity={0.25}
-    />
-    <path
-      d="M20 12a8 8 0 0 0-8-8"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-    />
+    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth={1.6} opacity={0.25} />
+    <path d="M20 12a8 8 0 0 0-8-8" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" />
   </svg>
 );
 
@@ -171,6 +97,7 @@ function PaymentModal({ booking, onClose, onPaymentSuccess }: any) {
   const [paymentUrl, setPaymentUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [gateway, setGateway] = useState<'midtrans' | 'doku'>('midtrans');
 
   useEffect(() => {
     const initiatePayment = async () => {
@@ -186,6 +113,7 @@ function PaymentModal({ booking, onClose, onPaymentSuccess }: any) {
 
         if (data.success && data.redirect_url) {
           setPaymentUrl(data.redirect_url);
+          setGateway(data.gateway || 'midtrans');
         } else {
           throw new Error(data.error || 'Gagal memproses pembayaran');
         }
@@ -212,6 +140,10 @@ function PaymentModal({ booking, onClose, onPaymentSuccess }: any) {
     setError('Gagal memuat halaman pembayaran');
   };
 
+  const getGatewayName = () => {
+    return gateway === 'doku' ? 'DOKU' : 'Midtrans';
+  };
+
   return (
     <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-[#E5D7BE]">
@@ -222,7 +154,7 @@ function PaymentModal({ booking, onClose, onPaymentSuccess }: any) {
               <span className="w-9 h-9 rounded-full bg-[#F5E4C6] flex items-center justify-center text-[#8F6E45]">
                 <IconCreditCard className="w-5 h-5" />
               </span>
-              <span>Proses Pembayaran</span>
+              <span>Proses Pembayaran via {getGatewayName()}</span>
             </h2>
             <p className="text-xs md:text-sm text-[#8B7B63] mt-1">
               {booking.user_id.name} • Total:{' '}
@@ -270,10 +202,10 @@ function PaymentModal({ booking, onClose, onPaymentSuccess }: any) {
               <iframe
                 src={paymentUrl}
                 className="w-full h-full border-0"
-                title="Midtrans Payment"
+                title={`${getGatewayName()} Payment`}
                 onLoad={handleIframeLoad}
                 onError={handleIframeError}
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
               />
             </div>
           ) : null}
@@ -302,7 +234,7 @@ export default function AdminTransactionsPage() {
   const { data: session } = useSession();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('unpaid'); // unpaid, all, paid
+  const [filter, setFilter] = useState('unpaid');
   const [processingPayment] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -358,7 +290,6 @@ export default function AdminTransactionsPage() {
   const handlePaymentModalClose = () => {
     setShowPaymentModal(false);
     setSelectedBooking(null);
-    // Refresh transactions after payment modal closes
     setTimeout(() => {
       fetchTransactions();
     }, 2000);
@@ -373,7 +304,7 @@ export default function AdminTransactionsPage() {
 
       if (data.success) {
         showSnackbar(`Status pembayaran: ${data.payment.status}`, 'info');
-        fetchTransactions(); // Refresh data
+        fetchTransactions();
       } else {
         throw new Error(data.error || 'Gagal memeriksa status pembayaran');
       }
@@ -505,6 +436,23 @@ function TransactionCard({
   const hasPayment = booking.payment;
   const isPaid = hasPayment && booking.payment.status === 'paid';
   const isPending = hasPayment && booking.payment.status === 'pending';
+  
+  const getRedirectUrl = () => {
+    if (!hasPayment) return null;
+    return booking.payment.payment_gateway === 'doku' 
+      ? booking.payment.doku_redirect_url 
+      : booking.payment.midtrans_redirect_url;
+  };
+  
+  const getGatewayBadge = () => {
+    if (!hasPayment) return null;
+    const gateway = booking.payment.payment_gateway;
+    return (
+      <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-[#E6F0FF] text-[#1D4ED8] border border-[#C3D4FF]">
+        {gateway === 'doku' ? 'DOKU' : 'Midtrans'}
+      </span>
+    );
+  };
 
   return (
     <div className="px-6 py-5 hover:bg-[#FFFAF1] transition-colors">
@@ -521,13 +469,16 @@ function TransactionCard({
             </span>
 
             {hasPayment && (
-              <span
-                className={`px-3 py-1 rounded-full text-[11px] md:text-xs font-semibold ${getPaymentStatusColor(
-                  booking.payment.status,
-                )}`}
-              >
-                {getPaymentStatusText(booking.payment.status)}
-              </span>
+              <>
+                <span
+                  className={`px-3 py-1 rounded-full text-[11px] md:text-xs font-semibold ${getPaymentStatusColor(
+                    booking.payment.status,
+                  )}`}
+                >
+                  {getPaymentStatusText(booking.payment.status)}
+                </span>
+                {getGatewayBadge()}
+              </>
             )}
 
             <span className="text-[11px] md:text-xs text-[#A08C6A] font-mono">
@@ -633,7 +584,7 @@ function TransactionCard({
                 </button>
               )}
 
-              {hasPayment && booking.payment.midtrans_redirect_url && !isPaid && (
+              {hasPayment && getRedirectUrl() && !isPaid && (
                 <button
                   onClick={onInitiatePayment}
                   className="inline-flex items-center gap-2 border border-[#D2C3A7] bg-white text-[#7A5D3A] px-4 py-2 rounded-full text-xs md:text-sm font-semibold hover:bg-[#F7EEDB] transition-colors"
@@ -650,7 +601,7 @@ function TransactionCard({
   );
 }
 
-// Helper functions (logic sama, hanya warna badge yang disesuaikan tema)
+// Helper functions remain the same...
 function getPaymentStatusColor(status: string) {
   switch (status) {
     case 'paid':

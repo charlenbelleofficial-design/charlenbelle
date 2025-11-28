@@ -5,7 +5,7 @@ import Payment from '../../../models/Payment';
 import Booking from '../../../models/Booking';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth-config';
-import { createTransaction } from '../../../lib/midtrans';
+import { createPaymentTransaction, getPaymentGateway, isPaymentGatewayConfigured } from '../../../lib/payment';
 import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
@@ -19,10 +19,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if Midtrans is configured
-    if (!process.env.MIDTRANS_SERVER_KEY || !process.env.MIDTRANS_CLIENT_KEY) {
+    // Check if payment gateway is configured
+    if (!isPaymentGatewayConfigured()) {
+      const gateway = getPaymentGateway();
+      console.error(`Payment gateway ${gateway} is not configured`);
       return NextResponse.json(
-        { error: 'Konfigurasi pembayaran belum siap' },
+        { error: `Konfigurasi pembayaran ${gateway.toUpperCase()} belum siap. Periksa environment variables.` },
         { status: 503 }
       );
     }
@@ -30,6 +32,13 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const { booking_id, payment_method, amount } = await req.json();
+
+    console.log('Payment request received:', {
+      booking_id,
+      payment_method,
+      amount,
+      user: session.user.email
+    });
 
     // Validate required fields
     if (!booking_id || !payment_method || !amount) {
@@ -65,6 +74,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const gateway = getPaymentGateway();
+    console.log(`Using payment gateway: ${gateway}`);
+
     // Generate unique order ID
     const orderId = `BOOKING-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
 
@@ -74,76 +86,118 @@ export async function POST(req: NextRequest) {
       user_id: session.user.id,
       amount,
       payment_method,
+      payment_gateway: gateway,
+      ...(gateway === 'doku' 
+        ? { doku_transaction_id: orderId }
+        : { midtrans_transaction_id: orderId }
+      ),
       status: 'pending',
-      midtrans_transaction_id: orderId,
       created_at: new Date()
     });
 
+    console.log('Payment record created:', {
+      payment_id: payment._id,
+      order_id: orderId,
+      gateway: gateway
+    });
+
     try {
-      // For Midtrans payments
-      if (payment_method.startsWith('midtrans_')) {
-        const customerDetails = {
-          first_name: session.user.name || 'Customer',
-          email: session.user.email || '',
-          phone: booking.user_id.phone_number || '081234567890'
-        };
+      const customerDetails = {
+        id: session.user.id,
+        name: session.user.name || 'Customer',
+        email: session.user.email || '',
+        phone: booking.user_id.phone_number || '081234567890'
+      };
 
-        // Define frontend URLs for Midtrans redirects
-        const frontendUrls = {
-          success: `${process.env.NEXT_PUBLIC_SITE_URL}/user/dashboard/bookings/payment/success`,
-          error: `${process.env.NEXT_PUBLIC_SITE_URL}/user/dashboard/bookings/payment/error`,
-          pending: `${process.env.NEXT_PUBLIC_SITE_URL}/user/dashboard/bookings/payment/pending`
-        };
+      console.log('Customer details:', {
+        id: customerDetails.id,
+        name: customerDetails.name,
+        email: customerDetails.email,
+        phone: customerDetails.phone
+      });
 
-        // Pass the URLs to createTransaction function
-        const transaction = await createTransaction(
-          orderId, 
-          amount, 
-          customerDetails,
-          frontendUrls // Add this parameter
-        );
+      // Define frontend URLs for redirects
+      const frontendUrls = {
+        success: `${process.env.NEXT_PUBLIC_SITE_URL}/user/dashboard/bookings/payment/success`,
+        error: `${process.env.NEXT_PUBLIC_SITE_URL}/user/dashboard/bookings/payment/error`,
+        pending: `${process.env.NEXT_PUBLIC_SITE_URL}/user/dashboard/bookings/payment/pending`
+      };
 
-        // Update payment with Midtrans data
-        payment.midtrans_redirect_url = transaction.redirect_url;
-        await payment.save();
+      console.log('Creating transaction with gateway:', gateway);
 
-        return NextResponse.json({
-          success: true,
-          message: 'Payment initiated',
-          payment_id: payment._id, // Make sure this is included
-          payment_token: transaction.token,
+      // Create transaction using unified payment library
+      const transaction = await createPaymentTransaction(
+        orderId, 
+        amount, 
+        customerDetails,
+        frontendUrls
+      );
+
+      console.log('Transaction created successfully:', {
+        has_token: !!transaction.token,
+        has_redirect_url: !!transaction.redirect_url
+      });
+
+      // Update payment with gateway-specific data
+      if (gateway === 'doku') {
+        payment.doku_redirect_url = transaction.redirect_url;
+        payment.doku_token_id = transaction.token;
+        payment.doku_session_id = transaction.session_id;
+        
+        // Store gateway response for debugging
+        payment.gateway_response = {
+          token: transaction.token,
           redirect_url: transaction.redirect_url,
-        }, { status: 201 });
+          session_id: transaction.session_id
+        };
+      } else {
+        payment.midtrans_redirect_url = transaction.redirect_url;
+        payment.gateway_response = {
+          token: transaction.token,
+          redirect_url: transaction.redirect_url
+        };
       }
-
-      // For manual payments
-      return NextResponse.json({
-        success: true,
-        message: 'Payment created for manual processing',
-        payment_id: payment._id
-      }, { status: 201 });
-
-    } catch (midtransError: any) {
-      // Update payment status to failed
-      payment.status = 'failed';
-      payment.error_message = midtransError.message;
+      
       await payment.save();
 
-      console.error('Midtrans transaction failed:', midtransError);
+      console.log('Payment updated with transaction data');
+
+      return NextResponse.json({
+        success: true,
+        message: 'Payment initiated',
+        payment_id: payment._id,
+        payment_token: transaction.token,
+        redirect_url: transaction.redirect_url,
+        gateway: gateway
+      }, { status: 201 });
+
+    } catch (gatewayError: any) {
+      // Update payment status to failed
+      payment.status = 'failed';
+      payment.error_message = gatewayError.message;
+      await payment.save();
+
+      console.error(`${gateway.toUpperCase()} transaction failed:`, {
+        message: gatewayError.message,
+        stack: gatewayError.stack
+      });
       
       return NextResponse.json(
         { 
-          error: 'Gagal memproses pembayaran melalui Midtrans',
-          details: midtransError.message || 'Pastikan konfigurasi Midtrans sudah benar'
+          error: `Gagal memproses pembayaran melalui ${gateway.toUpperCase()}`,
+          details: gatewayError.message || `Pastikan konfigurasi ${gateway.toUpperCase()} sudah benar`
         },
         { status: 500 }
       );
     }
 
   } catch (error: any) {
-    console.error('Create payment error:', error);
+    console.error('Create payment error:', {
+      message: error.message,
+      stack: error.stack
+    });
     return NextResponse.json(
-      { error: 'Terjadi kesalahan server' },
+      { error: 'Terjadi kesalahan server', details: error.message },
       { status: 500 }
     );
   }
