@@ -18,89 +18,101 @@ export default function DokuPaymentSuccessPage() {
     verifyDokuPayment();
   }, []);
 
-  const verifyDokuPayment = async () => {
+  // In your verifyDokuPayment function, add more logging:
+    const verifyDokuPayment = async () => {
     try {
-      setLoading(true);
-      
-      // Try to get order_id from URL parameters first
-      const orderId = searchParams.get('order_id');
-      const transactionId = searchParams.get('transaction_id');
-      
-      console.log('🔍 [SUCCESS PAGE] URL Parameters:', {
+        setLoading(true);
+        
+        // Try to get order_id from URL parameters first
+        const orderId = searchParams.get('order_id');
+        const transactionId = searchParams.get('transaction_id');
+        
+        console.log('🔍 [SUCCESS PAGE] URL Parameters:', {
         orderId,
         transactionId,
         allParams: Object.fromEntries(searchParams.entries())
-      });
+        });
 
-      // If no order_id in URL, try to get from sessionStorage (fallback)
-      let finalOrderId = orderId;
-      if (!finalOrderId) {
+        // If no order_id in URL, try to get from sessionStorage (fallback)
+        let finalOrderId = orderId;
+        if (!finalOrderId) {
         finalOrderId = sessionStorage.getItem('doku_last_order_id');
         console.log('🔍 [SUCCESS PAGE] Using order_id from sessionStorage:', finalOrderId);
-      }
+        }
 
-      if (!finalOrderId && !transactionId) {
+        if (!finalOrderId && !transactionId) {
         console.error('❌ [SUCCESS PAGE] Missing both order_id and transaction_id');
         
         // Try to find recent payment from localStorage as last resort
         const recentPayment = await findRecentPayment();
         if (recentPayment) {
-          console.log('✅ [SUCCESS PAGE] Found recent payment:', recentPayment);
-          setPaymentData(recentPayment);
-          if (recentPayment.status === 'paid') {
+            console.log('✅ [SUCCESS PAGE] Found recent payment:', recentPayment);
+            setPaymentData(recentPayment);
+            if (recentPayment.status === 'paid') {
             toast.success('Pembayaran berhasil!');
-          }
-          setLoading(false);
-          return;
+            }
+            setLoading(false);
+            return;
         }
         
         toast.error('Data pembayaran tidak valid. Silakan cek dashboard untuk status terbaru.');
         setLoading(false);
         return;
-      }
+        }
 
-      // Use the order_id to check payment status
-      const verifyResponse = await fetch('/api/payments/verify-doku', {
+        console.log('🔍 [SUCCESS PAGE] Calling verify API with:', {
+        order_id: finalOrderId,
+        transaction_id: transactionId
+        });
+
+        // Use the order_id to check payment status
+        const verifyResponse = await fetch('/api/payments/verify-doku', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+            'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          order_id: finalOrderId,
-          transaction_id: transactionId
+            order_id: finalOrderId,
+            transaction_id: transactionId
         }),
-      });
+        });
 
-      const data = await verifyResponse.json();
+        const data = await verifyResponse.json();
+        console.log('📨 [SUCCESS PAGE] Verify API response:', data);
 
-      if (data.success) {
+        if (data.success) {
         setPaymentData(data.payment);
         
         if (data.payment.status === 'paid') {
-          toast.success('Pembayaran berhasil diverifikasi!');
-          // Clear the session storage after successful verification
-          sessionStorage.removeItem('doku_last_order_id');
+            toast.success('Pembayaran berhasil diverifikasi!');
+            // Clear the session storage after successful verification
+            sessionStorage.removeItem('doku_last_order_id');
         } else if (data.payment.status === 'pending') {
-          // If still pending, retry after a delay
-          if (verificationAttempts < 5) {
+            // If still pending, retry after a delay
+            if (verificationAttempts < 5) {
+            console.log(`🔄 [SUCCESS PAGE] Retrying verification (${verificationAttempts + 1}/5)`);
             setTimeout(() => {
-              setVerificationAttempts(prev => prev + 1);
-              verifyDokuPayment();
+                setVerificationAttempts(prev => prev + 1);
+                verifyDokuPayment();
             }, 2000);
-          } else {
+            } else {
+            console.log('⏰ [SUCCESS PAGE] Max retries reached');
             toast.error('Pembayaran masih diproses. Status akan diperbarui otomatis.');
-          }
+            }
+        } else {
+            console.log('❌ [SUCCESS PAGE] Payment status:', data.payment.status);
         }
-      } else {
+        } else {
+        console.error('❌ [SUCCESS PAGE] Verify API error:', data.error);
         toast.error('Gagal memverifikasi pembayaran: ' + (data.error || 'Unknown error'));
-      }
+        }
     } catch (error) {
-      console.error('Error verifying Doku payment:', error);
-      toast.error('Terjadi kesalahan saat memverifikasi pembayaran');
+        console.error('❌ [SUCCESS PAGE] Error verifying Doku payment:', error);
+        toast.error('Terjadi kesalahan saat memverifikasi pembayaran');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+    };
 
   const findRecentPayment = async () => {
     try {
