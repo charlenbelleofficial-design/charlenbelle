@@ -439,7 +439,7 @@ export default function AdminTransactionsPage() {
   );
 }
 
-function TransactionCard({
+function TransactionCard({  
   booking,
   onInitiatePayment,
   onCheckStatus,
@@ -452,6 +452,7 @@ function TransactionCard({
   const hasPayment = booking.payment;
   const isPaid = hasPayment && booking.payment.status === 'paid';
   const isPending = hasPayment && booking.payment.status === 'pending';
+  
   
   const getRedirectUrl = () => {
     if (!hasPayment) return null;

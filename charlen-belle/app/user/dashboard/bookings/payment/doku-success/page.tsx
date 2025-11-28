@@ -12,6 +12,7 @@ export default function DokuPaymentSuccessPage() {
   const searchParams = useSearchParams();
   const [paymentData, setPaymentData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [verificationAttempts, setVerificationAttempts] = useState(0);
 
   const orderId = searchParams.get('order_id');
   const transactionId = searchParams.get('transaction_id');
@@ -21,6 +22,7 @@ export default function DokuPaymentSuccessPage() {
     if (orderId || transactionId) {
       verifyDokuPayment();
     } else {
+      console.error('Missing order_id or transaction_id in URL');
       toast.error('Data pembayaran tidak valid');
       router.push('/user/dashboard/bookings');
     }
@@ -28,13 +30,38 @@ export default function DokuPaymentSuccessPage() {
 
   const verifyDokuPayment = async () => {
     try {
-      // Find payment by order ID or transaction ID
-      const response = await fetch(`/api/payments/doku/verify?order_id=${orderId}&transaction_id=${transactionId}`);
-      const data = await response.json();
+      setLoading(true);
+      
+      // Use the order_id from URL parameters to check payment status
+      const verifyResponse = await fetch('/api/payments/verify-doku', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          order_id: orderId,
+          transaction_id: transactionId
+        }),
+      });
+
+      const data = await verifyResponse.json();
 
       if (data.success) {
         setPaymentData(data.payment);
-        toast.success('Pembayaran berhasil!');
+        
+        if (data.payment.status === 'paid') {
+          toast.success('Pembayaran berhasil diverifikasi!');
+        } else if (data.payment.status === 'pending') {
+          // If still pending, retry after a delay
+          if (verificationAttempts < 5) {
+            setTimeout(() => {
+              setVerificationAttempts(prev => prev + 1);
+              verifyDokuPayment();
+            }, 2000);
+          } else {
+            toast.error('Pembayaran masih diproses. Status akan diperbarui otomatis.');
+          }
+        }
       } else {
         toast.error('Gagal memverifikasi pembayaran');
       }
