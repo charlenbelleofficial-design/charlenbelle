@@ -124,37 +124,63 @@ export class DokuPayment {
     return requestId;
   }
 
-  async createTransaction(
+ async createTransaction(
     orderId: string,
     amount: number,
     customer: DokuCustomer,
     frontendUrls: { success: string; error: string; pending: string }
-  ): Promise<DokuTransactionResponse> {
+    ): Promise<DokuTransactionResponse> {
     try {
-      console.log('🚀 [DOKU] Starting transaction creation...');
-      console.log('🌐 [DOKU] API URL:', this.config.apiUrl);
-      console.log('🔑 [DOKU] Client ID:', this.config.clientId);
+        console.log('🚀 [DOKU] Starting transaction creation...');
+        
+        // Validate and get base URL
+        const getBaseUrl = () => {
+        // Priority: Use provided frontendUrls, then environment variable, then fallback
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                        process.env.VERCEL_URL || 
+                        'http://localhost:3000';
+        
+        // Ensure the URL has protocol
+        if (baseUrl.startsWith('http')) {
+            return baseUrl;
+        }
+        return `https://${baseUrl}`;
+        };
 
-      const requestId = this.generateRequestId();
-      const requestTimestamp = this.getCurrentUTCTimestamp();
-      const requestTarget = '/checkout/v1/payment';
+        const baseUrl = getBaseUrl();
+        console.log('🌐 [DOKU] Base URL:', baseUrl);
 
-      // Prepare request body sesuai dokumentasi Doku Checkout
-      const requestBody: DokuPaymentRequest = {
+        // Validate URLs
+        const successUrl = frontendUrls.success || `${baseUrl}/user/dashboard/bookings/payment/success`;
+        const errorUrl = frontendUrls.error || `${baseUrl}/user/dashboard/bookings/payment/error`;
+        const pendingUrl = frontendUrls.pending || `${baseUrl}/user/dashboard/bookings/payment/pending`;
+
+        console.log('🔗 [DOKU] Callback URLs:', {
+        success: successUrl,
+        error: errorUrl,
+        pending: pendingUrl
+        });
+
+        const requestId = this.generateRequestId();
+        const requestTimestamp = this.getCurrentUTCTimestamp();
+        const requestTarget = '/checkout/v1/payment';
+
+        // Prepare request body
+        const requestBody: DokuPaymentRequest = {
         order: {
-          amount: amount,
-          invoice_number: orderId,
-          currency: 'IDR',
-          callback_url: frontendUrls.success,
-          callback_url_cancel: frontendUrls.error,
-          callback_url_result: frontendUrls.success,
-          language: 'ID',
-          auto_redirect: true,
-          disable_retry_payment: false
+            amount: amount,
+            invoice_number: orderId,
+            currency: 'IDR',
+            callback_url: successUrl,
+            callback_url_cancel: errorUrl,
+            callback_url_result: successUrl,
+            language: 'ID',
+            auto_redirect: true,
+            disable_retry_payment: false
         },
         payment: {
-          payment_due_date: 60, // 60 minutes
-          payment_method_types: [
+            payment_due_date: 60,
+            payment_method_types: [
             'VIRTUAL_ACCOUNT_BCA',
             'VIRTUAL_ACCOUNT_BANK_MANDIRI',
             'VIRTUAL_ACCOUNT_BRI', 
@@ -163,17 +189,16 @@ export class DokuPayment {
             'QRIS',
             'EMONEY_OVO',
             'EMONEY_SHOPEEPAY'
-          ]
+            ]
         },
         customer: {
-          id: customer.id,
-          name: customer.name,
-          email: customer.email,
-          phone: customer.phone,
-          country: 'ID'
+            id: customer.id,
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone,
+            country: 'ID'
         }
-      };
-
+        };
       const bodyString = JSON.stringify(requestBody);
       console.log('📄 [REQUEST] Request Body:', bodyString);
 
