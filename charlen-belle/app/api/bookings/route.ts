@@ -159,7 +159,10 @@ export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ 
+        success: false,
+        error: 'Unauthorized' 
+      }, { status: 401 });
     }
 
     await connectDB();
@@ -169,11 +172,11 @@ export async function GET(req: NextRequest) {
 
     let query: any = {};
 
-    // Jika meminta booking milik user yang login
     if (userParam === 'me') {
       query.user_id = session.user.id;
     }
 
+    // Fix population paths
     const bookings = await Booking.find(query)
       .populate('user_id', 'name email')
       .populate('confirmed_by', 'name')
@@ -184,40 +187,49 @@ export async function GET(req: NextRequest) {
           { path: 'therapist_id', select: 'name' }
         ]
       })
-      .sort({ created_at: -1 });
+      .sort({ created_at: -1 })
+      .lean();
 
-    // Get treatments AND payment status for each booking
+    // Get treatments and payment status
     const bookingsWithTreatmentsAndPayment = await Promise.all(
       bookings.map(async (booking) => {
-        const treatments = await BookingTreatment.find({ booking_id: booking._id })
-          .populate('treatment_id', 'name description');
-        
-        // Check payment status from Payment model
-        const payment = await mongoose.model('Payment').findOne({ 
-          booking_id: booking._id 
-        }).sort({ created_at: -1 }); // Get the latest payment
-        
-        const payment_status = payment ? payment.status : 'unpaid';
-        
-        return {
-          _id: booking._id,
-          user_id: booking.user_id,
-          slot_id: booking.slot_id,
-          type: booking.type,
-          status: booking.status,
-          confirmed_by: booking.confirmed_by,
-          notes: booking.notes,
-          total_amount: booking.total_amount,
-          created_at: booking.created_at,
-          updated_at: booking.updated_at,
-          payment_status: payment_status === 'paid' ? 'paid' : 'unpaid', // Map to your frontend expected values
-          treatments: treatments.map(t => ({
-            _id: t._id,
-            treatment_id: t.treatment_id,
-            quantity: t.quantity,
-            price: t.price
-          }))
-        };
+        try {
+          const treatments = await BookingTreatment.find({ 
+            booking_id: booking._id 
+          })
+            .populate('treatment_id', 'name description')
+            .lean();
+
+          // Safely check for Payment model with proper typing
+          let payment_status = 'unpaid';
+          if (mongoose.models.Payment) {
+            const PaymentModel = mongoose.model('Payment');
+            const payment = await PaymentModel.findOne({ 
+              booking_id: booking._id 
+            }).sort({ created_at: -1 }).lean();
+            
+            // Use type assertion or check for the property safely
+            payment_status = payment && (payment as any).status ? (payment as any).status : 'unpaid';
+          }
+
+          return {
+            ...booking,
+            payment_status: payment_status === 'paid' ? 'paid' : 'unpaid',
+            treatments: treatments.map(t => ({
+              _id: t._id,
+              treatment_id: t.treatment_id,
+              quantity: t.quantity,
+              price: t.price
+            }))
+          };
+        } catch (itemError) {
+          console.error(`Error processing booking ${booking._id}:`, itemError);
+          return {
+            ...booking,
+            payment_status: 'unpaid',
+            treatments: []
+          };
+        }
       })
     );
 
@@ -230,7 +242,8 @@ export async function GET(req: NextRequest) {
     console.error('Error fetching bookings:', error);
     return NextResponse.json({ 
       success: false,
-      error: 'Terjadi kesalahan server' 
+      error: 'Terjadi kesalahan server',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }

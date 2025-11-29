@@ -239,10 +239,16 @@ export default function BookingsPage() {
     fetchBookings();
   }, []);
 
+ // In your bookings page component, update the fetch call:
   async function fetchBookings() {
     try {
       setLoading(true);
       const res = await fetch('/api/bookings?user=me');
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
       const data = await res.json();
 
       if (data.success) {
