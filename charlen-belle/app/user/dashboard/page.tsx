@@ -12,7 +12,6 @@ export default function DashboardPage() {
   const [stats, setStats] = useState({
     upcomingBookings: 0,
     completedTreatments: 0,
-    totalSpent: 0,
   });
 
   useEffect(() => {
@@ -46,8 +45,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+      {/* Quick Stats – hanya 2 card */}
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
         <StatCard
           title="Booking Mendatang"
           value={stats.upcomingBookings}
@@ -57,11 +56,6 @@ export default function DashboardPage() {
           title="Treatment Selesai"
           value={stats.completedTreatments}
           icon={<CheckIcon />}
-        />
-        <StatCard
-          title="Total Pengeluaran"
-          value={`Rp ${stats.totalSpent.toLocaleString('id-ID')}`}
-          icon={<MoneyIcon />}
         />
       </div>
 
@@ -77,7 +71,11 @@ export default function DashboardPage() {
         </div>
         <div className="sm:flex-shrink-0">
           <Link href="/user/treatments">
-            <Button className="w-full sm:w-auto rounded-xl bg-[#C89B4B] hover:bg-[#b48735] border-none text-white flex items-center justify-center gap-2">
+            <Button
+              className="w-full sm:w-auto rounded-xl bg-[#C89B4B] hover:bg-[#b48735] 
+              border-none text-white flex items-center justify-center gap-2 
+              px-5 py-2.5 text-sm font-medium"
+            >
               <CalendarIconSmall />
               <span>Buat Booking</span>
             </Button>
@@ -127,6 +125,8 @@ export default function DashboardPage() {
   );
 }
 
+/* --- COMPONENTS --- */
+
 function StatCard({
   title,
   value,
@@ -151,12 +151,12 @@ function StatCard({
   );
 }
 
-/* --- Simple solid icons (SVG) --- */
+/* --- Icons --- */
 
 function CalendarIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#3B2A1E]" fill="currentColor">
-      <path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm12 7H5v10h14V9z" />
+      <path d="M7 2v2H5a2 ..."/>
     </svg>
   );
 }
@@ -164,7 +164,7 @@ function CalendarIcon() {
 function CalendarIconSmall() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-      <path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm12 7H5v10h14V9z" />
+      <path d="M7 2v2H5a2 ..."/>
     </svg>
   );
 }
@@ -172,15 +172,7 @@ function CalendarIconSmall() {
 function CheckIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#3B2A1E]" fill="currentColor">
-      <path d="M9 16.17 4.83 12 3.41 13.41 9 19l12-12-1.41-1.41z" />
-    </svg>
-  );
-}
-
-function MoneyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#3B2A1E]" fill="currentColor">
-      <path d="M12 3C8.13 3 5 5.24 5 8c0 1.93 1.4 3.58 3.5 4.37V13c0 .55.45 1 1 1h1v3h2v-3h1c.55 0 1-.45 1-1v-1.12C17.6 11.58 19 9.93 19 8c0-2.76-3.13-5-7-5zm0 2c2.76 0 5 .9 5 3s-2.24 3-5 3-5-.9-5-3 2.24-3 5-3z" />
+      <path d="M9 16.17 ..."/>
     </svg>
   );
 }

@@ -23,6 +23,7 @@ type Booking = {
   total_amount: number;
   created_at: string;
   updated_at: string;
+  payment_status?: 'paid' | 'unpaid'; // <-- TAMBAHAN DI SINI
   treatments?: BookingTreatment[];
 };
 
@@ -77,7 +78,13 @@ function StatusCard({
 }
 
 // Booking Card Component
-function BookingCard({ booking, onViewDetail }: { booking: Booking; onViewDetail: () => void }) {
+function BookingCard({
+  booking,
+  onViewDetail,
+}: {
+  booking: Booking;
+  onViewDetail: () => void;
+}) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -108,36 +115,41 @@ function BookingCard({ booking, onViewDetail }: { booking: Booking; onViewDetail
     }
   };
 
-  const getActionButton = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return (
-          <button
-            onClick={onViewDetail}
-            className="px-5 py-2.5 bg-[#6C3FD1] text-white rounded-xl text-xs font-medium hover:bg-[#5b34b3] transition-colors"
-          >
-            Bayar Sekarang
-          </button>
-        );
-      case 'confirmed':
-        return (
+  // 🔥 BUTTON LOGIC BARU BERDASAR PAYMENT STATUS
+  const getActionButtons = (booking: Booking) => {
+    const unpaid = booking.payment_status !== "paid";
+
+    if (unpaid) {
+      return (
+        <div className="flex flex-col gap-2">
+          {/* Lihat Detail */}
           <button
             onClick={onViewDetail}
             className="px-5 py-2.5 border border-[#6C3FD1] text-[#6C3FD1] rounded-xl text-xs font-medium hover:bg-[#F4EDFF] transition-colors"
           >
             Lihat Detail
           </button>
-        );
-      default:
-        return (
+
+          {/* Bayar Sekarang */}
           <button
             onClick={onViewDetail}
-            className="px-5 py-2.5 border border-[#D0C3AD] text-[#7E6A52] rounded-xl text-xs font-medium hover:bg-[#FBF6EA] transition-colors"
+            className="px-5 py-2.5 bg-[#6C3FD1] text-white rounded-xl text-xs font-medium hover:bg-[#5b34b3] transition-colors"
           >
-            Lihat Detail
+            Bayar Sekarang
           </button>
-        );
+        </div>
+      );
     }
+
+    // Jika sudah lunas → hanya lihat detail
+    return (
+      <button
+        onClick={onViewDetail}
+        className="px-5 py-2.5 border border-[#D0C3AD] text-[#7E6A52] rounded-xl text-xs font-medium hover:bg-[#FBF6EA] transition-colors"
+      >
+        Lihat Detail
+      </button>
+    );
   };
 
   const getTreatmentNames = () => {
@@ -160,6 +172,18 @@ function BookingCard({ booking, onViewDetail }: { booking: Booking; onViewDetail
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
               {getStatusText(booking.status)}
             </span>
+
+            {/* Badge LUNAS / BELUM LUNAS */}
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                booking.payment_status === 'paid'
+                  ? 'bg-green-200 text-green-800'
+                  : 'bg-red-200 text-red-800'
+              }`}
+            >
+              {booking.payment_status === 'paid' ? 'Lunas' : 'Belum Lunas'}
+            </span>
+
             <span className="text-xs text-[#A18F76]">
               ID: {booking._id.slice(-8)}
             </span>
@@ -204,7 +228,7 @@ function BookingCard({ booking, onViewDetail }: { booking: Booking; onViewDetail
         </div>
 
         <div className="ml-0 md:ml-6 shrink-0">
-          {getActionButton(booking.status)}
+          {getActionButtons(booking)}
         </div>
       </div>
     </div>
@@ -322,11 +346,15 @@ export default function BookingsPage() {
           />
         </div>
 
-        {/* Buat Booking card di halaman booking */}
+        {/* Buat Booking card */}
         <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl px-6 py-5 flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-lg font-semibold text-[#3B2A1E] mb-1">Buat Booking</h2>
-            <p className="text-sm text-[#A18F76]">Buat janji baru untuk treatment favorit Anda.</p>
+            <h2 className="text-lg font-semibold text-[#3B2A1E] mb-1">
+              Buat Booking
+            </h2>
+            <p className="text-sm text-[#A18F76]">
+              Buat janji baru untuk treatment favorit Anda.
+            </p>
           </div>
           <button
             onClick={() => router.push('/user/treatments')}
@@ -344,7 +372,11 @@ export default function BookingsPage() {
           {filteredBookings.length === 0 ? (
             <div className="text-center py-12 px-6">
               <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-[#FBF6EA] mb-4">
-                <svg viewBox="0 0 24 24" className="h-7 w-7 text-[#C89B4B]" fill="currentColor">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-7 w-7 text-[#C89B4B]"
+                  fill="currentColor"
+                >
                   <path d="M7 2v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm0 7h10v2H7V9zm0 4h6v2H7v-2z" />
                 </svg>
               </div>
@@ -356,7 +388,9 @@ export default function BookingsPage() {
               <p className="text-sm text-[#A18F76] mb-6 max-w-md mx-auto">
                 {filter === 'all'
                   ? 'Mulai buat booking pertama Anda untuk treatment favorit.'
-                  : `Tidak ada booking dengan status ${getStatusText(filter).toLowerCase()}.`}
+                  : `Tidak ada booking dengan status ${getStatusText(
+                      filter
+                    ).toLowerCase()}.`}
               </p>
               {filter === 'all' && (
                 <button
