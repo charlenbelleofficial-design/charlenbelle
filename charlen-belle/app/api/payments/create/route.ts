@@ -50,6 +50,37 @@ export async function POST(req: NextRequest) {
 
     // Verify booking exists and belongs to user
     const booking = await Booking.findById(booking_id).populate('user_id');
+
+    if (!booking) {
+      return NextResponse.json(
+        { error: 'Booking tidak ditemukan' },
+        { status: 404 }
+      );
+    }
+
+    // Check if booking belongs to current user
+    if (booking.user_id._id.toString() !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Akses ditolak' },
+        { status: 403 }
+      );
+    }
+
+    // Check if booking is already paid - USE THE NEW FIELD
+    if (booking.payment_status === 'paid') {
+      return NextResponse.json(
+        { error: 'Booking sudah dibayar' },
+        { status: 400 }
+      );
+    }
+
+    // Check if booking status allows payment
+    if (booking.status !== 'pending') {
+      return NextResponse.json(
+        { error: 'Booking sudah diproses' },
+        { status: 400 }
+      );
+    }
     
     if (!booking) {
       return NextResponse.json(

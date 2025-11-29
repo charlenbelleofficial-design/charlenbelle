@@ -4,6 +4,7 @@ import connectDB from '../../../lib/mongodb';
 import Booking from '../../../models/Booking';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth-config';
+import mongoose from 'mongoose';
 
 export async function GET(
   req: NextRequest,
@@ -37,7 +38,19 @@ export async function GET(
       return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
     }
 
-    return NextResponse.json({ booking });
+    // Get payment status
+    const payment = await mongoose.model('Payment').findOne({ 
+      booking_id: id 
+    }).sort({ created_at: -1 });
+
+    const payment_status = payment ? payment.status : 'unpaid';
+
+    const bookingWithPayment = {
+      ...booking.toObject(),
+      payment_status: payment_status === 'paid' ? 'paid' : 'unpaid'
+    };
+
+    return NextResponse.json({ booking: bookingWithPayment });
 
   } catch (error) {
     console.error('Error fetching booking:', error);

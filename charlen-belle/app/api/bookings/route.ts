@@ -9,6 +9,7 @@ import TreatmentPromo from '../../models/TreatmentPromo';
 import Promo from '../../models/Promo';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../lib/auth-config';
+import mongoose from 'mongoose';
 
 // Update the POST function in app/api/bookings/route.ts
 export async function POST(req: NextRequest) {
@@ -153,6 +154,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// In the GET function of app/api/bookings/route.ts
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -184,11 +186,18 @@ export async function GET(req: NextRequest) {
       })
       .sort({ created_at: -1 });
 
-    // Get treatments for each booking
-    const bookingsWithTreatments = await Promise.all(
+    // Get treatments AND payment status for each booking
+    const bookingsWithTreatmentsAndPayment = await Promise.all(
       bookings.map(async (booking) => {
         const treatments = await BookingTreatment.find({ booking_id: booking._id })
           .populate('treatment_id', 'name description');
+        
+        // Check payment status from Payment model
+        const payment = await mongoose.model('Payment').findOne({ 
+          booking_id: booking._id 
+        }).sort({ created_at: -1 }); // Get the latest payment
+        
+        const payment_status = payment ? payment.status : 'unpaid';
         
         return {
           _id: booking._id,
@@ -201,6 +210,7 @@ export async function GET(req: NextRequest) {
           total_amount: booking.total_amount,
           created_at: booking.created_at,
           updated_at: booking.updated_at,
+          payment_status: payment_status === 'paid' ? 'paid' : 'unpaid', // Map to your frontend expected values
           treatments: treatments.map(t => ({
             _id: t._id,
             treatment_id: t.treatment_id,
@@ -213,7 +223,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      bookings: bookingsWithTreatments
+      bookings: bookingsWithTreatmentsAndPayment
     });
 
   } catch (error) {

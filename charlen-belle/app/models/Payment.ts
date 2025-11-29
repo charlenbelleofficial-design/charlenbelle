@@ -71,6 +71,30 @@ const PaymentSchema: Schema = new Schema({
   updated_at: { type: Date, default: Date.now }
 });
 
+// Add a method to update booking status when payment is completed
+PaymentSchema.methods.updateBookingPaymentStatus = async function() {
+  if (this.status === 'paid') {
+    const Booking = mongoose.model('Booking');
+    await Booking.findByIdAndUpdate(this.booking_id, {
+      payment_status: 'paid',
+      is_editable: false, // Make booking non-editable after payment
+      updated_at: new Date()
+    });
+  }
+};
+
+// Add post-save middleware to automatically update booking status
+PaymentSchema.post('save', async function(doc) {
+  if (doc.status === 'paid') {
+    const Booking = mongoose.model('Booking');
+    await Booking.findByIdAndUpdate(doc.booking_id, {
+      payment_status: 'paid',
+      is_editable: false,
+      updated_at: new Date()
+    });
+  }
+});
+
 // Index for faster queries
 PaymentSchema.index({ doku_transaction_id: 1 });
 PaymentSchema.index({ midtrans_order_id: 1 });

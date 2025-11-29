@@ -1,3 +1,4 @@
+// app/models/Booking.ts - MAKE SURE THIS IS UPDATED
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IBooking extends Document {
@@ -8,6 +9,9 @@ export interface IBooking extends Document {
   confirmed_by?: mongoose.Types.ObjectId;
   notes?: string;
   total_amount?: number;
+  
+  // NEW: Payment status field - MAKE SURE THIS EXISTS
+  payment_status: 'paid' | 'unpaid';
   
   // Consultation notes
   consultation_notes?: {
@@ -37,6 +41,13 @@ const BookingSchema: Schema = new Schema({
   confirmed_by: { type: Schema.Types.ObjectId, ref: 'User' },
   notes: { type: String },
   total_amount: { type: Number, default: 0 },
+  
+  // NEW: Payment status field - MAKE SURE THIS EXISTS
+  payment_status: {
+    type: String,
+    enum: ['paid', 'unpaid'],
+    default: 'unpaid'
+  },
   
   // Consultation notes array
   consultation_notes: [{
