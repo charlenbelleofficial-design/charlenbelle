@@ -1,3 +1,4 @@
+// app/user/dashboard/bookings/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -23,7 +24,7 @@ type Booking = {
   total_amount: number;
   created_at: string;
   updated_at: string;
-  payment_status?: 'paid' | 'unpaid'; // <-- TAMBAHAN DI SINI
+  payment_status?: 'paid' | 'unpaid';
   treatments?: BookingTreatment[];
 };
 
@@ -34,7 +35,6 @@ type BookingTreatment = {
   price: number;
 };
 
-// Status Card Component
 function StatusCard({
   title,
   count,
@@ -77,7 +77,6 @@ function StatusCard({
   );
 }
 
-// Booking Card Component
 function BookingCard({
   booking,
   onViewDetail,
@@ -115,22 +114,18 @@ function BookingCard({
     }
   };
 
-  // 🔥 BUTTON LOGIC BARU BERDASAR PAYMENT STATUS
   const getActionButtons = (booking: Booking) => {
     const unpaid = booking.payment_status !== "paid";
 
     if (unpaid) {
       return (
         <div className="flex flex-col gap-2">
-          {/* Lihat Detail */}
           <button
             onClick={onViewDetail}
             className="px-5 py-2.5 border border-[#6C3FD1] text-[#6C3FD1] rounded-xl text-xs font-medium hover:bg-[#F4EDFF] transition-colors"
           >
             Lihat Detail
           </button>
-
-          {/* Bayar Sekarang */}
           <button
             onClick={onViewDetail}
             className="px-5 py-2.5 bg-[#6C3FD1] text-white rounded-xl text-xs font-medium hover:bg-[#5b34b3] transition-colors"
@@ -141,7 +136,6 @@ function BookingCard({
       );
     }
 
-    // Jika sudah lunas → hanya lihat detail
     return (
       <button
         onClick={onViewDetail}
@@ -168,12 +162,11 @@ function BookingCard({
     <div className="px-6 py-5 hover:bg-[#FBF6EA] transition-colors">
       <div className="flex items-center justify-between gap-6">
         <div className="flex-1">
-          <div className="flex items-center gap-4 mb-3">
+          <div className="flex items-center gap-4 mb-3 flex-wrap">
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
               {getStatusText(booking.status)}
             </span>
 
-            {/* Badge LUNAS / BELUM LUNAS */}
             <span
               className={`px-3 py-1 rounded-full text-xs font-semibold ${
                 booking.payment_status === 'paid'
@@ -235,7 +228,6 @@ function BookingCard({
   );
 }
 
-// Main Component
 export default function BookingsPage() {
   const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -305,7 +297,6 @@ export default function BookingsPage() {
   return (
     <div className="min-h-screen py-2">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-[#3B2A1E] mb-1">
             Booking Saya
@@ -315,7 +306,6 @@ export default function BookingsPage() {
           </p>
         </div>
 
-        {/* Status Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatusCard
             title="Semua"
@@ -346,11 +336,10 @@ export default function BookingsPage() {
           />
         </div>
 
-        {/* Buat Booking card */}
         <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl px-6 py-5 flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-semibold text-[#3B2A1E] mb-1">
-              Buat Booking
+              Buat Booking Baru
             </h2>
             <p className="text-sm text-[#A18F76]">
               Buat janji baru untuk treatment favorit Anda.
@@ -367,7 +356,6 @@ export default function BookingsPage() {
           </button>
         </div>
 
-        {/* Bookings List */}
         <div className="bg-[#FFFDF9] rounded-2xl shadow-sm border border-[#E1D4C0] overflow-hidden">
           {filteredBookings.length === 0 ? (
             <div className="text-center py-12 px-6">

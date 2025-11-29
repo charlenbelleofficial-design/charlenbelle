@@ -7,15 +7,13 @@ import { verifyDokuSignature } from '../../../lib/doku';
 
 export async function POST(req: NextRequest) {
   console.log('🎯 [WEBHOOK] DOKU Webhook called at:', new Date().toISOString());
-  console.log('🎯 [WEBHOOK] Request method:', req.method);
-  console.log('🎯 [WEBHOOK] Request URL:', req.url);
 
   let notification: any = null;
   
   try {
     await connectDB();
 
-    // Get all headers for debugging
+    // Get headers
     const headers = {
       'Request-Id': req.headers.get('Request-Id') || '',
       'Request-Timestamp': req.headers.get('Request-Timestamp') || '',
@@ -25,16 +23,14 @@ export async function POST(req: NextRequest) {
       'User-Agent': req.headers.get('User-Agent') || '',
     };
 
-    // Get request body as text
+    // Get request body
     const body = await req.text();
     
-    console.log('🔔 [WEBHOOK] DOKU Webhook Received');
-    console.log('📨 [WEBHOOK] DOKU Notification received - START');
+    console.log('🔔 [WEBHOOK] DOKU Notification Received');
     console.log('🔧 [WEBHOOK] Headers:', headers);
     console.log('📦 [WEBHOOK] Body length:', body.length);
-    console.log('📦 [WEBHOOK] Raw Body:', body);
 
-    // Try to parse notification
+    // Parse notification
     try {
       notification = body ? JSON.parse(body) : {};
       console.log('📊 [WEBHOOK] Parsed notification:', JSON.stringify(notification, null, 2));
@@ -46,16 +42,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if this is a test notification from Doku simulator
+    // Verify signature (skip for test notifications)
     const isTestNotification = headers['User-Agent']?.includes('Doku') || 
                               notification.additional_info?.origin?.system?.includes('simulator');
-    
-    if (isTestNotification) {
-      console.log('🧪 [WEBHOOK] This appears to be a test notification from Doku');
-    }
 
-    // Verify signature (skip for empty body or test notifications)
-    if (body && headers.Signature) {
+    if (body && headers.Signature && !isTestNotification) {
       const requestTarget = '/api/webhooks/doku';
       const isValid = verifyDokuSignature(
         requestTarget,
@@ -73,11 +64,11 @@ export async function POST(req: NextRequest) {
         );
       }
       console.log('✅ [WEBHOOK] Signature verified successfully');
-    } else {
-      console.log('⚠️ [WEBHOOK] Skipping signature verification (empty body or no signature)');
+    } else if (isTestNotification) {
+      console.log('🧪 [WEBHOOK] Test notification - skipping signature verification');
     }
 
-    // Extract notification data with multiple possible field locations
+    // Extract notification data
     const invoiceNumber = notification.order?.invoice_number || 
                          notification.invoice_number ||
                          notification.transaction?.invoice_number;
@@ -90,46 +81,45 @@ export async function POST(req: NextRequest) {
                   notification.transaction?.amount || 
                   notification.amount;
 
-    // Add notification type detection
     const notificationType = notification.event || notification.type;
-    console.log('🎯 [WEBHOOK] Notification Type:', notificationType);
 
     console.log('🔍 [WEBHOOK] Extracted data:', {
       invoiceNumber,
       transactionStatus,
       amount,
-      notificationType,
-      rawTransactionStatus: notification.transaction?.status,
-      rawOrder: notification.order,
-      rawTransaction: notification.transaction
+      notificationType
     });
 
     if (!invoiceNumber) {
       console.error('❌ [WEBHOOK] Missing invoice number in notification');
-      console.error('🔍 [WEBHOOK] Available fields:', Object.keys(notification));
       return NextResponse.json(
         { error: 'Invalid notification data - missing invoice number' },
         { status: 400 }
       );
     }
 
-    // Enhanced payment search with better logging
+    // Find payment
     console.log('🔍 [WEBHOOK] Searching for payment with invoice:', invoiceNumber);
     
     const payment = await Payment.findOne({
       $or: [
-        { doku_order_id: invoiceNumber },           // Search by Doku order ID
-        { doku_transaction_id: invoiceNumber },     // Search by Doku transaction ID  
-        { midtrans_order_id: invoiceNumber }        // Fallback for Midtrans
+        { doku_order_id: invoiceNumber },
+        { doku_transaction_id: invoiceNumber },
+        { midtrans_order_id: invoiceNumber }
       ]
     }).populate('booking_id');
 
     if (!payment) {
       console.error('❌ [WEBHOOK] Payment not found for invoice:', invoiceNumber);
       
-      // Log all payments for debugging
-      const allPayments = await Payment.find({}).select('doku_order_id doku_transaction_id midtrans_order_id').limit(10);
-      console.log('🔍 [WEBHOOK] Recent payments for debugging:', allPayments);
+      // Log recent payments for debugging
+      const recentPayments = await Payment.find({
+        payment_gateway: 'doku'
+      })
+        .select('doku_order_id doku_transaction_id status amount created_at')
+        .sort({ created_at: -1 })
+        .limit(5);
+      console.log('🔍 [WEBHOOK] Recent payments:', recentPayments);
       
       return NextResponse.json(
         { error: 'Payment not found' },
@@ -141,18 +131,15 @@ export async function POST(req: NextRequest) {
       paymentId: payment._id,
       currentStatus: payment.status,
       bookingId: payment.booking_id?._id,
-      paymentGateway: payment.payment_gateway,
-      amount: payment.amount,
-      dokuOrderId: payment.doku_order_id,
-      dokuTransactionId: payment.doku_transaction_id
+      amount: payment.amount
     });
 
-    // ENHANCED STATUS MAPPING FOR DOKU WITH NOTIFICATION TYPE HANDLING
+    // Determine new status based on notification type or transaction status
     let newPaymentStatus: 'pending' | 'paid' | 'failed' | 'expired' = 'pending';
     let updateBooking = false;
     let errorMessage = '';
 
-    // Handle different Doku event types first
+    // Handle different event types
     switch (notificationType) {
       case 'payment.finished':
       case 'PAYMENT_FINISHED':
@@ -160,29 +147,29 @@ export async function POST(req: NextRequest) {
         newPaymentStatus = 'paid';
         payment.paid_at = new Date();
         updateBooking = true;
-        console.log('💰 [WEBHOOK] Payment finished successfully (event-based)');
+        console.log('💰 [WEBHOOK] Payment finished successfully');
         break;
         
       case 'payment.failed':
       case 'PAYMENT_FAILED':
         newPaymentStatus = 'failed';
-        errorMessage = 'Payment failed via DOKU webhook event';
+        errorMessage = 'Payment failed via DOKU webhook';
         payment.error_message = errorMessage;
-        console.log('❌ [WEBHOOK] Payment failed (event-based)');
+        console.log('❌ [WEBHOOK] Payment failed');
         break;
         
       case 'payment.expired':
       case 'PAYMENT_EXPIRED':
         newPaymentStatus = 'expired';
-        errorMessage = 'Payment expired via DOKU webhook event';
+        errorMessage = 'Payment expired';
         payment.error_message = errorMessage;
-        console.log('⏰ [WEBHOOK] Payment expired (event-based)');
+        console.log('⏰ [WEBHOOK] Payment expired');
         break;
         
       default:
-        // Fallback to transaction status checking for backward compatibility
+        // Fallback to transaction status
         const status = (transactionStatus || '').toUpperCase();
-        console.log('🔄 [WEBHOOK] Processing status (fallback):', status);
+        console.log('🔄 [WEBHOOK] Processing status:', status);
 
         switch (status) {
           case 'SUCCESS':
@@ -191,31 +178,31 @@ export async function POST(req: NextRequest) {
             newPaymentStatus = 'paid';
             payment.paid_at = new Date();
             updateBooking = true;
-            console.log('💰 [WEBHOOK] Payment marked as PAID (status-based)');
+            console.log('💰 [WEBHOOK] Payment marked as PAID');
             break;
 
           case 'FAILED':
           case 'FAILURE':
           case 'DENY':
             newPaymentStatus = 'failed';
-            errorMessage = notification.transaction?.message || notification.error_message || 'Payment failed via DOKU';
+            errorMessage = notification.transaction?.message || 'Payment failed';
             payment.error_message = errorMessage;
-            console.log('❌ [WEBHOOK] Payment marked as FAILED (status-based):', errorMessage);
+            console.log('❌ [WEBHOOK] Payment marked as FAILED');
             break;
 
           case 'EXPIRED':
           case 'EXPIRE':
             newPaymentStatus = 'expired';
-            errorMessage = 'Payment expired via DOKU';
+            errorMessage = 'Payment expired';
             payment.error_message = errorMessage;
-            console.log('⏰ [WEBHOOK] Payment marked as EXPIRED (status-based)');
+            console.log('⏰ [WEBHOOK] Payment marked as EXPIRED');
             break;
 
           case 'PENDING':
           case 'CHALLENGE':
           default:
             newPaymentStatus = 'pending';
-            console.log('⏳ [WEBHOOK] Payment remains PENDING (status-based)');
+            console.log('⏳ [WEBHOOK] Payment remains PENDING');
             break;
         }
         break;
@@ -226,7 +213,7 @@ export async function POST(req: NextRequest) {
     payment.notification_data = notification;
     payment.updated_at = new Date();
     
-    // Store additional Doku data with enhanced information
+    // Store additional info
     payment.gateway_response = {
       ...payment.gateway_response,
       doku_service_type: notification.service?.id,
@@ -234,13 +221,13 @@ export async function POST(req: NextRequest) {
       doku_notification_type: notificationType,
       doku_notification_received: new Date(),
       is_test: isTestNotification,
-      raw_notification: notification // Store complete notification for debugging
+      raw_notification: notification
     };
 
     await payment.save();
     console.log('✅ [WEBHOOK] Payment saved with new status:', newPaymentStatus);
 
-    // Update booking status if payment is successful
+    // Update booking if payment successful
     if (updateBooking && payment.booking_id) {
       try {
         await Booking.findByIdAndUpdate(
@@ -251,14 +238,8 @@ export async function POST(req: NextRequest) {
           }
         );
         console.log('✅ [WEBHOOK] Booking status updated to confirmed');
-        
-        // Also update any related data if needed
-        if (payment.booking_id.slot_id) {
-          console.log('📅 [WEBHOOK] Booking slot confirmed:', payment.booking_id.slot_id);
-        }
       } catch (bookingError) {
         console.error('❌ [WEBHOOK] Error updating booking:', bookingError);
-        // Don't fail the webhook if booking update fails
       }
     }
 
@@ -270,9 +251,8 @@ export async function POST(req: NextRequest) {
       notificationType: notificationType,
       isTest: isTestNotification
     });
-    console.log('📨 [WEBHOOK] DOKU Notification received - END');
 
-    // Return success response to DOKU
+    // Return success response
     return NextResponse.json({
       success: true,
       message: 'Notification processed successfully',

@@ -18,105 +18,104 @@ export default function DokuPaymentSuccessPage() {
     verifyDokuPayment();
   }, []);
 
-  // In your verifyDokuPayment function, add more logging:
-    const verifyDokuPayment = async () => {
+  const verifyDokuPayment = async () => {
     try {
-        setLoading(true);
-        
-        // Try to get order_id from URL parameters first
-        const orderId = searchParams.get('order_id');
-        const transactionId = searchParams.get('transaction_id');
-        
-        console.log('🔍 [SUCCESS PAGE] URL Parameters:', {
+      setLoading(true);
+      
+      // Get order_id from URL or sessionStorage
+      let orderId = searchParams.get('order_id') || searchParams.get('invoice_number');
+      const transactionId = searchParams.get('transaction_id');
+      
+      console.log('🔍 [SUCCESS PAGE] URL Parameters:', {
         orderId,
         transactionId,
         allParams: Object.fromEntries(searchParams.entries())
-        });
+      });
 
-        // If no order_id in URL, try to get from sessionStorage (fallback)
-        let finalOrderId = orderId;
-        if (!finalOrderId) {
-        finalOrderId = sessionStorage.getItem('doku_last_order_id');
-        console.log('🔍 [SUCCESS PAGE] Using order_id from sessionStorage:', finalOrderId);
-        }
+      // Fallback: check sessionStorage
+      if (!orderId) {
+        orderId = sessionStorage.getItem('current_payment_id');
+        console.log('🔍 [SUCCESS PAGE] Using payment_id from sessionStorage:', orderId);
+      }
 
-        if (!finalOrderId && !transactionId) {
+      if (!orderId && !transactionId) {
         console.error('❌ [SUCCESS PAGE] Missing both order_id and transaction_id');
         
-        // Try to find recent payment from localStorage as last resort
+        // Try to find recent payment
         const recentPayment = await findRecentPayment();
         if (recentPayment) {
-            console.log('✅ [SUCCESS PAGE] Found recent payment:', recentPayment);
-            setPaymentData(recentPayment);
-            if (recentPayment.status === 'paid') {
+          console.log('✅ [SUCCESS PAGE] Found recent payment:', recentPayment);
+          setPaymentData(recentPayment);
+          if (recentPayment.status === 'paid') {
             toast.success('Pembayaran berhasil!');
-            }
-            setLoading(false);
-            return;
+          }
+          setLoading(false);
+          return;
         }
         
         toast.error('Data pembayaran tidak valid. Silakan cek dashboard untuk status terbaru.');
+        setTimeout(() => router.push('/user/dashboard/bookings'), 3000);
         setLoading(false);
         return;
-        }
+      }
 
-        console.log('🔍 [SUCCESS PAGE] Calling verify API with:', {
-        order_id: finalOrderId,
+      console.log('🔍 [SUCCESS PAGE] Calling verify API with:', {
+        order_id: orderId,
         transaction_id: transactionId
-        });
+      });
 
-        // Use the order_id to check payment status
-        const verifyResponse = await fetch('/api/payments/verify-doku', {
+      // Verify payment with backend
+      const verifyResponse = await fetch('/api/payments/verify-doku', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            order_id: finalOrderId,
-            transaction_id: transactionId
+          order_id: orderId,
+          transaction_id: transactionId
         }),
-        });
+      });
 
-        const data = await verifyResponse.json();
-        console.log('📨 [SUCCESS PAGE] Verify API response:', data);
+      const data = await verifyResponse.json();
+      console.log('📨 [SUCCESS PAGE] Verify API response:', data);
 
-        if (data.success) {
+      if (data.success) {
         setPaymentData(data.payment);
         
         if (data.payment.status === 'paid') {
-            toast.success('Pembayaran berhasil diverifikasi!');
-            // Clear the session storage after successful verification
-            sessionStorage.removeItem('doku_last_order_id');
+          toast.success('Pembayaran berhasil diverifikasi!');
+          // Clear session storage
+          sessionStorage.removeItem('current_payment_id');
+          sessionStorage.removeItem('current_booking_id');
         } else if (data.payment.status === 'pending') {
-            // If still pending, retry after a delay
-            if (verificationAttempts < 5) {
+          // Retry verification if still pending
+          if (verificationAttempts < 5) {
             console.log(`🔄 [SUCCESS PAGE] Retrying verification (${verificationAttempts + 1}/5)`);
             setTimeout(() => {
-                setVerificationAttempts(prev => prev + 1);
-                verifyDokuPayment();
-            }, 2000);
-            } else {
+              setVerificationAttempts(prev => prev + 1);
+              verifyDokuPayment();
+            }, 3000); // Retry after 3 seconds
+          } else {
             console.log('⏰ [SUCCESS PAGE] Max retries reached');
-            toast.error('Pembayaran masih diproses. Status akan diperbarui otomatis.');
-            }
-        } else {
-            console.log('❌ [SUCCESS PAGE] Payment status:', data.payment.status);
+            toast('Pembayaran masih diproses. Status akan diperbarui otomatis.', {
+              icon: '⏳',
+            });
+          }
         }
-        } else {
+      } else {
         console.error('❌ [SUCCESS PAGE] Verify API error:', data.error);
         toast.error('Gagal memverifikasi pembayaran: ' + (data.error || 'Unknown error'));
-        }
+      }
     } catch (error) {
-        console.error('❌ [SUCCESS PAGE] Error verifying Doku payment:', error);
-        toast.error('Terjadi kesalahan saat memverifikasi pembayaran');
+      console.error('❌ [SUCCESS PAGE] Error verifying Doku payment:', error);
+      toast.error('Terjadi kesalahan saat memverifikasi pembayaran');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-    };
+  };
 
   const findRecentPayment = async () => {
     try {
-      // Try to get the most recent payment for the current user
       const response = await fetch('/api/payments/recent-doku');
       const data = await response.json();
       
@@ -138,7 +137,7 @@ export default function DokuPaymentSuccessPage() {
           <p className="text-sm text-[#A18F76]">
             {verificationAttempts > 0 
               ? `Memeriksa status... (${verificationAttempts}/5)`
-              : 'Memverifikasi pembayaran...'
+              : 'Memverifikasi pembayaran Anda...'
             }
           </p>
         </div>
@@ -151,19 +150,35 @@ export default function DokuPaymentSuccessPage() {
       {/* Success Header */}
       <div className="bg-[#FFFDF9] border border-[#E1D4C0] rounded-2xl p-6 sm:p-8 shadow-sm text-center mb-6">
         <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg
-            className="w-8 h-8 text-green-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
+          {paymentData?.status === 'paid' ? (
+            <svg
+              className="w-8 h-8 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          ) : (
+            <svg
+              className="w-8 h-8 text-yellow-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          )}
         </div>
         <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E] mb-2">
           {paymentData?.status === 'paid' ? 'Pembayaran Berhasil!' : 'Pembayaran Diproses'}
@@ -266,10 +281,10 @@ export default function DokuPaymentSuccessPage() {
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <Link
-          href="/user/dashboard"
+          href="/user/dashboard/bookings"
           className="w-full sm:flex-1 bg-[#FFFDF9] border border-[#E1D4C0] text-[#7E6A52] py-3 rounded-xl text-center text-sm font-medium hover:bg-[#FBF6EA] transition-colors"
         >
-          Kembali ke Dashboard
+          Kembali ke Daftar Booking
         </Link>
         {paymentData?.booking_id && (
           <Link

@@ -19,7 +19,7 @@ export interface DokuTransactionResponse {
   token: string;
   redirect_url: string;
   session_id?: string;
-  order_id?: string; // Added
+  order_id?: string;
 }
 
 export interface DokuPaymentRequest {
@@ -65,21 +65,19 @@ export class DokuPayment {
     try {
       console.log('🔐 [SIGNATURE] Starting signature generation...');
 
-      // Step 1: Clean request body - remove \r characters (Windows issue)
+      // Clean request body
       const cleanBody = requestBody ? requestBody.replace(/\r/g, '') : '';
       
-      // Step 2: Calculate Digest (Base64 encoded SHA-256 hash)
+      // Calculate Digest
       let digest = '';
       if (cleanBody) {
         const hash = crypto.createHash('sha256');
         hash.update(cleanBody);
-        const hashBuffer = hash.digest();
-        digest = hashBuffer.toString('base64');
+        digest = hash.digest('base64');
         console.log('📦 [SIGNATURE] Digest (Base64):', digest);
       }
 
-      // Step 3: Prepare signature components dengan format yang benar
-      // Format: Component1\nComponent2\nComponent3\nComponent4\nDigest
+      // Prepare signature components
       const signatureComponents = [
         `Client-Id:${clientId}`,
         `Request-Id:${requestId}`,
@@ -88,14 +86,11 @@ export class DokuPayment {
         `Digest:${digest}`
       ];
 
-      // Step 4: Create signature string dengan newline characters
+      // Create signature string
       const signatureString = signatureComponents.join('\n');
       console.log('📝 [SIGNATURE] Signature String:', signatureString);
-      console.log('📏 [SIGNATURE] Signature String Length:', signatureString.length);
 
-      // Step 5: Generate HMAC SHA256 signature
-      console.log('🔑 [SIGNATURE] Using Secret Key:', this.config.secretKey ? 'Set' : 'Missing');
-      
+      // Generate HMAC SHA256 signature
       const hmac = crypto.createHmac('sha256', this.config.secretKey);
       hmac.update(signatureString);
       const signatureBase64 = hmac.digest('base64');
@@ -113,7 +108,7 @@ export class DokuPayment {
 
   private getCurrentUTCTimestamp(): string {
     const now = new Date();
-    // Format: YYYY-MM-DDTHH:mm:ssZ (ISO 8601 without milliseconds)
+    // Format: YYYY-MM-DDTHH:mm:ssZ
     const utcTimestamp = now.toISOString().split('.')[0] + 'Z';
     console.log('🕒 [TIMESTAMP] UTC Timestamp:', utcTimestamp);
     return utcTimestamp;
@@ -125,7 +120,6 @@ export class DokuPayment {
     return requestId;
   }
 
-  // Add request body validation
   private validateRequestBody(requestBody: DokuPaymentRequest): void {
     if (!requestBody.order.amount || requestBody.order.amount <= 0) {
       throw new Error('Invalid amount: Amount must be greater than 0');
@@ -150,16 +144,14 @@ export class DokuPayment {
     try {
       console.log('🚀 [DOKU] Starting transaction creation...');
       
-      // Validate and get base URL
+      // Get base URL
       const getBaseUrl = () => {
-        // Priority: Use provided frontendUrls, then environment variable, then fallback
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
                         process.env.VERCEL_URL || 
                         'http://localhost:3000';
         
-        // Ensure the URL has protocol
         if (baseUrl.startsWith('http')) {
-            return baseUrl;
+          return baseUrl;
         }
         return `https://${baseUrl}`;
       };
@@ -167,10 +159,10 @@ export class DokuPayment {
       const baseUrl = getBaseUrl();
       console.log('🌐 [DOKU] Base URL:', baseUrl);
 
-      // Validate URLs
-      const successUrl = frontendUrls.success || `${baseUrl}/user/dashboard/bookings/payment/doku-success`;
-      const errorUrl = frontendUrls.error || `${baseUrl}/user/dashboard/bookings/payment/error`;
-      const pendingUrl = frontendUrls.pending || `${baseUrl}/user/dashboard/bookings/payment/pending`;
+      // Setup callback URLs
+      const successUrl = `${baseUrl}/user/dashboard/bookings/payment/doku-success`;
+      const errorUrl = `${baseUrl}/user/dashboard/bookings/payment/error`;
+      const pendingUrl = `${baseUrl}/user/dashboard/bookings/payment/pending`;
 
       console.log('🔗 [DOKU] Callback URLs:', {
         success: successUrl,
@@ -185,15 +177,15 @@ export class DokuPayment {
       // Prepare request body
       const requestBody: DokuPaymentRequest = {
         order: {
-            amount: amount,
-            invoice_number: orderId,
-            currency: 'IDR',
-            callback_url: `${baseUrl}/user/dashboard/bookings/payment/doku-success?order_id=${orderId}`,
-            callback_url_cancel: `${baseUrl}/user/dashboard/bookings/payment/error?order_id=${orderId}`,
-            callback_url_result: `${baseUrl}/user/dashboard/bookings/payment/doku-success?order_id=${orderId}`,
-            language: 'ID',
-            auto_redirect: true,
-            disable_retry_payment: false
+          amount: amount,
+          invoice_number: orderId,
+          currency: 'IDR',
+          callback_url: successUrl,
+          callback_url_cancel: errorUrl,
+          callback_url_result: successUrl,
+          language: 'ID',
+          auto_redirect: true,
+          disable_retry_payment: false
         },
         payment: {
           payment_due_date: 60,
@@ -205,7 +197,8 @@ export class DokuPayment {
             'CREDIT_CARD',
             'QRIS',
             'EMONEY_OVO',
-            'EMONEY_SHOPEEPAY'
+            'EMONEY_SHOPEEPAY',
+            'EMONEY_DANA'
           ]
         },
         customer: {
@@ -223,7 +216,7 @@ export class DokuPayment {
       const bodyString = JSON.stringify(requestBody);
       console.log('📄 [REQUEST] Request Body:', bodyString);
 
-      // Generate signature dengan format yang benar
+      // Generate signature
       const signature = this.generateSignature(
         this.config.clientId,
         requestId,
@@ -236,7 +229,7 @@ export class DokuPayment {
         'Client-Id': this.config.clientId,
         'Request-Id': requestId,
         'Request-Timestamp': requestTimestamp,
-        'Signature': signature,
+        'Signature': signature.substring(0, 30) + '...',
         'Content-Type': 'application/json'
       });
 
@@ -270,32 +263,15 @@ export class DokuPayment {
           data: errorData
         });
 
-        // Enhanced error handling for specific Doku errors
-        if (response.status === 400) {
-          if (errorData.error?.code === 'invalid_signature') {
-            console.error('🔍 [DEBUG] Signature verification failed');
-            console.error('🔍 [DEBUG] Please double-check:');
-            console.error('🔍 [DEBUG] 1. Client ID:', this.config.clientId);
-            console.error('🔍 [DEBUG] 2. Secret Key length:', this.config.secretKey?.length);
-            console.error('🔍 [DEBUG] 3. Environment:', this.config.isProduction ? 'Production' : 'Sandbox');
-          } else if (errorData.error?.code === 'invalid_client_id') {
-            console.error('🔍 [DEBUG] Invalid Client ID');
-          } else if (errorData.error?.code === 'invalid_amount') {
-            console.error('🔍 [DEBUG] Invalid amount format');
-          } else if (errorData.error?.code === 'invalid_customer') {
-            console.error('🔍 [DEBUG] Invalid customer data');
-          }
-        }
-
-        throw new Error(`DOKU API Error: ${errorData.error?.message || response.statusText}`);
+        throw new Error(`DOKU API Error: ${errorData.error?.message || errorData.error_messages?.[0] || response.statusText}`);
       }
 
       const data = JSON.parse(responseText);
       console.log('📨 [RESPONSE] Full Response:', JSON.stringify(data, null, 2));
 
-      // Enhanced response parsing for different Doku response formats
-      if (data.response && (data.response.payment || data.response.order)) {
-        const paymentData = data.response.payment || {};
+      // Parse response
+      if (data.response && data.response.payment) {
+        const paymentData = data.response.payment;
         const orderData = data.response.order || {};
         
         console.log('✅ [SUCCESS] DOKU Transaction Created');
@@ -307,16 +283,7 @@ export class DokuPayment {
           token: paymentData.token_id,
           redirect_url: paymentData.url,
           session_id: orderData.session_id,
-          order_id: orderData.invoice_number
-        };
-      } else if (data.payment) {
-        // Alternative response format
-        console.log('✅ [SUCCESS] DOKU Transaction Created (Alternative Format)');
-        return {
-          token: data.payment.token_id,
-          redirect_url: data.payment.url,
-          session_id: data.order?.session_id,
-          order_id: data.order?.invoice_number
+          order_id: orderData.invoice_number || orderId
         };
       } else {
         console.error('❌ [ERROR] Unexpected DOKU Response Format:', data);
@@ -330,7 +297,7 @@ export class DokuPayment {
   }
 }
 
-// Fixed webhook signature verification
+// Webhook signature verification
 export function verifyDokuSignature(
   requestTarget: string,
   requestId: string,
@@ -341,7 +308,6 @@ export function verifyDokuSignature(
   try {
     console.log('🔐 [WEBHOOK] Verifying DOKU signature...');
 
-    // Use YOUR client ID from environment, not from headers
     const yourClientId = process.env.DOKU_CLIENT_ID!;
     
     if (!yourClientId) {
@@ -355,11 +321,11 @@ export function verifyDokuSignature(
     // Calculate Digest
     const hash = crypto.createHash('sha256');
     hash.update(cleanBody);
-    const digest = hash.digest().toString('base64');
+    const digest = hash.digest('base64');
 
-    // Prepare signature components - use YOUR client ID
+    // Prepare signature components
     const signatureComponents = [
-      `Client-Id:${yourClientId}`, // Use your configured client ID
+      `Client-Id:${yourClientId}`,
       `Request-Id:${requestId}`,
       `Request-Timestamp:${requestTimestamp}`,
       `Request-Target:${requestTarget}`,
@@ -368,7 +334,7 @@ export function verifyDokuSignature(
 
     // Create signature string
     const signatureString = signatureComponents.join('\n');
-    console.log('📝 [WEBHOOK] Signature String:', signatureString);
+    console.log('📝 [WEBHOOK] Signature String length:', signatureString.length);
 
     // Generate expected signature
     const secretKey = process.env.DOKU_SECRET_KEY || '';
@@ -376,43 +342,12 @@ export function verifyDokuSignature(
     hmac.update(signatureString);
     const expectedSignature = `HMACSHA256=${hmac.digest('base64')}`;
 
-    console.log('🔍 [WEBHOOK] Signature Comparison:');
-    console.log('🔍 [WEBHOOK] Received:', signature);
-    console.log('🔍 [WEBHOOK] Expected:', expectedSignature);
+    console.log('🔍 [WEBHOOK] Signature match:', signature === expectedSignature);
 
-    const isValid = signature === expectedSignature;
-    console.log('✅ [WEBHOOK] Signature valid:', isValid);
-
-    return isValid;
+    return signature === expectedSignature;
 
   } catch (error) {
     console.error('❌ [WEBHOOK] Error verifying signature:', error);
     return false;
-  }
-}
-
-// Tambahkan juga fungsi untuk mendapatkan payment status
-export async function getDokuPaymentStatus(orderId: string): Promise<any> {
-  try {
-    const config = {
-      clientId: process.env.DOKU_CLIENT_ID!,
-      secretKey: process.env.DOKU_SECRET_KEY!,
-      isProduction: process.env.DOKU_IS_PRODUCTION === 'true',
-      apiUrl: process.env.DOKU_IS_PRODUCTION === 'true' 
-        ? 'https://api.doku.com/checkout/v1/payment'
-        : 'https://api-sandbox.doku.com/checkout/v1/payment'
-    };
-
-    const dokuPayment = new DokuPayment(config);
-    
-    // Note: Doku biasanya tidak menyediakan API untuk check status
-    // Kita bergantung pada webhook untuk update status
-    console.log('ℹ️ [STATUS] Doku relies on webhook for status updates');
-    
-    return { status: 'pending' }; // Default status
-    
-  } catch (error) {
-    console.error('❌ [STATUS] Error checking Doku payment status:', error);
-    throw error;
   }
 }

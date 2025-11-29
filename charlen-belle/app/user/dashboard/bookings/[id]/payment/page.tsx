@@ -1,32 +1,73 @@
 // app/user/dashboard/bookings/[id]/payment/page.tsx
 'use client';
 
-import { useEffect, useState, ReactNode } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useEffect, useState, use } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '../../../../../components/ui/buttons';
 import { formatCurrency } from '../../../../../lib/utils';
 import toast from 'react-hot-toast';
-import Script from 'next/script';
 
+// Declare DOKU Checkout function globally
 declare global {
   interface Window {
-    snap: any;
+    loadJokulCheckout: (url: string) => void;
   }
 }
 
-export default function PaymentPage() {
+export default function PaymentPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: bookingId } = use(params);
   const router = useRouter();
-  const params = useParams<{ id: string }>();
-  const bookingId = params.id;
 
   const [booking, setBooking] = useState<any>(null);
-  const [paymentMethod, setPaymentMethod] = useState('midtrans_qris');
+  const [paymentMethod, setPaymentMethod] = useState('online_payment');
   const [isLoading, setIsLoading] = useState(false);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [isDokuScriptLoaded, setIsDokuScriptLoaded] = useState(false);
 
   useEffect(() => {
     fetchBookingDetails();
+    loadDokuScript();
   }, [bookingId]);
+
+  // Load DOKU Checkout Script dynamically
+  const loadDokuScript = () => {
+    // Check if script is already loaded by checking for the actual function implementation
+    if (isDokuScriptLoaded) {
+      return;
+    }
+
+    // Additional check: if the function exists and seems to be properly implemented
+    if (typeof window.loadJokulCheckout === 'function') {
+      // Test if it's not just the declared function but actually implemented
+      try {
+        // Set a flag to indicate script is loaded
+        setIsDokuScriptLoaded(true);
+        return;
+      } catch (error) {
+        // Continue to load the script if there's an error
+        console.log('DOKU function exists but may not be properly implemented, loading script...');
+      }
+    }
+
+    const script = document.createElement('script');
+    const isDokuProduction = process.env.NEXT_PUBLIC_DOKU_IS_PRODUCTION === 'true';
+    
+    script.src = isDokuProduction
+      ? 'https://jokul.doku.com/jokul-checkout-js/v1/jokul-checkout-1.0.0.js'
+      : 'https://sandbox.doku.com/jokul-checkout-js/v1/jokul-checkout-1.0.0.js';
+    
+    script.async = true;
+    script.onload = () => {
+      console.log('✅ DOKU Checkout script loaded');
+      setIsDokuScriptLoaded(true);
+    };
+    script.onerror = () => {
+      console.error('❌ Failed to load DOKU Checkout script');
+      toast.error('Gagal memuat sistem pembayaran');
+    };
+
+    document.body.appendChild(script);
+  };
 
   const fetchBookingDetails = async () => {
     try {
@@ -34,12 +75,10 @@ export default function PaymentPage() {
       const data = await response.json();
       setBooking(data.booking);
       
-      // Calculate total amount
-      const total =
-        data.booking.treatments?.reduce(
-          (sum: number, t: any) => sum + t.price,
-          0
-        ) || 0;
+      const total = data.booking.treatments?.reduce(
+        (sum: number, t: any) => sum + t.price,
+        0
+      ) || 0;
       setTotalAmount(total);
     } catch (error) {
       toast.error('Gagal memuat detail booking');
@@ -47,8 +86,17 @@ export default function PaymentPage() {
   };
 
   const handlePayment = async () => {
-    setIsLoading(true);
+    if (!booking) return;
+    
+    // Check if DOKU script is loaded for online payments
+    const paymentGateway = process.env.NEXT_PUBLIC_PAYMENT_GATEWAY || 'midtrans';
+    if (paymentGateway === 'doku' && paymentMethod === 'online_payment' && !isDokuScriptLoaded) {
+      toast.error('Sistem pembayaran belum siap. Mohon tunggu...');
+      return;
+    }
 
+    setIsLoading(true);
+    
     try {
       const response = await fetch('/api/payments/create', {
         method: 'POST',
@@ -63,47 +111,83 @@ export default function PaymentPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error);
+        throw new Error(data.error || data.details || 'Gagal memproses pembayaran');
       }
 
-      // For Midtrans payments
-      if (paymentMethod.startsWith('midtrans_')) {
-        if (window.snap) {
-          window.snap.pay(data.payment_token, {
-            onSuccess: function (result: any) {
-              toast.success('Pembayaran berhasil!');
-              router.push(
-                `/user/dashboard/bookings/payment/success?payment_id=${data.payment_id}`
-              );
-            },
-            onPending: function (result: any) {
-              toast('Menunggu pembayaran...', {
-                icon: '⏳',
-                style: { background: '#F3F4F6', color: '#111827' }
-              });
-              router.push(`/user/dashboard/bookings/payment/pending?order_id=${data.order_id}`);
-            },
-            onError: function (result: any) {
-              toast.error('Pembayaran gagal');
-            },
-            onClose: function () {
-              toast('Pembayaran dibatalkan...', {
-                icon: 'ℹ️',
-                style: { background: '#F3F4F6', color: '#111827' }
-              });
-            }
-          });
+      console.log('💳 Payment response:', data);
+
+      // Store order_id in sessionStorage for later verification
+      if (data.payment_id) {
+        sessionStorage.setItem('current_payment_id', data.payment_id);
+        sessionStorage.setItem('current_booking_id', bookingId);
+      }
+
+      // Handle based on payment gateway
+      if (data.gateway === 'doku') {
+        if (data.redirect_url) {
+          console.log('🔗 Opening DOKU Checkout:', data.redirect_url);
+          
+          // Use DOKU Checkout JS for modal popup
+          if (window.loadJokulCheckout && isDokuScriptLoaded) {
+            window.loadJokulCheckout(data.redirect_url);
+            
+            // Start polling for payment status
+            startPaymentStatusPolling(data.payment_id);
+          } else {
+            // Fallback: redirect to payment URL
+            console.warn('⚠️ DOKU Checkout script not loaded, using redirect fallback');
+            window.location.href = data.redirect_url;
+          }
+        } else {
+          throw new Error('URL pembayaran tidak tersedia');
         }
+      } else if (data.gateway === 'midtrans') {
+        // Midtrans handling (if you still support it)
+        toast.success('Memproses pembayaran...');
+        // Add midtrans snap handling here if needed
       } else {
-        // For manual payments
+        // Manual payment
         toast.success('Mohon lakukan pembayaran di kasir');
         router.push(`/user/dashboard/bookings/${bookingId}`);
       }
     } catch (error: any) {
-      toast.error(error.message);
+      console.error('Payment error:', error);
+      toast.error(error.message || 'Terjadi kesalahan saat memproses pembayaran');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Poll payment status after opening DOKU Checkout
+  const startPaymentStatusPolling = (paymentId: string) => {
+    let pollCount = 0;
+    const maxPolls = 120; // Poll for 10 minutes (120 * 5 seconds)
+
+    const pollInterval = setInterval(async () => {
+      pollCount++;
+      
+      try {
+        const response = await fetch(`/api/payments/${paymentId}/status`);
+        const data = await response.json();
+        
+        if (data.success && data.payment.status === 'paid') {
+          clearInterval(pollInterval);
+          console.log('✅ Payment confirmed!');
+          toast.success('Pembayaran berhasil!');
+          
+          // Redirect to success page
+          router.push(`/user/dashboard/bookings/payment/doku-success?order_id=${data.payment.doku_order_id}`);
+        } else if (pollCount >= maxPolls) {
+          clearInterval(pollInterval);
+          console.log('⏰ Polling timeout');
+        }
+      } catch (error) {
+        console.error('Status check error:', error);
+      }
+    }, 5000); // Check every 5 seconds
+
+    // Clean up on unmount
+    return () => clearInterval(pollInterval);
   };
 
   if (!booking) {
@@ -118,113 +202,100 @@ export default function PaymentPage() {
   }
 
   return (
-    <>
-      <Script
-        src={`https://app.${
-          process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true'
-            ? ''
-            : 'sandbox.'
-        }midtrans.com/snap/snap.js`}
-        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
-      />
+    <div className="max-w-3xl mx-auto space-y-6 mt-4 px-4">
+      <div>
+        <p className="text-xs text-[#A18F76] mb-1">Pembayaran Booking</p>
+        <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E] mb-1">
+          Selesaikan Pembayaran
+        </h1>
+        <p className="text-sm text-[#A18F76]">
+          Pilih metode pembayaran yang Anda inginkan.
+        </p>
+      </div>
 
-      <div className="max-w-3xl mx-auto space-y-6 mt-4 px-4">
-        <div>
-          <p className="text-xs text-[#A18F76] mb-1">Pembayaran Booking</p>
-          <h1 className="text-xl sm:text-2xl font-semibold text-[#3B2A1E] mb-1">
-            Selesaikan Pembayaran
-          </h1>
-          <p className="text-sm text-[#A18F76]">
-            Pilih metode pembayaran yang Anda inginkan.
-          </p>
-        </div>
-
-        {/* Order Summary */}
-        <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-5 sm:p-6">
-          <h2 className="text-sm font-semibold text-[#3B2A1E] mb-4">
-            Ringkasan Pesanan
-          </h2>
-          <div className="space-y-3 text-sm">
-            {booking.treatments?.map((treatment: any, index: number) => (
-              <div
-                key={index}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3 border-b border-[#F1E5D1]"
-              >
-                <div>
-                  <p className="font-semibold text-[#3B2A1E]">
-                    {treatment.name}
-                  </p>
-                  <p className="text-xs text-[#A18F76]">
-                    Qty: {treatment.quantity}
-                  </p>
-                </div>
-                <p className="font-semibold text-[#3B2A1E] sm:text-right">
-                  {formatCurrency(treatment.price)}
+      {/* Order Summary */}
+      <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-5 sm:p-6">
+        <h2 className="text-sm font-semibold text-[#3B2A1E] mb-4">
+          Ringkasan Pesanan
+        </h2>
+        <div className="space-y-3 text-sm">
+          {booking.treatments?.map((treatment: any, index: number) => (
+            <div
+              key={index}
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3 border-b border-[#F1E5D1]"
+            >
+              <div>
+                <p className="font-semibold text-[#3B2A1E]">
+                  {treatment.name}
+                </p>
+                <p className="text-xs text-[#A18F76]">
+                  Qty: {treatment.quantity}
                 </p>
               </div>
-            ))}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 text-base font-bold gap-1">
-              <span className="text-[#3B2A1E]">Total</span>
-              <span className="text-[#6C3FD1]">
-                {formatCurrency(totalAmount)}
-              </span>
+              <p className="font-semibold text-[#3B2A1E] sm:text-right">
+                {formatCurrency(treatment.price)}
+              </p>
             </div>
+          ))}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 text-base font-bold gap-1">
+            <span className="text-[#3B2A1E]">Total</span>
+            <span className="text-[#6C3FD1]">
+              {formatCurrency(totalAmount)}
+            </span>
           </div>
         </div>
-
-        {/* Payment Method */}
-        <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-5 sm:p-6">
-          <h2 className="text-sm font-semibold text-[#3B2A1E] mb-4">
-            Metode Pembayaran
-          </h2>
-          <div className="space-y-3">
-            <PaymentMethodOption
-              value="midtrans_qris"
-              selected={paymentMethod}
-              onChange={setPaymentMethod}
-              label="QRIS"
-              description="Bayar cepat dengan QRIS"
-              iconLabel="QR"
-            />
-            <PaymentMethodOption
-              value="midtrans_cc"
-              selected={paymentMethod}
-              onChange={setPaymentMethod}
-              label="Kartu Kredit/Debit"
-              description="Visa, Mastercard, JCB"
-              iconLabel="CC"
-            />
-            <PaymentMethodOption
-              value="midtrans_va"
-              selected={paymentMethod}
-              onChange={setPaymentMethod}
-              label="Virtual Account"
-              description="BCA, BNI, BRI, Mandiri"
-              iconLabel="VA"
-            />
-            <PaymentMethodOption
-              value="manual_cash"
-              selected={paymentMethod}
-              onChange={setPaymentMethod}
-              label="Tunai di Kasir"
-              description="Bayar langsung di klinik"
-              iconLabel="CA"
-            />
-          </div>
-        </div>
-
-        <Button
-          onClick={handlePayment}
-          disabled={isLoading}
-          className="w-full rounded-xl bg-[#6C3FD1] hover:bg-[#5b34b3] border-none"
-          size="lg"
-        >
-          {isLoading
-            ? 'Memproses...'
-            : `Bayar ${formatCurrency(totalAmount)}`}
-        </Button>
       </div>
-    </>
+
+      {/* Payment Method Selection */}
+      <div className="bg-[#FFFDF9] rounded-2xl border border-[#E1D4C0] shadow-sm p-5 sm:p-6">
+        <h2 className="text-sm font-semibold text-[#3B2A1E] mb-4">
+          Metode Pembayaran
+        </h2>
+        <div className="space-y-3">
+          <PaymentMethodOption
+            value="online_payment"
+            selected={paymentMethod}
+            onChange={setPaymentMethod}
+            label="Pembayaran Online"
+            description="Virtual Account, E-Wallet, Credit Card, QRIS"
+            iconLabel="💳"
+          />
+          <PaymentMethodOption
+            value="manual_cash"
+            selected={paymentMethod}
+            onChange={setPaymentMethod}
+            label="Tunai di Kasir"
+            description="Bayar langsung di klinik"
+            iconLabel="💵"
+          />
+        </div>
+      </div>
+
+      {/* Payment Button */}
+      <Button
+        onClick={handlePayment}
+        disabled={isLoading || (paymentMethod === 'online_payment' && !isDokuScriptLoaded)}
+        className="w-full rounded-xl bg-[#6C3FD1] hover:bg-[#5b34b3] border-none"
+        size="lg"
+      >
+        {isLoading
+          ? 'Memproses...'
+          : !isDokuScriptLoaded && paymentMethod === 'online_payment'
+          ? 'Memuat sistem pembayaran...'
+          : `Bayar ${formatCurrency(totalAmount)}`}
+      </Button>
+
+      {/* Info Notice */}
+      {paymentMethod === 'online_payment' && (
+        <div className="bg-[#E3F2FD] border border-[#C9E0FA] rounded-xl p-4 text-xs text-[#1E4E8C]">
+          <p className="font-semibold mb-1">ℹ️ Informasi Pembayaran</p>
+          <p>
+            Setelah klik tombol bayar, jendela pembayaran akan muncul. 
+            Pilih metode pembayaran favorit Anda dan selesaikan pembayaran.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -254,7 +325,7 @@ function PaymentMethodOption({
           : 'border-[#E1D4C0] bg-[#FFFDF9] hover:border-[#C89B4B]'
       }`}
     >
-      <span className="h-10 w-10 rounded-xl bg-[#E6D8C2] flex items-center justify-center text-[11px] font-semibold text-[#3B2A1E]">
+      <span className="h-10 w-10 rounded-xl bg-[#E6D8C2] flex items-center justify-center text-xl">
         {iconLabel}
       </span>
       <div className="flex-1">
