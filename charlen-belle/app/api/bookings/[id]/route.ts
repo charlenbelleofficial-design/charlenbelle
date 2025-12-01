@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../lib/mongodb';
 import Booking from '../../../models/Booking';
+import Payment from '../../../models/Payment'; // ← ADD THIS IMPORT
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth-config';
 import mongoose from 'mongoose';
@@ -38,8 +39,8 @@ export async function GET(
       return NextResponse.json({ error: 'Akses ditolak' }, { status: 403 });
     }
 
-    // Get payment status
-    const payment = await mongoose.model('Payment').findOne({ 
+    // Get payment status - Use imported Payment model
+    const payment = await Payment.findOne({ 
       booking_id: id 
     }).sort({ created_at: -1 });
 
