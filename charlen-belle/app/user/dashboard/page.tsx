@@ -84,7 +84,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Booking Mendatang Preview */}
-      <div className="bg-[#FBF6EA] rounded-2xl px-4 sm:px-6 py-6 border border-[#E1D4C0]">
+      {/* <div className="bg-[#FBF6EA] rounded-2xl px-4 sm:px-6 py-6 border border-[#E1D4C0]">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
           <h2 className="text-lg font-semibold text-[#3B2A1E]">
             Booking Terbaru
@@ -96,14 +96,13 @@ export default function DashboardPage() {
             Lihat Semua
           </Link>
         </div>
-        {/* TODO: list booking nanti kalau API ada */}
         <p className="text-sm text-[#A18F76] text-center py-6">
           Belum ada booking terbaru.
         </p>
-      </div>
+      </div> */}
 
       {/* Promo Banner */}
-      <div className="bg-[#C89B4B] rounded-2xl p-6 sm:p-7 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* <div className="bg-[#C89B4B] rounded-2xl p-6 sm:p-7 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h3 className="text-xl sm:text-2xl font-bold mb-1">
             Promo Spesial Bulan Ini!
@@ -120,7 +119,7 @@ export default function DashboardPage() {
             Lihat Promo
           </Button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -90,7 +90,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         <div className="px-4 sm:px-6 py-4 text-xs text-gray-400 border-t border-gray-200 mt-auto">
-          © {new Date().getFullYear()} Sharlene Belle
+          © {new Date().getFullYear()} Charlene Belle
         </div>
       </aside>
 

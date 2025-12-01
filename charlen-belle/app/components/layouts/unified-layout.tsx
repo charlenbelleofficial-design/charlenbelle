@@ -211,7 +211,7 @@ export default function UnifiedLayout({
         </nav>
 
         <div className="px-6 py-4 text-xs text-gray-400 border-t border-gray-200">
-          © {new Date().getFullYear()} Sharlene Belle
+          © {new Date().getFullYear()} Charlene Belle
         </div>
       </aside>
 
