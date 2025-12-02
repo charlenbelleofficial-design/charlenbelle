@@ -14,6 +14,8 @@ import {
   Title,
   Tooltip,
   Legend,
+  ChartOptions,
+  ChartData,
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 
@@ -259,9 +261,6 @@ export default function SalesReportsPage() {
     }
   };
 
-  // === Chart data (logic sama, hanya ubah warna ke gold/cream) ===
-  // Replace the revenueChartData and revenueChartOptions with this:
-
   const revenueChartData = {
     labels:
       salesData?.dailySales.map((day) => {
@@ -286,21 +285,21 @@ export default function SalesReportsPage() {
         type: 'line' as const,
         label: 'Trend',
         data: salesData?.dailySales.map((day) => day.revenue) || [],
-        borderColor: 'rgba(219, 68, 55, 1)', // Red line for contrast
+        borderColor: 'rgba(219, 68, 55, 1)', 
         backgroundColor: 'rgba(219, 68, 55, 0.1)',
         borderWidth: 3,
         pointRadius: 5,
         pointBackgroundColor: 'rgba(219, 68, 55, 1)',
         pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
-        tension: 0.3, // Smooth curve
+        tension: 0.3,
         fill: false,
         order: 1,
       },
     ],
   };
 
-  const revenueChartOptions = {
+  const revenueChartOptions: ChartOptions<'bar'> = {
     responsive: true,
     plugins: {
       legend: {
@@ -323,12 +322,14 @@ export default function SalesReportsPage() {
         mode: 'index' as const,
         intersect: false,
         callbacks: {
-          label: function (context: any) {
+          label: function (context) {
             let label = context.dataset.label || '';
             if (label) {
               label += ': ';
             }
-            label += `Rp ${context.parsed.y.toLocaleString('id-ID')}`;
+            if (context.parsed.y !== null) {
+              label += `Rp ${context.parsed.y.toLocaleString('id-ID')}`;
+            }
             return label;
           },
         },
@@ -349,13 +350,14 @@ export default function SalesReportsPage() {
           color: 'rgba(229, 215, 190, 0.3)',
         },
         ticks: {
-          callback: function (value: any) {
-            if (value >= 1000000) {
-              return 'Rp ' + (value / 1000000).toFixed(1) + 'JT';
-            } else if (value >= 1000) {
-              return 'Rp ' + (value / 1000).toFixed(0) + 'K';
+          callback: function (value) {
+            const numValue = Number(value);
+            if (numValue >= 1000000) {
+              return 'Rp ' + (numValue / 1000000).toFixed(1) + 'JT';
+            } else if (numValue >= 1000) {
+              return 'Rp ' + (numValue / 1000).toFixed(0) + 'K';
             }
-            return 'Rp ' + value;
+            return 'Rp ' + numValue;
           },
           color: '#8B7B63',
         },
@@ -367,7 +369,27 @@ export default function SalesReportsPage() {
     },
   };
 
-  // Line chart data for trend visualization
+  const revenueBarChartData = {
+    labels: salesData?.dailySales.map((day) => {
+      const date = new Date(day._id);
+      return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+      });
+    }) || [],
+    datasets: [
+      {
+        label: 'Pendapatan',
+        data: salesData?.dailySales.map((day) => day.revenue) || [],
+        backgroundColor: 'rgba(180, 138, 90, 0.85)',
+        borderColor: 'rgba(148, 109, 64, 1)',
+        borderWidth: 2,
+        borderRadius: 6,
+      },
+    ],
+  };
+
+
   const lineChartData = {
     labels:
       salesData?.dailySales.map((day) => {
@@ -395,7 +417,7 @@ export default function SalesReportsPage() {
       {
         label: 'Jumlah Transaksi',
         data: salesData?.dailySales.map((day) => day.transactions) || [],
-        borderColor: 'rgba(107, 175, 122, 1)', // Green
+        borderColor: 'rgba(107, 175, 122, 1)', 
         backgroundColor: 'rgba(107, 175, 122, 0.1)',
         borderWidth: 3,
         pointRadius: 6,
@@ -794,7 +816,7 @@ export default function SalesReportsPage() {
                 Pendapatan Harian
               </h2>
               <div className="h-80">
-                <Bar data={revenueChartData} options={revenueChartOptions} />
+                <Bar data={revenueBarChartData} options={revenueChartOptions} />
               </div>
             </div>
 
