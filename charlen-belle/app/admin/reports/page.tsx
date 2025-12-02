@@ -162,7 +162,7 @@ export default function SalesReportsPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
-    period: 'today',
+    period: 'week', // Change from 'today' to 'week' to see more data
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
   });
@@ -171,6 +171,7 @@ export default function SalesReportsPage() {
     fetchSalesData();
   }, [filters]);
 
+  // app/admin/reports/page.tsx - update fetchSalesData
   const fetchSalesData = async () => {
     try {
       setLoading(true);
@@ -183,13 +184,44 @@ export default function SalesReportsPage() {
       }
 
       const response = await fetch(`/api/admin/sales-reports?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
 
       if (data.success) {
         setSalesData(data.data);
+      } else {
+        console.error('API Error:', data.error);
+        // Set empty data structure to prevent crashes
+        setSalesData({
+          summary: {
+            totalRevenue: 0,
+            totalTransactions: 0,
+            averageTransaction: 0
+          },
+          dailySales: [],
+          topTreatments: [],
+          paymentMethods: [],
+          recentTransactions: []
+        });
       }
     } catch (error) {
       console.error('Error fetching sales data:', error);
+      // Set empty data on error
+      setSalesData({
+        summary: {
+          totalRevenue: 0,
+          totalTransactions: 0,
+          averageTransaction: 0
+        },
+        dailySales: [],
+        topTreatments: [],
+        paymentMethods: [],
+        recentTransactions: []
+      });
     } finally {
       setLoading(false);
     }
@@ -228,6 +260,8 @@ export default function SalesReportsPage() {
   };
 
   // === Chart data (logic sama, hanya ubah warna ke gold/cream) ===
+  // Replace the revenueChartData and revenueChartOptions with this:
+
   const revenueChartData = {
     labels:
       salesData?.dailySales.map((day) => {
@@ -239,12 +273,29 @@ export default function SalesReportsPage() {
       }) || [],
     datasets: [
       {
+        type: 'bar' as const,
         label: 'Pendapatan',
         data: salesData?.dailySales.map((day) => day.revenue) || [],
         backgroundColor: 'rgba(180, 138, 90, 0.85)',
         borderColor: 'rgba(148, 109, 64, 1)',
         borderWidth: 2,
         borderRadius: 6,
+        order: 2,
+      },
+      {
+        type: 'line' as const,
+        label: 'Trend',
+        data: salesData?.dailySales.map((day) => day.revenue) || [],
+        borderColor: 'rgba(219, 68, 55, 1)', // Red line for contrast
+        backgroundColor: 'rgba(219, 68, 55, 0.1)',
+        borderWidth: 3,
+        pointRadius: 5,
+        pointBackgroundColor: 'rgba(219, 68, 55, 1)',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        tension: 0.3, // Smooth curve
+        fill: false,
+        order: 1,
       },
     ],
   };
@@ -256,6 +307,7 @@ export default function SalesReportsPage() {
         position: 'top' as const,
         labels: {
           color: '#5B4630',
+          usePointStyle: true,
         },
       },
       title: {
@@ -264,13 +316,20 @@ export default function SalesReportsPage() {
         color: '#3A3530',
         font: {
           size: 14,
-          weight: 'bold' as const, // Ganti '600' dengan 'bold'
+          weight: 'bold' as const,
         },
       },
       tooltip: {
+        mode: 'index' as const,
+        intersect: false,
         callbacks: {
           label: function (context: any) {
-            return `Pendapatan: Rp ${context.parsed.y.toLocaleString('id-ID')}`;
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            label += `Rp ${context.parsed.y.toLocaleString('id-ID')}`;
+            return label;
           },
         },
       },
@@ -286,13 +345,159 @@ export default function SalesReportsPage() {
       },
       y: {
         beginAtZero: true,
+        grid: {
+          color: 'rgba(229, 215, 190, 0.3)',
+        },
         ticks: {
           callback: function (value: any) {
-            return 'Rp ' + (value / 1000000).toFixed(1) + 'JT';
+            if (value >= 1000000) {
+              return 'Rp ' + (value / 1000000).toFixed(1) + 'JT';
+            } else if (value >= 1000) {
+              return 'Rp ' + (value / 1000).toFixed(0) + 'K';
+            }
+            return 'Rp ' + value;
           },
           color: '#8B7B63',
         },
       },
+    },
+    interaction: {
+      intersect: false,
+      mode: 'index' as const,
+    },
+  };
+
+  // Line chart data for trend visualization
+  const lineChartData = {
+    labels:
+      salesData?.dailySales.map((day) => {
+        const date = new Date(day._id);
+        return date.toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'short',
+        });
+      }) || [],
+    datasets: [
+      {
+        label: 'Pendapatan',
+        data: salesData?.dailySales.map((day) => day.revenue) || [],
+        borderColor: 'rgba(180, 138, 90, 1)',
+        backgroundColor: 'rgba(180, 138, 90, 0.1)',
+        borderWidth: 3,
+        pointRadius: 6,
+        pointBackgroundColor: 'rgba(180, 138, 90, 1)',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointHoverRadius: 8,
+        tension: 0.3,
+        fill: true,
+      },
+      {
+        label: 'Jumlah Transaksi',
+        data: salesData?.dailySales.map((day) => day.transactions) || [],
+        borderColor: 'rgba(107, 175, 122, 1)', // Green
+        backgroundColor: 'rgba(107, 175, 122, 0.1)',
+        borderWidth: 3,
+        pointRadius: 6,
+        pointBackgroundColor: 'rgba(107, 175, 122, 1)',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointHoverRadius: 8,
+        tension: 0.3,
+        fill: false,
+        yAxisID: 'y1',
+      },
+    ],
+  };
+
+  const lineChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          color: '#5B4630',
+          usePointStyle: true,
+        },
+      },
+      title: {
+        display: true,
+        text: 'Trend Pendapatan & Transaksi',
+        color: '#3A3530',
+        font: {
+          size: 14,
+          weight: 'bold' as const,
+        },
+      },
+      tooltip: {
+        mode: 'index' as const,
+        intersect: false,
+        callbacks: {
+          label: function (context: any) {
+            let label = context.dataset.label || '';
+            if (label.includes('Pendapatan')) {
+              label += `: Rp ${context.parsed.y.toLocaleString('id-ID')}`;
+            } else {
+              label += `: ${context.parsed.y} transaksi`;
+            }
+            return label;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          color: 'rgba(229, 215, 190, 0.3)',
+        },
+        ticks: {
+          color: '#8B7B63',
+        },
+      },
+      y: {
+        type: 'linear' as const,
+        display: true,
+        position: 'left' as const,
+        title: {
+          display: true,
+          text: 'Pendapatan (Rp)',
+          color: '#8B7B63',
+        },
+        grid: {
+          color: 'rgba(229, 215, 190, 0.3)',
+        },
+        ticks: {
+          callback: function (value: any) {
+            if (value >= 1000000) {
+              return (value / 1000000).toFixed(1) + 'JT';
+            } else if (value >= 1000) {
+              return (value / 1000).toFixed(0) + 'K';
+            }
+            return value;
+          },
+          color: '#8B7B63',
+        },
+      },
+      y1: {
+        type: 'linear' as const,
+        display: true,
+        position: 'right' as const,
+        title: {
+          display: true,
+          text: 'Jumlah Transaksi',
+          color: '#8B7B63',
+        },
+        grid: {
+          drawOnChartArea: false,
+        },
+        ticks: {
+          color: '#8B7B63',
+        },
+      },
+    },
+    interaction: {
+      intersect: false,
+      mode: 'index' as const,
     },
   };
 
@@ -511,6 +716,7 @@ export default function SalesReportsPage() {
               <option value="month">Bulan Ini</option>
               <option value="year">Tahun Ini</option>
               <option value="custom">Custom</option>
+              <option value="all">Semua Data</option>
             </select>
           </div>
 
@@ -581,11 +787,11 @@ export default function SalesReportsPage() {
           </div>
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Revenue Trend Chart */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5D7BE]">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Revenue Bar Chart */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5D7BE] lg:col-span-2">
               <h2 className="text-base font-semibold text-[#3A3530] mb-3">
-                Trend Pendapatan
+                Pendapatan Harian
               </h2>
               <div className="h-80">
                 <Bar data={revenueChartData} options={revenueChartOptions} />
@@ -602,6 +808,26 @@ export default function SalesReportsPage() {
                   data={paymentMethodChartData}
                   options={paymentMethodChartOptions}
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Line Chart Section */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5D7BE] mb-8">
+            <h2 className="text-base font-semibold text-[#3A3530] mb-3">
+              Analisis Trend
+            </h2>
+            <div className="h-80">
+              <Line data={lineChartData} options={lineChartOptions} />
+            </div>
+            <div className="mt-4 flex flex-wrap gap-4 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#B48A5A]"></div>
+                <span className="text-[#8B7B63]">Pendapatan (Rp)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#6BAF7A]"></div>
+                <span className="text-[#8B7B63]">Jumlah Transaksi</span>
               </div>
             </div>
           </div>

@@ -36,7 +36,7 @@ const PaymentSchema: Schema = new Schema({
   booking_id: { type: Schema.Types.ObjectId, ref: 'Booking', required: true },
   user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   amount: { type: Number, required: true },
-  payment_method: { type: String, required: true },
+  payment_method: { type: String, required: true, default: 'bank_transfer' },
   payment_gateway: { 
     type: String, 
     enum: ['midtrans', 'doku'], 

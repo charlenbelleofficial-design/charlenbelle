@@ -502,7 +502,7 @@ function TransactionCard({
                 >
                   {getPaymentStatusText(booking.payment.status)}
                 </span>
-                {getGatewayBadge()}
+                {/* {getGatewayBadge()} */}
               </>
             )}
 

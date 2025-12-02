@@ -581,43 +581,119 @@ export default function UserProfilePage() {
                     </div>
                   </div>
                 ) : profile.customer_profile?.completed_at ? (
-                  // View mode when completed
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-[#7E6A52]">Jenis Kulit</span>
-                      <span className="font-medium text-[#3B2A1E] text-right">
+                // View mode when completed - PERBAIKAN DI SINI
+                <div className="space-y-5">
+                  {/* Skin Type */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-[#3B2A1E] mb-2">Jenis Kulit</h3>
+                    <div className="bg-[#FBF6EA] rounded-xl p-3">
+                      <span className="text-[#3B2A1E]">
                         {profile.customer_profile.skin_type || 'Belum diisi'}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-[#7E6A52]">Alergi</span>
-                      <span className="font-medium text-[#3B2A1E] text-right">
+                  </div>
+
+                  {/* Allergies */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-[#3B2A1E]">Alergi</h3>
+                      <span className="text-xs text-[#A18F76]">
                         {profile.customer_profile.allergies?.length || 0} item
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-[#7E6A52]">Kondisi Medis</span>
-                      <span className="font-medium text-[#3B2A1E] text-right">
-                        {profile.customer_profile.medical_conditions?.length ||
-                          0}{' '}
-                        item
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-[#7E6A52]">Obat</span>
-                      <span className="font-medium text-[#3B2A1E] text-right">
-                        {profile.customer_profile.medications?.length || 0}{' '}
-                        item
-                      </span>
-                    </div>
-                    <div className="text-xs text-[#A18F76] mt-2">
-                      Terakhir diperbarui:{' '}
-                      {new Date(
-                        profile.customer_profile.completed_at
-                      ).toLocaleDateString('id-ID')}
+                    <div className="bg-[#FBF6EA] rounded-xl p-3 min-h-[60px]">
+                      {(profile.customer_profile.allergies || []).length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {profile.customer_profile.allergies.map((allergy, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex bg-red-50 text-red-700 px-3 py-1 rounded-full text-xs border border-red-200"
+                            >
+                              {allergy}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[#A18F76] italic">Tidak ada alergi</span>
+                      )}
                     </div>
                   </div>
-                ) : (
+
+                  {/* Medical Conditions */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-[#3B2A1E]">Kondisi Medis</h3>
+                      <span className="text-xs text-[#A18F76]">
+                        {profile.customer_profile.medical_conditions?.length || 0} item
+                      </span>
+                    </div>
+                    <div className="bg-[#FBF6EA] rounded-xl p-3 min-h-[60px]">
+                      {(profile.customer_profile.medical_conditions || []).length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {profile.customer_profile.medical_conditions.map((condition, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex bg-amber-50 text-amber-800 px-3 py-1 rounded-full text-xs border border-amber-200"
+                            >
+                              {condition}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[#A18F76] italic">Tidak ada kondisi medis</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Medications */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-[#3B2A1E]">Obat yang Dikonsumsi</h3>
+                      <span className="text-xs text-[#A18F76]">
+                        {profile.customer_profile.medications?.length || 0} item
+                      </span>
+                    </div>
+                    <div className="bg-[#FBF6EA] rounded-xl p-3 min-h-[60px]">
+                      {(profile.customer_profile.medications || []).length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {profile.customer_profile.medications.map((medication, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full text-xs border border-emerald-200"
+                            >
+                              {medication}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[#A18F76] italic">Tidak ada obat yang dikonsumsi</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Additional Notes */}
+                  {profile.customer_profile.notes && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-[#3B2A1E] mb-2">Catatan Tambahan</h3>
+                      <div className="bg-[#FBF6EA] rounded-xl p-3 whitespace-pre-wrap">
+                        <p className="text-[#3B2A1E] text-sm">
+                          {profile.customer_profile.notes}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="text-xs text-[#A18F76] pt-3 border-t border-[#E1D4C0]">
+                    Terakhir diperbarui: {new Date(profile.customer_profile.completed_at).toLocaleDateString('id-ID', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                </div>
+              ) : (
                   // Empty state
                   <div className="text-center py-6">
                     <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-[#FBF6EA] flex items-center justify-center">
